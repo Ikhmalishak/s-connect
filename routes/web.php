@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ItRequestController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -24,4 +26,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+Route::get('/', [HomeController::class, 'index']);
+Route::post('/form/submit', [HomeController::class, 'testSubmit']);
+Route::get('/table',[HomeController::class,'showTable']);
+Route::post('/it-requests',[ItRequestController::class,'store'])->name('itrequestform.store');
 require __DIR__.'/auth.php';

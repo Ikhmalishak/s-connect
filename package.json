@@ -12,12 +12,24 @@
         "@tailwindcss/vite": "^4.0.0",
         "@vitejs/plugin-vue": "^5.0.0",
         "autoprefixer": "^10.4.12",
-        "axios": "^1.8.2",
+        "axios": "^1.10.0",
         "concurrently": "^9.0.1",
         "laravel-vite-plugin": "^1.2.0",
         "postcss": "^8.4.31",
         "tailwindcss": "^3.2.1",
         "vite": "^6.2.4",
         "vue": "^3.4.0"
+    },
+    "dependencies": {
+        "@vee-validate/zod": "^4.15.1",
+        "@vueuse/core": "^13.5.0",
+        "class-variance-authority": "^0.7.1",
+        "clsx": "^2.1.1",
+        "lucide-vue-next": "^0.525.0",
+        "reka-ui": "^2.3.2",
+        "tailwind-merge": "^3.3.1",
+        "tailwindcss-animate": "^1.0.7",
+        "vee-validate": "^4.15.1",
+        "zod": "^3.25.67"
     }
 }

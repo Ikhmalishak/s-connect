@@ -18,9 +18,12 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
+        'department_id',
+        'manager_id',
         'name',
         'email',
         'password',
+        'position'
     ];
 
     /**
@@ -45,4 +48,25 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function department()
+{
+    return $this->belongsTo(Department::class);
+}
+
+public function manager()
+{
+    return $this->belongsTo(User::class, 'manager_id');
+}
+
+public function subordinates()
+{
+    return $this->hasMany(User::class, 'manager_id');
+}
+
+public function itRequests()
+{
+    return $this->hasMany(ItRequest::class);
+}
+
 }
