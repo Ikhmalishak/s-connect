@@ -26,7 +26,7 @@ class ItRequestController extends Controller
      */
     public function create()
     {
-        //
+        return Inertia::render('Form/It/ITRequestForm');
     }
 
     /**

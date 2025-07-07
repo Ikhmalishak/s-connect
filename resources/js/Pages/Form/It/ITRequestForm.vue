@@ -26,6 +26,7 @@ import axios from "axios";
 import { useToast } from "@/components/ui/toast/use-toast";
 import { ref } from "vue";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
+import { Textarea } from "@/components/ui/textarea";
 
 const { toast } = useToast();
 
@@ -217,8 +218,7 @@ const onSubmit = handleSubmit(async (values) => {
                     <FormItem>
                         <FormLabel>Description</FormLabel>
                         <FormControl>
-                            <Input
-                                type="text"
+                            <Textarea
                                 placeholder="Write description"
                                 v-bind="componentField"
                                 class="h-[100px]"
