@@ -24,10 +24,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    //form
+    Route::get('/form', action: [HomeController::class, 'index']);
+
 });
 
-Route::get('/', [HomeController::class, 'index']);
 Route::post('/form/submit', [HomeController::class, 'testSubmit']);
-Route::get('/table',[HomeController::class,'showTable']);
+Route::get('/table',[ItRequestController::class,'index']);
 Route::post('/it-requests',[ItRequestController::class,'store'])->name('itrequestform.store');
 require __DIR__.'/auth.php';

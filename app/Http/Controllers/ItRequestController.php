@@ -14,7 +14,7 @@ class ItRequestController extends Controller
      */
     public function index()
     {
-        $form = ItRequest::all();
+        $form = ItRequest::with('user:id,name')->get();
 
         return Inertia::render('Table', [
             'data' => $form,
@@ -48,7 +48,7 @@ class ItRequestController extends Controller
             $validated['attachment'] = $request->file('attachment')->store('attachments');
         }
 
-        $validated['user_id'] = 1;
+        $validated['user_id'] = auth()->id();
 
         // Store to DB
         ItRequest::create($validated);

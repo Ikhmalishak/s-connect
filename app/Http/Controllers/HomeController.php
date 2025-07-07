@@ -22,7 +22,8 @@ class HomeController extends Controller
 
     public function showTable(){
 
-        $department = Department::all();
+        $department = Department::all()->withRelationshipAutoloading();
+        dd($department);
         return Inertia::render('Table',[
             'data' => $department,
         ]);
