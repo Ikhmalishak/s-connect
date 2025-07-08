@@ -32,7 +32,7 @@ const props = defineProps({
 
 // This is sample data.
 const data = {
-  versions: ["1.0.1", "1.1.0-alpha", "2.0.0-beta1"],
+  versions: ["1.0.1"],
   navMain: [
     {
       title: "Main",
@@ -97,7 +97,7 @@ const data = {
         :versions="data.versions"
         :default-version="data.versions[0]"
       />
-      <SearchForm />
+      <!-- <SearchForm /> -->
     </SidebarHeader>
     <SidebarContent class="gap-0">
       <Collapsible

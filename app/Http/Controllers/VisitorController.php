@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Visitor;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-
+use Carbon\Carbon;
 class VisitorController extends Controller
 {
     /**
@@ -16,7 +16,7 @@ class VisitorController extends Controller
         //return index page with data
         $visitor = Visitor::with('visitorCompany')->get();
 
-        return Inertia::render('Security/Visitor/VisitorTable',[
+        return Inertia::render('Security/Visitor/VisitorTable', [
             'data' => $visitor,
         ]);
     }
@@ -39,48 +39,75 @@ class VisitorController extends Controller
         $validated = $request->validate([
             'visitor_name' => ['required', 'string', 'max:255'],
             'vehicle_number' => ['required', 'string', 'max:20'],
-            'time_register' => ['required', 'regex:/^\d{2}:\d{2}$/'],
-            'time_in' => ['required', 'regex:/^\d{2}:\d{2}$/'],
-            'time_out' => ['required', 'regex:/^\d{2}:\d{2}$/'],
+            'time_register' => ['nullable', 'regex:/^\d{2}:\d{2}$/'],
+            'time_in' => ['nullable', 'regex:/^\d{2}:\d{2}$/'],
+            'time_out' => ['nullable', 'regex:/^\d{2}:\d{2}$/'],
             'visitor_company_id' => ['required', 'integer', 'exists:visitor_companies,id'],
-            'reasons' => ['nullable', 'string'],
-            'ic_number' => ['nullable', 'string', 'max:20'],
-            'pass_number' => ['nullable', 'string', 'max:20'],
-            'phone_number' => ['nullable', 'string', 'max:20'],
+            'reasons' => ['required', 'string'],
+            'ic_number' => ['required', 'string', 'max:20'],
+            'pass_number' => ['required', 'string', 'max:20'],
+            'phone_number' => ['required', 'string', 'max:20'],
         ]);
+
+        $validated['time_register'] = Carbon::now()->format('H:i');
 
         $visitor = Visitor::create($validated);
 
         return back()->with('success', 'Visitor registered successfully.');
     }
 
-    /**
-     * Display the specified resource.
-     */
+    //function to update check in time
+    public function checkIn($id)
+    {
+        $visitor = Visitor::findOrFail($id);
+        $visitor->time_in = now();
+        $visitor->save();
+
+        return redirect()->back();
+    }
+
+    //function to update check out time
+    public function checkOut($id)
+    {
+        $visitor = Visitor::findOrFail($id);
+        $visitor->time_out = now();
+        $visitor->save();
+
+        return redirect()->back();
+    }
+
     public function show(Visitor $Visitor)
     {
         //
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Visitor $Visitor)
+    public function edit(Visitor $visitor)
     {
-        //
+        return Inertia::render('Security/Visitor/VisitorForm', [
+            'visitor' => $visitor
+        ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Visitor $Visitor)
+    public function update(Request $request, Visitor $visitor)
     {
-        //
+        $validated = $request->validate([
+            'visitor_name' => ['required', 'string', 'max:255'],
+            'vehicle_number' => ['required', 'string', 'max:20'],
+            'time_register' => ['nullable', 'regex:/^\d{2}:\d{2}$/'],
+            'time_in' => ['nullable', 'regex:/^\d{2}:\d{2}$/'],
+            'time_out' => ['nullable', 'regex:/^\d{2}:\d{2}$/'],
+            'reasons' => ['required', 'string', 'max:200'],
+            'ic_number' => ['required', 'string', 'size:12'],
+            'pass_number' => ['required', 'string', 'max:20'],
+            'phone_number' => ['required', 'string', 'max:20'],
+            'visitor_company_id' => ['required', 'integer', 'exists:visitor_companies,id'],
+        ]);
+
+        $visitor->update($validated);
+
+        return redirect('/visitor')->with('success', 'Visitor updated.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Visitor $Visitor)
     {
         //
