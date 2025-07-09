@@ -23,7 +23,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'position'
+        'position',
+        'site'
     ];
 
     /**
@@ -50,23 +51,28 @@ class User extends Authenticatable
     }
 
     public function department()
-{
-    return $this->belongsTo(Department::class);
-}
+    {
+        return $this->belongsTo(Department::class);
+    }
 
-public function manager()
-{
-    return $this->belongsTo(User::class, 'manager_id');
-}
+    public function manager()
+    {
+        return $this->belongsTo(User::class, 'manager_id');
+    }
 
-public function subordinates()
-{
-    return $this->hasMany(User::class, 'manager_id');
-}
+    public function subordinates()
+    {
+        return $this->hasMany(User::class, 'manager_id');
+    }
 
-public function itRequests()
-{
-    return $this->hasMany(ItRequest::class);
-}
+    public function itRequests()
+    {
+        return $this->hasMany(ItRequest::class);
+    }
+
+    public function site()
+    {
+        return $this->belongsTo(Site::class);
+    }
 
 }

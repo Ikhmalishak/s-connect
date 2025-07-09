@@ -5,6 +5,8 @@ use App\Http\Controllers\ItRequestController;
 use App\Http\Controllers\VisitorCompanyController;
 use App\Http\Controllers\VisitorController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PurposeController;
+use App\Http\Controllers\SiteController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -41,6 +43,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/visitor/{id}/check-out', [VisitorController::class, 'checkOut']);
     Route::get('/visitor/{visitor}/edit', [VisitorController::class, 'edit']);
     Route::put('/visitor/{visitor}', [VisitorController::class, 'update']);
+
+    //route for purpose and site
+    Route::apiResource('purposes', PurposeController::class);
+    Route::apiResource('sites', SiteController::class);
 });
 
 Route::post('/form/submit', [HomeController::class, 'testSubmit']);

@@ -14,14 +14,18 @@ return new class extends Migration {
             $table->id();
             $table->string('visitor_name');
             $table->string('vehicle_number')->nullable();
+            $table->string('site');
             $table->time('time_register');
             $table->time('time_in')->nullable();
             $table->time('time_out')->nullable();
             $table->foreignId('visitor_company_id')->constrained('visitor_companies');
-            $table->string('reasons');
+            $table->string('purpose');
+            $table->string('pic');
+            $table->string('remarks');
             $table->string('ic_number');
-            $table->string('pass_number')->nullable();
-            $table->string('phone_number')->nullable();
+            $table->string('passport');
+            $table->string('pass_number');
+            $table->string('phone_number');
             $table->timestamps();
         });
     }
