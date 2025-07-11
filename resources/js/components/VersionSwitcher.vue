@@ -1,5 +1,5 @@
 <script setup>
-import { Check, ChevronsUpDown, GalleryVerticalEnd } from "lucide-vue-next";
+import { Archive, Check, ChevronsUpDown, GalleryVerticalEnd } from "lucide-vue-next";
 
 import { ref } from "vue";
 import {
@@ -26,23 +26,19 @@ const selectedVersion = ref(props.defaultVersion);
   <SidebarMenu>
     <SidebarMenuItem>
       <DropdownMenu>
-        <DropdownMenuTrigger as-child>
-          <SidebarMenuButton
-            size="lg"
-            class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-          >
-            <div
-              class="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground"
-            >
-              <GalleryVerticalEnd class="size-4" />
-            </div>
-            <div class="flex flex-col gap-0.5 leading-none">
-              <span class="font-semibold">S-Connect</span>
-              <span class="">v{{ selectedVersion }}</span>
-            </div>
-            <ChevronsUpDown class="ml-auto" />
-          </SidebarMenuButton>
-        </DropdownMenuTrigger>
+<DropdownMenuTrigger as-child>
+  <Button variant="ghost" class="h-8 w-32 justify-between px-2">
+    <div class="flex items-center gap-2">
+      <img
+        src="/assets/logo.png"
+        alt="Logo"
+        class="w-5 h-5"
+      />
+      <span class="font-semibold">S-Connect</span>
+    </div>
+    <ChevronDown class="ml-2 size-4 opacity-50" />
+  </Button>
+</DropdownMenuTrigger>
         <DropdownMenuContent
           class="w-[--reka-dropdown-menu-trigger-width]"
           align="start"

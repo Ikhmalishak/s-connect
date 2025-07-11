@@ -8,9 +8,6 @@ use Inertia\Inertia;
 use Carbon\Carbon;
 class VisitorController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
         //return index page with data
@@ -21,15 +18,21 @@ class VisitorController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function getVisitorForm()
     {
         //return form page
         return Inertia::render('Security/Visitor/VisitorForm');
     }
 
+    public function getVisitorAcknowledgeForm()
+    {
+        $visitor = Visitor::with('visitorCompany')->get();
+
+        //return form page
+        return Inertia::render('Security/Visitor/VisitorAcknowledgeTable', [
+            'data' => $visitor,
+        ]);
+    }
     /**
      * Store a newly created resource in storage.
      */
@@ -43,8 +46,12 @@ class VisitorController extends Controller
             'time_in' => ['nullable', 'regex:/^\d{2}:\d{2}$/'],
             'time_out' => ['nullable', 'regex:/^\d{2}:\d{2}$/'],
             'visitor_company_id' => ['required', 'integer', 'exists:visitor_companies,id'],
-            'reasons' => ['required', 'string'],
-            'ic_number' => ['required', 'string', 'max:20'],
+            'purpose' => ['required', 'string'],
+            'site' => ['required', 'string'],
+            'person_to_meet' => ['nullable', 'string'],
+            'remarks' => ['required', 'string', 'max:200'],
+            'ic_number' => ['nullable', 'string', 'max:20', 'required_without:passport'],
+            'passport' => ['nullable', 'string', 'max:20', 'required_without:ic_number'],
             'pass_number' => ['required', 'string', 'max:20'],
             'phone_number' => ['required', 'string', 'max:20'],
         ]);
@@ -53,7 +60,9 @@ class VisitorController extends Controller
 
         $visitor = Visitor::create($validated);
 
-        return back()->with('success', 'Visitor registered successfully.');
+        return response()->json([
+            'message' => 'Visitor registered successfully.'
+        ]);
     }
 
     //function to update check in time
@@ -71,6 +80,16 @@ class VisitorController extends Controller
     {
         $visitor = Visitor::findOrFail($id);
         $visitor->time_out = now();
+        $visitor->save();
+
+        return redirect()->back();
+    }
+
+    //function to update the acknowledge
+    public function updateAcknowledge($id)
+    {
+        $visitor = Visitor::findOrFail($id);
+        $visitor->is_acknowledge = true;
         $visitor->save();
 
         return redirect()->back();

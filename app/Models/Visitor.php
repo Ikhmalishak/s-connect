@@ -13,11 +13,17 @@ class Visitor extends Model
         'time_register',
         'time_in',
         'time_out',
+        'site',
+        'purpose',
+        'pic',
         'visitor_company_id',
         'reasons',
         'ic_number',
         'pass_number',
         'phone_number',
+        'remarks',
+        'passport',
+        
     ];
 
     public function visitorCompany()

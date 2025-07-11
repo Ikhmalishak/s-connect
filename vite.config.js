@@ -17,4 +17,15 @@ export default defineConfig({
             },
         }),
     ],
+    server: {
+        host: '0.0.0.0',
+        port: 5173,
+        strictPort: true,
+        cors: true,    // <<< this line is critical
+        hmr: {
+            protocol: 'ws',
+            host: '10.2.11.105',
+            port: 5173,
+        },
+    },
 });

@@ -15,17 +15,18 @@ return new class extends Migration {
             $table->string('visitor_name');
             $table->string('vehicle_number')->nullable();
             $table->string('site');
-            $table->time('time_register');
+            $table->time('time_register')->nullable();
             $table->time('time_in')->nullable();
             $table->time('time_out')->nullable();
             $table->foreignId('visitor_company_id')->constrained('visitor_companies');
             $table->string('purpose');
-            $table->string('pic');
-            $table->string('remarks');
-            $table->string('ic_number');
-            $table->string('passport');
+            $table->string('remarks')->nullable();
+            $table->string('ic_number')->nullable();
+            $table->string('passport')->nullable();
             $table->string('pass_number');
             $table->string('phone_number');
+            $table->boolean('is_acknowledge')->default(false); // did they watch the video etc.
+            $table->string('person_to_meet')->nullable(); // for meetings
             $table->timestamps();
         });
     }
@@ -35,6 +36,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('visitor_forms');
+        Schema::dropIfExists('visitors');
     }
 };

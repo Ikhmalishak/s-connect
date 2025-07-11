@@ -1,6 +1,5 @@
 <script setup>
 import { ChevronRight } from "lucide-vue-next";
-import SearchForm from '@/components/SearchForm.vue';
 import VersionSwitcher from '@/components/VersionSwitcher.vue';
 import {
   Collapsible,

@@ -37,12 +37,14 @@ Route::middleware('auth')->group(function () {
 
     //security form
     Route::get('/visitor', [VisitorController::class, 'index']);
-    Route::get('/visitor/form', [VisitorController::class, 'create']);
+    Route::get('/visitor/form', [VisitorController::class, 'getVisitorForm']);
+    Route::get('/visitor/acknowledge', [VisitorController::class, 'getVisitorAcknowledgeForm']);
     Route::post('/visitor/submit', [VisitorController::class, 'store']);
     Route::post('/visitor/{id}/check-in', [VisitorController::class, 'checkIn']);
     Route::post('/visitor/{id}/check-out', [VisitorController::class, 'checkOut']);
     Route::get('/visitor/{visitor}/edit', [VisitorController::class, 'edit']);
     Route::put('/visitor/{visitor}', [VisitorController::class, 'update']);
+    Route::post('/visitor/{visitor}/acknowledge', [VisitorController::class, 'updateAcknowledge']);
 
     //route for purpose and site
     Route::apiResource('purposes', PurposeController::class);
