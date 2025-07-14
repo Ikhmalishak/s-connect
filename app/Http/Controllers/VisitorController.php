@@ -18,6 +18,12 @@ class VisitorController extends Controller
         ]);
     }
 
+    public function refreshVisitorTablePage()
+    {
+        $visitor = Visitor::with('visitorCompany')->latest()->get();
+        return response()->json($visitor);
+    }
+
     public function getVisitorForm()
     {
         //return form page
@@ -38,27 +44,76 @@ class VisitorController extends Controller
      */
     public function store(Request $request)
     {
-        //validate the request
+        // Validate form data
         $validated = $request->validate([
-            'visitor_name' => ['required', 'string', 'max:255'],
-            'vehicle_number' => ['required', 'string', 'max:20'],
-            'time_register' => ['nullable', 'regex:/^\d{2}:\d{2}$/'],
-            'time_in' => ['nullable', 'regex:/^\d{2}:\d{2}$/'],
-            'time_out' => ['nullable', 'regex:/^\d{2}:\d{2}$/'],
-            'visitor_company_id' => ['required', 'integer', 'exists:visitor_companies,id'],
-            'purpose' => ['required', 'string'],
-            'site' => ['required', 'string'],
-            'person_to_meet' => ['nullable', 'string'],
-            'remarks' => ['required', 'string', 'max:200'],
-            'ic_number' => ['nullable', 'string', 'max:20', 'required_without:passport'],
-            'passport' => ['nullable', 'string', 'max:20', 'required_without:ic_number'],
-            'pass_number' => ['required', 'string', 'max:20'],
-            'phone_number' => ['required', 'string', 'max:20'],
+            'visitor_name' => 'required|string',
+            'id_type' => 'required|in:IC,Passport',
+            'id_number' => 'required|string',
+            'pass_number' => 'required|string',
+            'phone_number' => 'required|string',
+            'purpose' => 'required|string',
+            'remarks' => 'nullable|string',
+            'site' => 'required|string',
+            'time_in' => 'nullable',
+            'time_out' => 'nullable',
+            'time_register' => 'nullable',
+            'vehicle_number' => 'nullable|string',
+            'visitor_company_id' => 'required|integer',
+            'pax' => 'array',
+            'pax.*.visitor_name' => 'required|string',
+            'pax.*.id_type' => 'required|in:IC,Passport',
+            'pax.*.id_number' => 'required|string',
+            'pax.*.phone_number' => 'required|string',
         ]);
 
-        $validated['time_register'] = Carbon::now()->format('H:i');
+        $timeRegister = $validated['time_register'] ?? now()->format('H:i');
 
-        $visitor = Visitor::create($validated);
+        // Map ID fields for main visitor
+        $mainIc = $validated['id_type'] === 'IC' ? $validated['id_number'] : null;
+        $mainPassport = $validated['id_type'] === 'Passport' ? $validated['id_number'] : null;
+
+        // Create main visitor
+        Visitor::create([
+            'visitor_name' => $validated['visitor_name'],
+            'ic_number' => $mainIc,
+            'passport' => $mainPassport,
+            'pass_number' => $validated['pass_number'],
+            'phone_number' => $validated['phone_number'],
+            'purpose' => $validated['purpose'],
+            'remarks' => $validated['remarks'],
+            'site' => $validated['site'],
+            'time_in' => $validated['time_in'],
+            'time_out' => $validated['time_out'],
+            'time_register' => $timeRegister,
+            'vehicle_number' => $validated['vehicle_number'],
+            'visitor_company_id' => $validated['visitor_company_id'],
+            'is_acknowledge' => true, // This assumes acknowledgment if passed
+        ]);
+
+        // Create pax rows
+        if (!empty($validated['pax'])) {
+            foreach ($validated['pax'] as $paxEntry) {
+                $paxIc = $paxEntry['id_type'] === 'IC' ? $paxEntry['id_number'] : null;
+                $paxPassport = $paxEntry['id_type'] === 'Passport' ? $paxEntry['id_number'] : null;
+
+                Visitor::create([
+                    'visitor_name' => $paxEntry['visitor_name'],
+                    'ic_number' => $paxIc,
+                    'passport' => $paxPassport,
+                    'pass_number' => $validated['pass_number'],
+                    'phone_number' => $paxEntry['phone_number'],
+                    'purpose' => $validated['purpose'],
+                    'remarks' => $validated['remarks'],
+                    'site' => $validated['site'],
+                    'time_in' => $validated['time_in'],
+                    'time_out' => $validated['time_out'],
+                    'time_register' => $timeRegister,
+                    'vehicle_number' => $validated['vehicle_number'],
+                    'visitor_company_id' => $validated['visitor_company_id'],
+                    'is_acknowledge' => true,
+                ]);
+            }
+        }
 
         return response()->json([
             'message' => 'Visitor registered successfully.'

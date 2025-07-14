@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { router } from "@inertiajs/vue3";
 import { Input } from "@/components/ui/input";
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 
 interface Props {
     data: VisitorForm[];
@@ -41,19 +41,19 @@ interface VisitorForm {
 }
 
 const { props } = usePage();
-const visitorForms = props.data as VisitorForm[];
+const visitorForms = ref<VisitorForm[]>(props.data as VisitorForm[]);
 
 const searchQuery = ref("");
 
 const filteredVisitors = computed(() => {
-    if (!searchQuery.value) return visitorForms;
-    return visitorForms.filter((visitor) =>
+    const items = visitorForms.value;
+    if (!searchQuery.value) return items;
+    return items.filter((visitor) =>
         visitor.visitor_name
             .toLowerCase()
             .includes(searchQuery.value.toLowerCase())
     );
 });
-console.log(filteredVisitors);
 
 //function to mask ic number
 function maskIC(ic: string) {
@@ -67,7 +67,7 @@ function maskIC(ic: string) {
 async function checkIn(id: number) {
     try {
         await axios.post(`/visitor/${id}/check-in`);
-        router.visit(window.location.pathname);
+        await fetchVisitors(); // Refresh data without navigating
     } catch (error) {
         console.error(error);
     }
@@ -76,11 +76,37 @@ async function checkIn(id: number) {
 async function checkOut(id: number) {
     try {
         await axios.post(`/visitor/${id}/check-out`);
-        router.visit(window.location.pathname);
+        await fetchVisitors(); // Refresh data without navigating
     } catch (error) {
         console.error(error);
     }
 }
+
+async function fetchVisitors() {
+    try {
+        const res = await axios.get("/api/visitors");
+        visitorForms.value = res.data;
+    } catch (e) {
+        console.error("Failed to fetch visitors", e);
+    }
+}
+
+function getRowClass(visitor: VisitorForm) {
+    if (visitor.time_out) {
+        return "bg-green-100"; // green background
+    }
+    if (visitor.time_in && !visitor.time_out) {
+        return "bg-red-300"; // red background
+    }
+    return ""; // default
+}
+
+onMounted(() => {
+    console.log("Mounted VisitorTable.vue");
+    fetchVisitors();
+    setInterval(fetchVisitors, 60000);
+});
+
 </script>
 
 <template>
@@ -113,13 +139,14 @@ async function checkOut(id: number) {
                         <TableHead>IC Number</TableHead>
                         <TableHead>Pass Number</TableHead>
                         <TableHead>Phone Number</TableHead>
-                        <TableHead>Action</TableHead>
+                        <!-- <TableHead>Action</TableHead> -->
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     <TableRow
                         v-for="visitor in filteredVisitors"
                         :key="visitor.id"
+                        :class="getRowClass(visitor)"
                     >
                         <TableCell>{{ visitor.visitor_name }}</TableCell>
                         <TableCell>{{ visitor.vehicle_number }}</TableCell>
@@ -151,13 +178,13 @@ async function checkOut(id: number) {
                         <TableCell>{{ maskIC(visitor.ic_number) }}</TableCell>
                         <TableCell>{{ visitor.pass_number }}</TableCell>
                         <TableCell>{{ visitor.phone_number }}</TableCell>
-                        <TableCell
+                        <!-- <TableCell
                             ><Button as-child variant="outline" size="sm">
                                 <a :href="`/visitor/${visitor.id}/edit`"
                                     >Edit</a
                                 >
                             </Button>
-                        </TableCell>
+                        </TableCell> -->
                     </TableRow>
                 </TableBody>
             </Table>

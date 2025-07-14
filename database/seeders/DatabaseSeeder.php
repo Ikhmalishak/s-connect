@@ -19,6 +19,12 @@ class DatabaseSeeder extends Seeder
             'email' => 'Ikhmal1410@gmail.com',
             'password' => '12345678'
         ]);
+        
+        User::create([
+            'name' => 'Test',
+            'email' => 'test@example.com',
+            'password' => '12345678'
+        ]);
 
         $this->call([
             DepartmentSeeder::class,

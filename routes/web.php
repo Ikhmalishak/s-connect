@@ -29,9 +29,6 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    //visitor company
-    Route::get('/listvisitorcompany', [VisitorCompanyController::class, 'getVisitorCompany']);
-
     //it request form
     Route::get('/itrequestform', [ItRequestController::class, 'create']);
 
@@ -45,13 +42,17 @@ Route::middleware('auth')->group(function () {
     Route::get('/visitor/{visitor}/edit', [VisitorController::class, 'edit']);
     Route::put('/visitor/{visitor}', [VisitorController::class, 'update']);
     Route::post('/visitor/{visitor}/acknowledge', [VisitorController::class, 'updateAcknowledge']);
+    Route::get('/api/visitors', [VisitorController::class, 'refreshVisitorTablePage']);
 
     //route for purpose and site
     Route::apiResource('purposes', PurposeController::class);
     Route::apiResource('sites', SiteController::class);
 });
 
+Route::get('/visitor/form', [VisitorController::class, 'getVisitorForm']);
 Route::post('/form/submit', [HomeController::class, 'testSubmit']);
 Route::get('/table', [ItRequestController::class, 'index']);
 Route::post('/it-requests', [ItRequestController::class, 'store'])->name('itrequestform.store');
+//visitor company
+Route::get('/listvisitorcompany', [VisitorCompanyController::class, 'getVisitorCompany']);
 require __DIR__ . '/auth.php';
