@@ -36,23 +36,25 @@ Route::middleware('auth')->group(function () {
     Route::get('/visitor', [VisitorController::class, 'index']);
     Route::get('/visitor/form', [VisitorController::class, 'getVisitorForm']);
     Route::get('/visitor/acknowledge', [VisitorController::class, 'getVisitorAcknowledgeForm']);
-    Route::post('/visitor/submit', [VisitorController::class, 'store']);
     Route::post('/visitor/{id}/check-in', [VisitorController::class, 'checkIn']);
     Route::post('/visitor/{id}/check-out', [VisitorController::class, 'checkOut']);
     Route::get('/visitor/{visitor}/edit', [VisitorController::class, 'edit']);
     Route::put('/visitor/{visitor}', [VisitorController::class, 'update']);
     Route::post('/visitor/{visitor}/acknowledge', [VisitorController::class, 'updateAcknowledge']);
     Route::get('/api/visitors', [VisitorController::class, 'refreshVisitorTablePage']);
+    Route::get('/visitor/form/archive', [VisitorController::class, 'getArchivedVisitorForm']);
 
     //route for purpose and site
     Route::apiResource('purposes', PurposeController::class);
     Route::apiResource('sites', SiteController::class);
 });
 
+Route::get('/visitor/form/archive', [VisitorController::class, 'getArchivedVisitorForm']);
 Route::get('/visitor/form', [VisitorController::class, 'getVisitorForm']);
 Route::post('/form/submit', [HomeController::class, 'testSubmit']);
 Route::get('/table', [ItRequestController::class, 'index']);
 Route::post('/it-requests', [ItRequestController::class, 'store'])->name('itrequestform.store');
+Route::post('/visitor/submit', action: [VisitorController::class, 'store']);
 //visitor company
 Route::get('/listvisitorcompany', [VisitorCompanyController::class, 'getVisitorCompany']);
 require __DIR__ . '/auth.php';

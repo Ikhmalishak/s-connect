@@ -30,6 +30,12 @@ class VisitorController extends Controller
         return Inertia::render('Security/Visitor/VisitorForm');
     }
 
+    public function getArchivedVisitorForm()
+    {
+        //return form page
+        return Inertia::render('Security/Visitor/ArchivedVisitorForm');
+    }
+
     public function getVisitorAcknowledgeForm()
     {
         $visitor = Visitor::with('visitorCompany')->get();
@@ -134,12 +140,22 @@ class VisitorController extends Controller
     public function checkOut($id)
     {
         $visitor = Visitor::findOrFail($id);
+
         $visitor->time_out = now();
+
+        // Ensure time_in is not null
+        if ($visitor->time_in) {
+            // Calculate the duration in minutes (or any format you want)
+            $duration = Carbon::parse($visitor->time_in)->diffInMinutes($visitor->time_out);
+
+            // Optionally store it in the database (you'll need to add a `duration` column to the visitors table)
+            $visitor->duration = $duration;
+        }
+
         $visitor->save();
 
         return redirect()->back();
     }
-
     //function to update the acknowledge
     public function updateAcknowledge($id)
     {

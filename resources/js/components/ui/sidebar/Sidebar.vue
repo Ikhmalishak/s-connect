@@ -22,7 +22,7 @@ const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
     v-if="collapsible === 'none'"
     :class="
       cn(
-        'flex h-full w-[--sidebar-width] flex-col bg-sidebar text-sidebar-foreground',
+        'flex h-full w-[--sidebar-width] flex-col bg-gray-100 text-sidebar-foreground',
         props.class,
       )
     "
@@ -91,7 +91,7 @@ const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
     >
       <div
         data-sidebar="sidebar"
-        class="flex h-full w-full flex-col text-sidebar-foreground bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
+        class="flex h-full w-full flex-col text-sidebar-foreground bg-gray-100 group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
       >
         <slot />
       </div>

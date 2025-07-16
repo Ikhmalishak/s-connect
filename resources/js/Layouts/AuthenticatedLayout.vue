@@ -47,7 +47,9 @@ console.log(user.email);
             >
                 <SidebarTrigger class="-ml-1" />
                 <Separator orientation="vertical" class="mr-2 h-4" />
-                <Breadcrumb>
+                <!-- Breadcrumb slot -->
+                <slot name="breadcrumb" />
+                <!-- <Breadcrumb>
                     <BreadcrumbList>
                         <BreadcrumbItem class="hidden md:block">
                             <BreadcrumbLink href="#">
@@ -59,28 +61,37 @@ console.log(user.email);
                             <BreadcrumbPage>Data Fetching</BreadcrumbPage>
                         </BreadcrumbItem>
                     </BreadcrumbList>
-                </Breadcrumb>
-                <div class="absolute inset-y right-3">
+                </Breadcrumb> -->
+                <div
+                    class="flex flex-row items-center absolute inset-y right-3"
+                >
+                    <div class="w-20 mr-4">
+                        <img src="/assets/skpLogo.png" alt="My Avatar" />
+                    </div>
                     <DropdownMenu>
-                        <DropdownMenuTrigger
-                            ><Avatar class="w-10 h-10">
+                        <DropdownMenuTrigger>
+                            <Avatar class="w-10 h-10">
                                 <AvatarImage
                                     src="/assets/skp.jpg"
                                     alt="My Avatar"
                                     class="rounded-full object-cover"
                                 />
                                 <AvatarFallback>CN</AvatarFallback>
-                            </Avatar></DropdownMenuTrigger
-                        >
+                            </Avatar>
+                        </DropdownMenuTrigger>
                         <DropdownMenuContent>
-                            <DropdownMenuLabel>Hi {{ user.name }}</DropdownMenuLabel>
+                            <DropdownMenuLabel
+                                >Hi {{ user.name }}</DropdownMenuLabel
+                            >
                             <DropdownMenuSeparator />
                             <!--buat as child biar sata component render as link-->
                             <DropdownMenuItem asChild>
                                 <Link href="/profile"> Profile </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
-                                <Link href="/logout" method="post"> Logout </Link>
+                                <Link href="/logout" method="post">
+                                    Logout
+                                </Link>
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>

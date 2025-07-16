@@ -78,7 +78,7 @@ const submit = () => {
                 </form>
                 <div class="flex items-center justify-center">
                     <img
-                        src="/assets/7.png"
+                        src="/assets/logo.png"
                         alt="Image"
                         class="mx-auto my-auto h-80 w-80 object-contain dark:brightness-[0.2] dark:grayscale"
                     />

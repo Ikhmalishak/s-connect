@@ -15,7 +15,15 @@ import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { router } from "@inertiajs/vue3";
 import { Input } from "@/components/ui/input";
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
+import {
+    Breadcrumb,
+    BreadcrumbPage,
+    BreadcrumbSeparator,
+    BreadcrumbList,
+    BreadcrumbItem,
+    BreadcrumbLink,
+} from "@/components/ui/breadcrumb";
 
 interface Props {
     data: VisitorForm[];
@@ -32,8 +40,9 @@ interface VisitorForm {
         id: number;
         name: string;
     };
-    reasons: string;
+    purpose: string;
     ic_number: string;
+    passport: string;
     pass_number: string;
     phone_number: string;
     created_at?: string;
@@ -44,6 +53,9 @@ const { props } = usePage();
 const visitorForms = ref<VisitorForm[]>(props.data as VisitorForm[]);
 
 const searchQuery = ref("");
+const currentTime = ref(new Date());
+
+let intervalId;
 
 const filteredVisitors = computed(() => {
     const items = visitorForms.value;
@@ -93,25 +105,68 @@ async function fetchVisitors() {
 
 function getRowClass(visitor: VisitorForm) {
     if (visitor.time_out) {
-        return "bg-green-100"; // green background
+        return "bg-green-100 hover:bg-green-100 data-[state=hover]:bg-green-100";
     }
     if (visitor.time_in && !visitor.time_out) {
-        return "bg-red-300"; // red background
+        return "bg-red-300 hover:bg-red-300 data-[state=hover]:bg-red-300";
     }
-    return ""; // default
+    return "bg-white hover:bg-white data-[state=hover]:bg-white";
 }
 
 onMounted(() => {
     console.log("Mounted VisitorTable.vue");
     fetchVisitors();
-    setInterval(fetchVisitors, 60000);
+    setInterval(fetchVisitors, 15000);
+    intervalId = setInterval(() => {
+        currentTime.value = new Date();
+    }, 1000);
 });
 
+onUnmounted(() => {
+    clearInterval(intervalId);
+});
+
+const formattedDate = computed(() =>
+    currentTime.value.toLocaleDateString("en-GB", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+    })
+);
+
+const formattedTime = computed(() =>
+    currentTime.value.toLocaleTimeString("en-GB")
+);
 </script>
 
 <template>
     <AuthenticatedLayout>
-        <Card class="p-5">
+        <template #breadcrumb>
+            <Breadcrumb>
+                <BreadcrumbList>
+                    <BreadcrumbItem>
+                        <BreadcrumbLink href="/">Visitor Management System</BreadcrumbLink>
+                    </BreadcrumbItem>
+                    <BreadcrumbSeparator />
+                    <BreadcrumbItem>
+                        <BreadcrumbPage>Dashboard</BreadcrumbPage>
+                    </BreadcrumbItem>
+                </BreadcrumbList>
+            </Breadcrumb>
+        </template>
+        <Card
+            class="shadow-lg shadow-opacity-30 p-4 mb-4 text-2xl font-bold flex items-center justify-between bg-gray-100"
+        >
+            <div>Visitor Management System</div>
+            <div
+                class="flex flex-row space-x-4 text-base font-normal text-gray-600 text-right"
+            >
+                <div>{{ formattedDate }}</div>
+                <div>{{ formattedTime }}</div>
+            </div>
+        </Card>
+        <Card class="p-5 shadow-2xl shadow-opacity-60">
             <div class="flex space-x-4 justify-between mb-4">
                 <div class="flex flex-row space-x-2">
                     <Input
@@ -128,25 +183,55 @@ onMounted(() => {
             <Table class="overflow-auto max-h-[400px] overflow-y-auto">
                 <TableCaption>A list of all visitor records.</TableCaption>
                 <TableHeader>
-                    <TableRow>
-                        <TableHead>Visitor Name</TableHead>
-                        <TableHead>Vehicle Number</TableHead>
-                        <TableHead>Time Register</TableHead>
-                        <TableHead>Time In</TableHead>
-                        <TableHead>Time Out</TableHead>
-                        <TableHead>Company</TableHead>
-                        <TableHead>Reasons</TableHead>
-                        <TableHead>IC Number</TableHead>
-                        <TableHead>Pass Number</TableHead>
-                        <TableHead>Phone Number</TableHead>
+                    <TableRow
+                        class="border border-gray-300 font-black divide-x divide-gray-300 text-black"
+                    >
+                        <TableHead class="font-black text-black"
+                            >Visitor Name</TableHead
+                        >
+                        <TableHead class="font-black text-black"
+                            >Vehicle Number</TableHead
+                        >
+                        <TableHead class="font-black text-black"
+                            >Time Register</TableHead
+                        >
+                        <TableHead class="font-black text-black"
+                            >Time In</TableHead
+                        >
+                        <TableHead class="font-black text-black"
+                            >Time Out</TableHead
+                        >
+                        <TableHead class="font-black text-black"
+                            >Company</TableHead
+                        >
+                        <TableHead class="font-black text-black"
+                            >Reasons</TableHead
+                        >
+                        <TableHead class="font-black text-black"
+                            >IC Number</TableHead
+                        >
+                        <TableHead class="font-black text-black"
+                            >Passport</TableHead
+                        >
+                        <TableHead class="font-black text-black"
+                            >Pass Number</TableHead
+                        >
+                        <TableHead class="font-black text-black"
+                            >Phone Number</TableHead
+                        >
                         <!-- <TableHead>Action</TableHead> -->
                     </TableRow>
                 </TableHeader>
-                <TableBody>
+                <TableBody
+                    class="border border-gray-300 divide-x divide-gray-300"
+                >
                     <TableRow
                         v-for="visitor in filteredVisitors"
                         :key="visitor.id"
-                        :class="getRowClass(visitor)"
+                        :class="[
+                            getRowClass(visitor),
+                            'border border-gray-300 divide-x divide-gray-300',
+                        ]"
                     >
                         <TableCell>{{ visitor.visitor_name }}</TableCell>
                         <TableCell>{{ visitor.vehicle_number }}</TableCell>
@@ -174,8 +259,9 @@ onMounted(() => {
                         <TableCell>{{
                             visitor.visitor_company?.name
                         }}</TableCell>
-                        <TableCell>{{ visitor.reasons }}</TableCell>
+                        <TableCell>{{ visitor.purpose }}</TableCell>
                         <TableCell>{{ maskIC(visitor.ic_number) }}</TableCell>
+                        <TableCell>{{ maskIC(visitor.passport) }}</TableCell>
                         <TableCell>{{ visitor.pass_number }}</TableCell>
                         <TableCell>{{ visitor.phone_number }}</TableCell>
                         <!-- <TableCell

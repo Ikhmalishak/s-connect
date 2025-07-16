@@ -18,6 +18,7 @@ return new class extends Migration {
             $table->time('time_register')->nullable();
             $table->time('time_in')->nullable();
             $table->time('time_out')->nullable();
+            $table->integer('duration')->nullable();
             $table->foreignId('visitor_company_id')->constrained('visitor_companies');
             $table->string('purpose');
             $table->string('remarks')->nullable();
