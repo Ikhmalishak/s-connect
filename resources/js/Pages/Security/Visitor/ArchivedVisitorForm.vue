@@ -19,7 +19,7 @@ import { Card } from "@/components/ui/card";
 import axios from "axios";
 import { useToast } from "@/components/ui/toast/use-toast";
 import { Textarea } from "@/components/ui/textarea";
-import { onMounted, ref, computed, watch,} from "vue";
+import { onMounted, ref, computed, watch } from "vue";
 import {
     Select,
     SelectContent,
@@ -28,6 +28,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { router, usePage } from "@inertiajs/vue3";
 
 // Interfaces
@@ -274,7 +275,6 @@ const isFormValid = computed(() => {
 
     return mainFieldsValid && paxFieldsValid;
 });
-
 </script>
 
 <template>
@@ -293,7 +293,7 @@ const isFormValid = computed(() => {
                     </FormItem>
                 </FormField>
 
-                <!-- ID Type Select -->
+                <!-- ID Type Select
                 <FormField name="id_type" v-slot="{ componentField }">
                     <FormItem>
                         <FormLabel>ID Type</FormLabel>
@@ -314,6 +314,41 @@ const isFormValid = computed(() => {
                                 </SelectGroup>
                             </SelectContent>
                         </Select>
+                        <FormMessage />
+                    </FormItem>
+                </FormField> -->
+
+                <!-- ID Type Radio -->
+                <FormField v-slot="{ componentField }" name="id_type">
+                    <FormItem class="space-y-3">
+                        <FormLabel>ID Type</FormLabel>
+                        <FormControl>
+                            <RadioGroup
+                                class="flex flex-col space-y-1"
+                                v-bind="componentField"
+                            >
+                                <FormItem
+                                    class="flex items-center space-y-0 gap-x-3"
+                                >
+                                    <FormControl>
+                                        <RadioGroupItem value="IC" />
+                                    </FormControl>
+                                    <FormLabel class="font-normal">
+                                        Identification Card
+                                    </FormLabel>
+                                </FormItem>
+                                <FormItem
+                                    class="flex items-center space-y-0 gap-x-3"
+                                >
+                                    <FormControl>
+                                        <RadioGroupItem value="Passport" />
+                                    </FormControl>
+                                    <FormLabel class="font-normal">
+                                        Passport
+                                    </FormLabel>
+                                </FormItem>
+                            </RadioGroup>
+                        </FormControl>
                         <FormMessage />
                     </FormItem>
                 </FormField>

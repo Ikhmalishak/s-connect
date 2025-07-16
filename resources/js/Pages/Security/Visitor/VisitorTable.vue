@@ -146,7 +146,9 @@ const formattedTime = computed(() =>
             <Breadcrumb>
                 <BreadcrumbList>
                     <BreadcrumbItem>
-                        <BreadcrumbLink href="/">Visitor Management System</BreadcrumbLink>
+                        <BreadcrumbLink href="/"
+                            >Visitor Management System</BreadcrumbLink
+                        >
                     </BreadcrumbItem>
                     <BreadcrumbSeparator />
                     <BreadcrumbItem>
@@ -251,7 +253,11 @@ const formattedTime = computed(() =>
                                 {{ visitor.time_out }}
                             </template>
                             <template v-else>
-                                <Button size="sm" @click="checkOut(visitor.id)">
+                                <Button
+                                    size="sm"
+                                    @click="checkOut(visitor.id)"
+                                    :disabled="!visitor.time_in"
+                                >
                                     Check Out
                                 </Button>
                             </template>
