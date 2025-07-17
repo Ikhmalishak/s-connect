@@ -15,15 +15,20 @@ class DatabaseSeeder extends Seeder
     {
 
         User::create([
-            'name' => 'Ikhmal',
-            'email' => 'Ikhmal1410@gmail.com',
-            'password' => '12345678'
+            'name' => 'Admin',
+            'email' => 'admin@example.com',
+            'password' => '12345678',
+            'role' => 'admin',
+            'site' => 'Site 2'
         ]);
-        
+
         User::create([
-            'name' => 'Test',
-            'email' => 'test@example.com',
-            'password' => '12345678'
+            'name' => 'Guard',
+            'email' => 'guard@example.com',
+            'password' => '12345678',
+            'role' => 'guard',
+            'site' => 'Site 2'
+
         ]);
 
         $this->call([

@@ -24,7 +24,7 @@ Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::middleware('auth')->group(function () {
+Route::middleware('auth', 'role:admin')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -49,12 +49,15 @@ Route::middleware('auth')->group(function () {
     Route::apiResource('sites', SiteController::class);
 });
 
-Route::get('/visitor/form', [VisitorController::class, 'getArchivedVisitorForm']);
-Route::get('/visitor/form/new', [VisitorController::class, 'getVisitorForm']);
-Route::post('/form/submit', [HomeController::class, 'testSubmit']);
-Route::get('/table', [ItRequestController::class, 'index']);
-Route::post('/it-requests', [ItRequestController::class, 'store'])->name('itrequestform.store');
-Route::post('/visitor/submit', action: [VisitorController::class, 'store']);
+Route::middleware(['auth', 'role:guard'])->group(function () {
+    Route::get('/visitor/form', [VisitorController::class, 'getArchivedVisitorForm']);
+    Route::get('/visitor/form/new', [VisitorController::class, 'getVisitorForm']);
+    Route::post('/form/submit', [HomeController::class, 'testSubmit']);
+    Route::get('/table', [ItRequestController::class, 'index']);
+    Route::post('/visitor/submit', action: [VisitorController::class, 'store']);
+});
+
+
 //visitor company
 Route::get('/listvisitorcompany', [VisitorCompanyController::class, 'getVisitorCompany']);
 require __DIR__ . '/auth.php';

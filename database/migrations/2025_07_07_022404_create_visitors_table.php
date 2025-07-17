@@ -20,12 +20,12 @@ return new class extends Migration {
             $table->time('time_in')->nullable();
             $table->time('time_out')->nullable();
             $table->integer('duration')->nullable();
-            $table->foreignId('visitor_company_id')->constrained('visitor_companies');
+            $table->string('visitor_company')->nullable();
             $table->string('purpose');
             $table->string('remarks')->nullable();
             $table->string('ic_number')->nullable();
             $table->string('passport')->nullable();
-            $table->string('pass_number');
+            $table->string('pass_number')->nullable();
             $table->string('phone_number');
             $table->boolean('is_acknowledge')->default(false); // did they watch the video etc.
             $table->string('person_to_meet')->nullable(); // for meetings
