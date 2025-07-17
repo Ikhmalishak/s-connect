@@ -63,6 +63,7 @@ class VisitorController extends Controller
             'time_in' => 'nullable',
             'time_out' => 'nullable',
             'time_register' => 'nullable',
+            'date' => 'nullable|date',
             'vehicle_number' => 'nullable|string',
             'visitor_company_id' => 'required|integer',
             'pax' => 'array',
@@ -73,6 +74,7 @@ class VisitorController extends Controller
         ]);
 
         $timeRegister = $validated['time_register'] ?? now()->format('H:i');
+        $date = !empty($validated['date']) ? $validated['date'] : now()->format('Y-m-d');
 
         // Map ID fields for main visitor
         $mainIc = $validated['id_type'] === 'IC' ? $validated['id_number'] : null;
@@ -91,6 +93,7 @@ class VisitorController extends Controller
             'time_in' => $validated['time_in'],
             'time_out' => $validated['time_out'],
             'time_register' => $timeRegister,
+            'date' => $date,
             'vehicle_number' => $validated['vehicle_number'],
             'visitor_company_id' => $validated['visitor_company_id'],
             'is_acknowledge' => true, // This assumes acknowledgment if passed
@@ -114,6 +117,7 @@ class VisitorController extends Controller
                     'time_in' => $validated['time_in'],
                     'time_out' => $validated['time_out'],
                     'time_register' => $timeRegister,
+                    'date' => $date,
                     'vehicle_number' => $validated['vehicle_number'],
                     'visitor_company_id' => $validated['visitor_company_id'],
                     'is_acknowledge' => true,

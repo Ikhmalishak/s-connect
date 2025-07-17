@@ -1,12 +1,12 @@
 <template>
     <div class="flex flex-col items-center justify-center bg-gray-200">
-        <div class="flex items-center gap-3">
+        <div class="flex items-center ">
             <img
-                src="/assets/logo.png"
+                src="/assets/LOGO-3.png"
                 alt="Logo"
-                class="w-16 h-16 object-contain"
+                class="w-14 h-14 object-contain"
             />
-            <span class="text-2xl text-black font-bold">S-Connect</span>
+            <span class="text-2xl text-black font-bold">S-CONNECT</span>
         </div>
     </div>
 </template>

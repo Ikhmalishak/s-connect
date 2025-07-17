@@ -135,8 +135,7 @@ onMounted(() => {
               @play="isPlaying = true"
               @pause="isPlaying = false"
             >
-              <source src="/assets/videos/security-briefing.mp4" type="video/mp4">
-              <source src="/assets/videos/security-briefing.webm" type="video/webm">
+              <source src="/assets/short.mp4" type="video/mp4">
               Your browser does not support the video tag.
             </video>
             

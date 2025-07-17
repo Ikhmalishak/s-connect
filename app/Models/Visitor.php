@@ -21,6 +21,7 @@ class Visitor extends Model
         'ic_number',
         'pass_number',
         'phone_number',
+        'date',
         'remarks',
         'passport',
         

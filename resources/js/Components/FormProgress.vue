@@ -1,5 +1,5 @@
 <template>
-  <div class="absolute bottom-4 right-4 space-y-2">
+  <div class="fixed bottom-4 right-4 space-y-2 z-50">
     <CircularProgress :percentage="progressPercentage" />
     <ProgressBar :percentage="progressPercentage" />
   </div>

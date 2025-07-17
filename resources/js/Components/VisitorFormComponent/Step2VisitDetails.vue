@@ -20,7 +20,7 @@ const props = defineProps<{
 // Mock data - replace with actual data sources
 const sites = ref([
     "Site A",
-    "Site B", 
+    "Site B",
     "Site C",
     "Main Office",
     "Warehouse"
@@ -46,17 +46,16 @@ const purposes = ref([
 
 <template>
     <div class="space-y-6">
-        <h2 class="text-xl font-semibold">Step 3: Visit Details</h2>
-        
+        <h2 class="text-xl font-semibold">Step 2: Visit Details</h2>
+
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <!-- Vehicle Number -->
             <FormField v-slot="{ componentField }" name="vehicle_number">
                 <FormItem>
                     <FormLabel>Vehicle Number</FormLabel>
                     <FormControl>
-                        <Input 
-                            type="text" 
-                            v-bind="componentField" 
+                        <Input
+                            type="text"
+                            v-bind="componentField"
                             placeholder="Enter vehicle number"
                         />
                     </FormControl>
@@ -64,10 +63,9 @@ const purposes = ref([
                 </FormItem>
             </FormField>
 
-            <!-- Site -->
             <FormField v-slot="{ componentField }" name="site">
                 <FormItem>
-                    <FormLabel>Site</FormLabel>
+                    <FormLabel>Site <span class="text-red-500">*</span></FormLabel>
                     <Select v-bind="componentField">
                         <FormControl>
                             <SelectTrigger>
@@ -86,10 +84,9 @@ const purposes = ref([
                 </FormItem>
             </FormField>
 
-            <!-- Visitor Company -->
             <FormField v-slot="{ componentField }" name="visitor_company_id">
                 <FormItem>
-                    <FormLabel>Visitor Company</FormLabel>
+                    <FormLabel>Visitor Company <span class="text-red-500">*</span></FormLabel>
                     <Select v-bind="componentField">
                         <FormControl>
                             <SelectTrigger>
@@ -114,10 +111,9 @@ const purposes = ref([
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <!-- Purpose -->
             <FormField v-slot="{ componentField }" name="purpose">
                 <FormItem>
-                    <FormLabel>Purpose</FormLabel>
+                    <FormLabel>Purpose <span class="text-red-500">*</span></FormLabel>
                     <Select v-bind="componentField">
                         <FormControl>
                             <SelectTrigger>
@@ -140,7 +136,6 @@ const purposes = ref([
                 </FormItem>
             </FormField>
 
-            <!-- Person to Meet -->
             <FormField
                 v-if="values.purpose === 'Meeting'"
                 v-slot="{ componentField }"
@@ -149,9 +144,9 @@ const purposes = ref([
                 <FormItem>
                     <FormLabel>Person to Meet</FormLabel>
                     <FormControl>
-                        <Input 
-                            type="text" 
-                            v-bind="componentField" 
+                        <Input
+                            type="text"
+                            v-bind="componentField"
                             placeholder="Enter person's name"
                         />
                     </FormControl>
@@ -159,47 +154,26 @@ const purposes = ref([
                 </FormItem>
             </FormField>
 
-            <!-- Visit Date & Time -->
             <FormField v-slot="{ componentField }" name="visit_date">
                 <FormItem>
-                    <FormLabel>Visit Date</FormLabel>
+                    <FormLabel>Visit Date <span class="text-red-500">*</span></FormLabel>
                     <FormControl>
-                        <Input 
-                            type="date" 
-                            v-bind="componentField" 
+                        <Input
+                            type="date"
+                            v-bind="componentField"
                         />
                     </FormControl>
                     <FormMessage />
                 </FormItem>
             </FormField>
-        </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Visit Time -->
             <FormField v-slot="{ componentField }" name="visit_time">
                 <FormItem>
-                    <FormLabel>Visit Time</FormLabel>
+                    <FormLabel>Visit Time <span class="text-red-500">*</span></FormLabel>
                     <FormControl>
-                        <Input 
-                            type="time" 
-                            v-bind="componentField" 
-                        />
-                    </FormControl>
-                    <FormMessage />
-                </FormItem>
-            </FormField>
-
-            <!-- Expected Duration -->
-            <FormField v-slot="{ componentField }" name="expected_duration">
-                <FormItem>
-                    <FormLabel>Expected Duration (hours)</FormLabel>
-                    <FormControl>
-                        <Input 
-                            type="number" 
-                            v-bind="componentField" 
-                            placeholder="e.g., 2"
-                            min="0.5"
-                            step="0.5"
+                        <Input
+                            type="time"
+                            v-bind="componentField"
                         />
                     </FormControl>
                     <FormMessage />
@@ -207,14 +181,13 @@ const purposes = ref([
             </FormField>
         </div>
 
-        <!-- Remarks -->
         <FormField v-slot="{ componentField }" name="remarks">
             <FormItem>
                 <FormLabel>Remarks</FormLabel>
                 <FormControl>
-                    <Textarea 
-                        v-bind="componentField" 
-                        class="h-[100px]" 
+                    <Textarea
+                        v-bind="componentField"
+                        class="h-[100px]"
                         placeholder="Additional notes or special requirements..."
                     />
                 </FormControl>

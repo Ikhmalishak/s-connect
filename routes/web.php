@@ -33,7 +33,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/itrequestform', [ItRequestController::class, 'create']);
 
     //security form
-    Route::get('/visitor', [VisitorController::class, 'index']);
+    Route::get('/visitor', [VisitorController::class, 'index'])->name('visitor');
     Route::get('/visitor/form', [VisitorController::class, 'getVisitorForm']);
     Route::get('/visitor/acknowledge', [VisitorController::class, 'getVisitorAcknowledgeForm']);
     Route::post('/visitor/{id}/check-in', [VisitorController::class, 'checkIn']);
@@ -49,8 +49,8 @@ Route::middleware('auth')->group(function () {
     Route::apiResource('sites', SiteController::class);
 });
 
-Route::get('/visitor/form/archive', [VisitorController::class, 'getArchivedVisitorForm']);
-Route::get('/visitor/form', [VisitorController::class, 'getVisitorForm']);
+Route::get('/visitor/form', [VisitorController::class, 'getArchivedVisitorForm']);
+Route::get('/visitor/form/new', [VisitorController::class, 'getVisitorForm']);
 Route::post('/form/submit', [HomeController::class, 'testSubmit']);
 Route::get('/table', [ItRequestController::class, 'index']);
 Route::post('/it-requests', [ItRequestController::class, 'store'])->name('itrequestform.store');

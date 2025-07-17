@@ -16,6 +16,7 @@ return new class extends Migration {
             $table->string('vehicle_number')->nullable();
             $table->string('site');
             $table->time('time_register')->nullable();
+            $table->date('date');
             $table->time('time_in')->nullable();
             $table->time('time_out')->nullable();
             $table->integer('duration')->nullable();

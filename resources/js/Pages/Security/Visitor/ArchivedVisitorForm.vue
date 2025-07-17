@@ -233,7 +233,7 @@ function handleVideoEnded() {
     toast({
         title: "Video Completed",
         description: "You can now submit the form.",
-        variant: "success",
+        variant: "destructive",
     });
 }
 

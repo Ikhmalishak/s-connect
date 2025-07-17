@@ -33,6 +33,7 @@ interface VisitorForm {
     id: number;
     visitor_name: string;
     vehicle_number: string;
+    date: string;
     time_register: string;
     time_in: string;
     time_out: string;
@@ -108,7 +109,7 @@ function getRowClass(visitor: VisitorForm) {
         return "bg-green-100 hover:bg-green-100 data-[state=hover]:bg-green-100";
     }
     if (visitor.time_in && !visitor.time_out) {
-        return "bg-red-300 hover:bg-red-300 data-[state=hover]:bg-red-300";
+        return "text-white bg-red-400 hover:bg-red-300 data-[state=hover]:bg-red-300";
     }
     return "bg-white hover:bg-white data-[state=hover]:bg-white";
 }
@@ -116,7 +117,7 @@ function getRowClass(visitor: VisitorForm) {
 onMounted(() => {
     console.log("Mounted VisitorTable.vue");
     fetchVisitors();
-    setInterval(fetchVisitors, 15000);
+    setInterval(fetchVisitors, 10000);
     intervalId = setInterval(() => {
         currentTime.value = new Date();
     }, 1000);
@@ -195,6 +196,9 @@ const formattedTime = computed(() =>
                             >Vehicle Number</TableHead
                         >
                         <TableHead class="font-black text-black"
+                            >Date</TableHead
+                        >
+                        <TableHead class="font-black text-black"
                             >Time Register</TableHead
                         >
                         <TableHead class="font-black text-black"
@@ -237,6 +241,7 @@ const formattedTime = computed(() =>
                     >
                         <TableCell>{{ visitor.visitor_name }}</TableCell>
                         <TableCell>{{ visitor.vehicle_number }}</TableCell>
+                        <TableCell>{{ visitor.date }}</TableCell>
                         <TableCell>{{ visitor.time_register }}</TableCell>
                         <TableCell>
                             <template v-if="visitor.time_in">

@@ -35,7 +35,7 @@ const submit = () => {
                     <div class="flex flex-col gap-6">
                         <div class="flex flex-col items-center text-center">
                             <h1 class="text-4xl text-white font-bold">
-                                S-Connect
+                                S-CONNECT
                             </h1>
                             <p class="text-balance text-sm text-white">
                                 Login to your account
@@ -78,7 +78,7 @@ const submit = () => {
                 </form>
                 <div class="flex items-center justify-center">
                     <img
-                        src="/assets/logo.png"
+                        src="/assets/LOGO-3.png"
                         alt="Image"
                         class="mx-auto my-auto h-80 w-80 object-contain dark:brightness-[0.2] dark:grayscale"
                     />
