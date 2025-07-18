@@ -179,7 +179,7 @@ const formattedTime = computed(() =>
                     />
                 </div>
                 <Button as-child>
-                    <a href="/visitor/form">New Visitor</a>
+                    <a href="/visitor/form/new">New Visitor</a>
                 </Button>
             </div>
 
