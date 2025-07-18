@@ -182,7 +182,6 @@ function handleGuidelinesConfirm(confirmed: boolean) {
 
     <div class="relative container mx-auto px-4 py-8 max-w-6xl">
         <VisitorFormHeader title="Visitor Registration Form" />
-        {{ values }}
         <Card class="relative z-0 mt-4 mx-auto max-w-3xl w-full shadow-2xl">
             <div class="px-6 py-4 border-b">
                 <div class="flex items-center justify-between">
