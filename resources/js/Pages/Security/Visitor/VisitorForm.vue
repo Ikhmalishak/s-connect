@@ -231,7 +231,7 @@ function handleGuidelinesConfirm(confirmed: boolean) {
 
             <form @submit="onSubmit" class="p-6 space-y-6">
                 <!-- Step 1 -->
-                <Step1PersonalInfo
+                <PersonalInfoStep
                     v-show="currentStep === 1"
                     :visitors="values.visitors"
                     :errors="errors"
