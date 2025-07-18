@@ -29,26 +29,6 @@ const handleConfirmChange = (checked: boolean) => {
 <template>
   <div>
     <h3 class="text-lg font-semibold mb-4">Review & Submit</h3>
-    
-    <div class="mb-6">
-      <h4 class="font-medium mb-2">Visitor Information</h4>
-      <div class="bg-gray-50 p-4 rounded">
-        <div v-for="(visitor, i) in values.visitors" :key="i" class="mb-4">
-          <p><strong>Visitor {{ i + 1 }}:</strong> {{ visitor.visitor_name }}</p>
-          <p>ID: {{ visitor.id_type }} - {{ visitor.id_number }}</p>
-          <p>Phone: {{ visitor.phone_number }}</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="mb-6">
-      <h4 class="font-medium mb-2">Visit Details</h4>
-      <div class="bg-gray-50 p-4 rounded">
-        <p><strong>Site:</strong> {{ values.site }}</p>
-        <p><strong>Purpose:</strong> {{ values.purpose }}</p>
-        <p v-if="values.person_to_meet"><strong>Person to Meet:</strong> {{ values.person_to_meet }}</p>
-      </div>
-    </div>
 
     <div class="h-64 overflow-y-auto border p-4 rounded mb-4" @scroll="handleScroll">
       <h3 class="text-lg font-semibold mb-2">Security Guidelines</h3>

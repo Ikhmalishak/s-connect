@@ -9,14 +9,15 @@ import VisitDetailsStep from "./VisitDetailsStep.vue";
 import VideoDetailsStep from "./VideoDetailsStep.vue";
 import ReviewStep from "./ReviewStep.vue";
 import VisitorFormHeader from "@/Components/VisitorFormHeader.vue";
+import ResultModal from "./ResultModal.vue";
 import axios from "axios";
+import Step1PersonalInfo from "@/Components/VisitorFormComponent/Step1PersonalInfo.vue";
 
 // Form setup
-const { handleSubmit, setFieldValue, values, errors } = useForm({
+const { handleSubmit, setFieldValue, values, errors, resetForm } = useForm({
     initialValues: {
         visitors: [],
         vehicle_number: "",
-        // site: "",
         visitor_company: "",
         purpose: "",
         person_to_meet: "",
@@ -26,10 +27,10 @@ const { handleSubmit, setFieldValue, values, errors } = useForm({
     },
 });
 
-const visitors = toRef(values, "visitors");
 const paxCount = ref(1);
 const paxModalOpen = ref(true);
 const paxInputValue = ref("1");
+const resultModalOpen = ref(false);
 
 // Video state
 const videoEnded = ref(false);
@@ -128,14 +129,28 @@ const onSubmit = handleSubmit(async (formValues) => {
         const response = await axios.post("/visitor/submit", formValues);
 
         console.log("Form submitted successfully:", response.data);
-        alert("Form submitted successfully!");
 
-        // Optional: Reset the form or navigate somewhere
+        resultModalOpen.value = true;
     } catch (error) {
         console.error("Submission error:", error);
         alert("An error occurred while submitting the form.");
     }
 });
+
+function handleModalClose() {
+    resultModalOpen.value = false;
+
+    // Reset form values
+    resetForm();
+
+    // Reset steps and state
+    currentStep.value = 1;
+    videoEnded.value = false;
+    securityGuidelinesConfirmed.value = false;
+
+    // Reopen pax modal if you want users to input number of visitors again
+    paxModalOpen.value = true;
+}
 
 const stepTitles = {
     1: "Visitor Information",
@@ -163,9 +178,11 @@ function handleGuidelinesConfirm(confirmed: boolean) {
         @confirm="confirmPaxCount"
     />
 
+    <ResultModal :open="resultModalOpen" @update:open="handleModalClose" />
+
     <div class="relative container mx-auto px-4 py-8 max-w-6xl">
         <VisitorFormHeader title="Visitor Registration Form" />
-{{ values }}
+        {{ values }}
         <Card class="relative z-0 mt-4 mx-auto max-w-3xl w-full shadow-2xl">
             <div class="px-6 py-4 border-b">
                 <div class="flex items-center justify-between">
@@ -196,16 +213,25 @@ function handleGuidelinesConfirm(confirmed: boolean) {
                         ></div>
                     </div>
                 </div>
-                <div class="mt-2">
-                    <h3 class="text-sm font-semibold">
-                        {{ stepTitles[currentStep] }}
-                    </h3>
+                <div class="flex items-center justify-between">
+                    <div
+                        v-for="step in 4"
+                        :key="step"
+                        class="flex items-center"
+                        :class="{ 'opacity-50': step > currentStep }"
+                    >
+                        <div class="mt-2">
+                            <h3 class="text-sm font-semibold">
+                                {{ stepTitles[step] }}
+                            </h3>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <form @submit="onSubmit" class="p-6 space-y-6">
                 <!-- Step 1 -->
-                <PersonalInfoStep
+                <Step1PersonalInfo
                     v-show="currentStep === 1"
                     :visitors="values.visitors"
                     :errors="errors"

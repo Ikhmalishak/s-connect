@@ -16,7 +16,7 @@ class Visitor extends Model
         'site',
         'purpose',
         'pic',
-        'visitor_company_id',
+        'visitor_company',
         'reasons',
         'ic_number',
         'pass_number',

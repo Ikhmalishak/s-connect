@@ -33,7 +33,9 @@ class VisitorController extends Controller
     public function getArchivedVisitorForm()
     {
         //return form page
-        return Inertia::render('Security/Visitor/ArchivedVisitorForm');
+        // return Inertia::render('Security/Visitor/ArchivedVisitorForm');
+                return Inertia::render('Security/Visitor/ArchivedFormSeparated');
+
     }
 
     public function getVisitorAcknowledgeForm()
@@ -88,13 +90,14 @@ class VisitorController extends Controller
                 'time_register' => $timeRegister,
                 'date' => $date,
                 'vehicle_number' => $validated['vehicle_number'],
-                'visitor_company_id' => $validated['visitor_company_id'],
+                'visitor_company' => $validated['visitor_company'],
                 'is_acknowledge' => true,
             ]);
         }
 
         return response()->json([
-            'message' => 'Visitor registered successfully.'
+            'message' => 'Visitor registered successfully.',
+            'data' => $validated
         ]);
     }
 

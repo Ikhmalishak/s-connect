@@ -174,7 +174,7 @@ const stepTitles = {
     </PaxModal>
 
     <VisitorFormHeader title="Visitor Registration Form" />
-
+{{ values }}
     <Card v-if="!paxModalOpen" class="mt-4 mx-auto max-w-3xl w-full shadow-2xl">
         <div class="px-6 py-4 border-b">
             <div class="flex items-center justify-between">
@@ -207,7 +207,7 @@ const stepTitles = {
             </div>
         </div>
 
-        <Form @submit="onSubmit" class="p-6 space-y-6">
+        <form @submit="onSubmit" class="p-6 space-y-6">
             <Step1PersonalInfo
                 v-show="currentStep === 1"
                 :values="values"
@@ -265,6 +265,6 @@ const stepTitles = {
                     </Button>
                 </div>
             </div>
-        </Form>
+        </form>
     </Card>
 </template>
