@@ -178,7 +178,6 @@ function handleGuidelinesConfirm(confirmed: boolean) {
 </script>
 
 <template>
-    {{ values }}
     <PaxModal
         v-model:open="paxModalOpen"
         v-model:pax-input="paxInputValue"

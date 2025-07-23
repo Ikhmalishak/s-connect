@@ -289,7 +289,7 @@ function getRowClass(visitor: VisitorForm) {
                                         'hsl(0, 85%, 60%)',
                                         'hsl(0, 75%, 50%)',
                                     ]"
-                                    centralSubLabel="Out"
+                                    centralSubLabel="In"
                                     class="w-4/5 h-4/5"
                                 />
                             </div>
