@@ -130,6 +130,7 @@ const data = {
                                         :is-active="
                                             page.url.startsWith(childItem.url)
                                         "
+                                        class="hover:bg-blue-100"
                                     >
                                         <a :href="childItem.url">{{
                                             childItem.title

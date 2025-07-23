@@ -23,12 +23,7 @@ class Visitor extends Model
         'phone_number',
         'date',
         'remarks',
-        'passport',
-        
+        'passport', 
+        'visitor_type'
     ];
-
-    public function visitorCompany()
-    {
-        return $this->belongsTo(VisitorCompany::class);
-    }
 }

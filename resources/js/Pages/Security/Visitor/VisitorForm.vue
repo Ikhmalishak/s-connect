@@ -11,7 +11,6 @@ import ReviewStep from "./ReviewStep.vue";
 import VisitorFormHeader from "@/Components/VisitorFormHeader.vue";
 import ResultModal from "./ResultModal.vue";
 import axios from "axios";
-import Step1PersonalInfo from "@/Components/VisitorFormComponent/Step1PersonalInfo.vue";
 
 // Form setup
 const { handleSubmit, setFieldValue, values, errors, resetForm } = useForm({
@@ -24,9 +23,11 @@ const { handleSubmit, setFieldValue, values, errors, resetForm } = useForm({
         remarks: "",
         video_watched: false,
         security_guidelines_confirmed: false,
+        visitor_type: "visitor",
     },
 });
 
+const visitorType = ref("visitor");
 const paxCount = ref(1);
 const paxModalOpen = ref(true);
 const paxInputValue = ref("1");
@@ -66,6 +67,10 @@ watch(
     { deep: true }
 );
 
+watch(visitorType, (newVal) => {
+    setFieldValue("visitor_type", newVal);
+});
+
 // Confirm Pax Count
 function confirmPaxCount(count: number) {
     paxCount.value = count;
@@ -75,6 +80,7 @@ function confirmPaxCount(count: number) {
         id_number: "",
         phone_number: "",
         pass_number: "",
+        visitor_type: visitorType.value,
     }));
     setFieldValue("visitors", visitorArray);
     paxModalOpen.value = false;
@@ -172,14 +178,15 @@ function handleGuidelinesConfirm(confirmed: boolean) {
 </script>
 
 <template>
+    {{ values }}
     <PaxModal
         v-model:open="paxModalOpen"
         v-model:pax-input="paxInputValue"
+        v-model:visitor-type="visitorType"
         @confirm="confirmPaxCount"
     />
 
     <ResultModal :open="resultModalOpen" @update:open="handleModalClose" />
-
     <div class="relative container mx-auto px-4 py-8 max-w-6xl">
         <VisitorFormHeader title="Visitor Registration Form" />
         <Card class="relative z-0 mt-4 mx-auto max-w-3xl w-full shadow-2xl">
@@ -262,6 +269,7 @@ function handleGuidelinesConfirm(confirmed: boolean) {
                     @update:security-guidelines-confirmed="
                         handleGuidelinesConfirm
                     "
+                    :visitor-type="visitorType" 
                 />
 
                 <!-- Navigation Buttons -->

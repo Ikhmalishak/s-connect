@@ -41,9 +41,9 @@ console.log(user.email);
 <template>
     <SidebarProvider>
         <AppSidebar />
-        <SidebarInset class="flex flex-col min-h-screen overflow-hidden">
+        <SidebarInset class="flex flex-col min-h-screen overflow-hidden ">
             <header
-                class="sticky top-0 z-10 h-16 bg-background border-b px-4 flex items-center gap-2"
+                class="sticky top-0 z-10 h-16 bg-gray-200 border-b px-4 flex items-center gap-2"
             >
                 <SidebarTrigger class="-ml-1" />
                 <Separator orientation="vertical" class="mr-2 h-4" />

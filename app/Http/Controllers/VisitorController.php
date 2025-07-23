@@ -6,23 +6,75 @@ use App\Models\Visitor;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 class VisitorController extends Controller
 {
     public function index()
     {
         //return index page with data
-        $visitor = Visitor::with('visitorCompany')->get();
+        $visitor = Visitor::orderByDesc('id')->get();
 
         return Inertia::render('Security/Visitor/VisitorTable', [
             'data' => $visitor,
         ]);
     }
 
-    public function refreshVisitorTablePage()
+    public function refreshVisitorTablePage(Request $request )
     {
-        $visitor = Visitor::with('visitorCompany')->latest()->get();
-        return response()->json($visitor);
+        $limit = $request->input('limit', 10);
+        
+        $date = Carbon::now()->format('Y-m-d');
+        $startOfDay = Carbon::today();
+        $endOfDay = Carbon::now();
+        
+        // Get all visitors
+        $visitor = Visitor::latest()->take($limit)->get();
+
+        // Currently inside
+        $visitor_inside = Visitor::whereNotNull('time_in')
+            ->whereNull('time_out')
+            ->whereDate('date', $date)
+            ->selectRaw('visitor_type, COUNT(*) as total')
+            ->groupBy('visitor_type')
+            ->get();
+
+        // Visitors out
+        $visitor_today = Visitor::whereDate('date', $date)
+            ->whereNotNull('time_out')
+            ->selectRaw('visitor_type, COUNT(*) as total')
+            ->groupBy('visitor_type')
+            ->get();
+
+
+        // Get time_in count grouped by hour
+        $visitor_in_by_hour = Visitor::select([
+            DB::raw("HOUR(time_in) as hour"),
+            DB::raw("COUNT(*) as total_in")
+        ])
+            ->whereBetween('time_in', [$startOfDay, $endOfDay])
+            ->groupBy(DB::raw("HOUR(time_in)"))
+            ->orderBy("hour")
+            ->get();
+
+        // Get time_in count grouped by hour
+        $visitor_out_by_hour = Visitor::select([
+            DB::raw("HOUR(time_out) as hour"),
+            DB::raw("COUNT(*) as total_out")
+        ])
+            ->whereBetween('time_out', [$startOfDay, $endOfDay])
+            ->groupBy(DB::raw("HOUR(time_out)"))
+            ->orderBy("hour")
+            ->get();
+
+        return response()->json([
+            'visitor_inside' => $visitor_inside,
+            'visitor_today' => $visitor_today,
+            'visitor' => $visitor,
+            'visitor_in_by_hour' => $visitor_in_by_hour,
+            'visitor_out_by_hour' => $visitor_out_by_hour,
+        ]);
     }
+
 
     public function getVisitorForm()
     {
@@ -34,7 +86,7 @@ class VisitorController extends Controller
     {
         //return form page
         // return Inertia::render('Security/Visitor/ArchivedVisitorForm');
-                return Inertia::render('Security/Visitor/ArchivedFormSeparated');
+        return Inertia::render('Security/Visitor/ArchivedFormSeparated');
 
     }
 
@@ -47,6 +99,7 @@ class VisitorController extends Controller
             'data' => $visitor,
         ]);
     }
+
     /**
      * Store a newly created resource in storage.
      */
@@ -61,6 +114,7 @@ class VisitorController extends Controller
             'time_out' => 'nullable|string',
             'time_register' => 'nullable',
             'date' => 'nullable|date',
+            'visitor_type' => 'required|string',
             'vehicle_number' => 'nullable|string',
             'visitor_company' => 'nullable|string',
             'visitors' => 'required|array|min:1',
@@ -73,6 +127,7 @@ class VisitorController extends Controller
         $timeRegister = $validated['time_register'] ?? now()->format('H:i');
         $date = $validated['date'] ?? now()->format('Y-m-d');
         $site = auth()->user()->site;
+        $company = $validated['visitor_company'] ? $validated['visitor_company'] : "N/A";
 
         foreach ($validated['visitors'] as $visitor) {
             $ic = $visitor['id_type'] === 'IC' ? $visitor['id_number'] : "N/A";
@@ -89,8 +144,9 @@ class VisitorController extends Controller
                 'site' => $site,
                 'time_register' => $timeRegister,
                 'date' => $date,
+                'visitor_type' => $validated['visitor_type'],
                 'vehicle_number' => $validated['vehicle_number'],
-                'visitor_company' => $validated['visitor_company'],
+                'visitor_company' => $company,
                 'is_acknowledge' => true,
             ]);
         }

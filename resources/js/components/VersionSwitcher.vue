@@ -1,5 +1,5 @@
 <template>
-    <div class="flex flex-col items-center justify-center bg-gray-200">
+    <div class="flex flex-col items-center justify-center bg-gray-200 h-16">
         <div class="flex items-center ">
             <img
                 src="/assets/LOGO-3.png"

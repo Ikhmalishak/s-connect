@@ -13,6 +13,7 @@ return new class extends Migration {
         Schema::create('visitors', function (Blueprint $table) {
             $table->id();
             $table->string('visitor_name');
+            $table->string('visitor_type');
             $table->string('vehicle_number')->nullable();
             $table->string('site');
             $table->time('time_register')->nullable();

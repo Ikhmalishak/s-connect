@@ -9,8 +9,4 @@ class VisitorCompany extends Model
     //fillable
     protected $fillable = ['name'];
 
-    public function visitorForms()
-    {
-        return $this->hasMany(Visitor::class);
-    }
 }
