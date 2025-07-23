@@ -256,9 +256,9 @@ function getRowClass(visitor: VisitorForm) {
             </div>
         </Card>
 
-        <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-3 gap-2 mb-4">
+        <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-8 gap-2 mb-4">
             <!-- Donut Card with Fixed Height -->
-            <div class="relative ">
+            <div class="relative lg:col-span-4">
                 <!-- Overlay Badge -->
                 <div class="absolute -top-3 left-2 z-10">
                     <span
@@ -319,7 +319,7 @@ function getRowClass(visitor: VisitorForm) {
                 </Card>
             </div>
 
-            <div class="relative lg:col-span-2">
+            <div class="relative lg:col-span-4">
                 <!-- Overlay Badge -->
                 <div class="absolute -top-3 left-2 z-10">
                     <span
