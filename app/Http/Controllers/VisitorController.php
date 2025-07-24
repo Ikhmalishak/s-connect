@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Events\VisitorRegistered;
 class VisitorController extends Controller
 {
     public function index()
@@ -19,14 +20,14 @@ class VisitorController extends Controller
         ]);
     }
 
-    public function refreshVisitorTablePage(Request $request )
+    public function refreshVisitorTablePage(Request $request)
     {
         $limit = $request->input('limit', 10);
-        
+
         $date = Carbon::now()->format('Y-m-d');
         $startOfDay = Carbon::today();
         $endOfDay = Carbon::now();
-        
+
         // Get all visitors
         $visitor = Visitor::latest()->take($limit)->get();
 
@@ -63,7 +64,7 @@ class VisitorController extends Controller
             DB::raw("COUNT(*) as total_out")
         ])
             ->whereBetween('time_out', [$startOfDay, $endOfDay])
-                        ->whereDate('date', $date)
+            ->whereDate('date', $date)
             ->groupBy(DB::raw("HOUR(time_out)"))
             ->orderBy("hour")
             ->get();
@@ -135,7 +136,7 @@ class VisitorController extends Controller
             $ic = $visitor['id_type'] === 'IC' ? $visitor['id_number'] : "N/A";
             $passport = $visitor['id_type'] === 'Passport' ? $visitor['id_number'] : "N/A";
 
-            Visitor::create([
+            $new_visitor = Visitor::create([
                 'visitor_name' => $visitor['visitor_name'],
                 'ic_number' => $ic,
                 'passport' => $passport,
@@ -151,6 +152,8 @@ class VisitorController extends Controller
                 'visitor_company' => $company,
                 'is_acknowledge' => true,
             ]);
+
+            event(new VisitorRegistered($new_visitor));
         }
 
         return response()->json([

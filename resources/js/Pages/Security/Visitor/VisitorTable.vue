@@ -152,19 +152,18 @@ async function fetchVisitors(limit = limitTable.value) {
 onMounted(() => {
     console.log("Mounted VisitorTable.vue");
     fetchVisitors();
-    // setInterval(fetchVisitors, 150000);
-    // intervalId = setInterval(() => {
-    //     currentTime.value = new Date();
-    // }, 1000);
+
+    // Only keep the time interval - remove the fetchVisitors polling
+    intervalId = setInterval(() => {
+        currentTime.value = new Date();
+    }, 1000);
 
     //Websocket
     // --- Laravel Reverb / Echo Integration ---
     if (window.Echo) {
         window.Echo.channel("visitors") // Listen to the 'visitors' public channel
-            .listen("VisitorRegistered", (e) => {
-                console.log("New VisitorRegistered event received:", e.visitor);
-                // When a new visitor is registered, re-fetch all data to update
-                // the table and all charts with the latest aggregated numbers.
+            .listen(".visitor.registered", (e) => {
+                console.log("New VisitorRegistered event received:", e);
                 fetchVisitors();
             })
             .error((error) => {
@@ -191,7 +190,6 @@ onUnmounted(() => {
     if (intervalId) {
         clearInterval(intervalId);
     }
-
     // --- Laravel Reverb / Echo Clean-up ---
     if (window.Echo) {
         window.Echo.leave("visitors"); // Stop listening to the channel when component unmounts
@@ -386,7 +384,7 @@ function trimVisitorType(visitorType) {
                             :data="visitorInOutByHourData"
                             index="name"
                             :categories="['total_in', 'total_out']"
-                            :colors="['red', 'green',]"
+                            :colors="['red', 'green']"
                             class="w-full h-3/4"
                         />
                     </div>
@@ -521,14 +519,18 @@ function trimVisitorType(visitorType) {
                                     'border border-gray-300 divide-x divide-gray-300',
                                 ]"
                             >
-                                <TableCell class="text-center">{{ visitor.pass_number }}</TableCell>
+                                <TableCell class="text-center">{{
+                                    visitor.pass_number
+                                }}</TableCell>
                                 <TableCell class="text-center">{{
                                     visitor.visitor_name
                                 }}</TableCell>
                                 <TableCell class="text-center">{{
                                     visitor.vehicle_number
                                 }}</TableCell>
-                                <TableCell class="text-center">{{ visitor.date }}</TableCell>
+                                <TableCell class="text-center">{{
+                                    visitor.date
+                                }}</TableCell>
                                 <TableCell class="text-center">{{
                                     trimToHourMinute(visitor.time_register)
                                 }}</TableCell>
@@ -561,7 +563,9 @@ function trimVisitorType(visitorType) {
                                 <TableCell class="text-center">{{
                                     visitor.visitor_company
                                 }}</TableCell>
-                                <TableCell class="text-center">{{ visitor.purpose }}</TableCell>
+                                <TableCell class="text-center">{{
+                                    visitor.purpose
+                                }}</TableCell>
                                 <TableCell class="text-center">{{
                                     maskIC(visitor.ic_number)
                                 }}</TableCell>
