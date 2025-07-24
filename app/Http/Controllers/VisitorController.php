@@ -52,6 +52,7 @@ class VisitorController extends Controller
             DB::raw("COUNT(*) as total_in")
         ])
             ->whereBetween('time_in', [$startOfDay, $endOfDay])
+            ->whereDate('date', $date)
             ->groupBy(DB::raw("HOUR(time_in)"))
             ->orderBy("hour")
             ->get();
@@ -62,6 +63,7 @@ class VisitorController extends Controller
             DB::raw("COUNT(*) as total_out")
         ])
             ->whereBetween('time_out', [$startOfDay, $endOfDay])
+                        ->whereDate('date', $date)
             ->groupBy(DB::raw("HOUR(time_out)"))
             ->orderBy("hour")
             ->get();
