@@ -152,10 +152,33 @@ async function fetchVisitors(limit = limitTable.value) {
 onMounted(() => {
     console.log("Mounted VisitorTable.vue");
     fetchVisitors();
-    setInterval(fetchVisitors, 150000);
-    intervalId = setInterval(() => {
-        currentTime.value = new Date();
-    }, 1000);
+    // setInterval(fetchVisitors, 150000);
+    // intervalId = setInterval(() => {
+    //     currentTime.value = new Date();
+    // }, 1000);
+
+    //Websocket
+    // --- Laravel Reverb / Echo Integration ---
+    if (window.Echo) {
+        window.Echo.channel("visitors") // Listen to the 'visitors' public channel
+            .listen("VisitorRegistered", (e) => {
+                console.log("New VisitorRegistered event received:", e.visitor);
+                // When a new visitor is registered, re-fetch all data to update
+                // the table and all charts with the latest aggregated numbers.
+                fetchVisitors();
+            })
+            .error((error) => {
+                console.error("WebSocket error on visitors channel:", error);
+                // You might want to display a user-friendly error message here
+            });
+        console.log(
+            'Listening for VisitorRegistered events on "visitors" channel via Reverb.'
+        );
+    } else {
+        console.error(
+            "Laravel Echo is not initialized. Please check resources/js/app.js."
+        );
+    }
 });
 
 watch(limitTable, (newVal) => {
@@ -164,7 +187,18 @@ watch(limitTable, (newVal) => {
 });
 
 onUnmounted(() => {
-    clearInterval(intervalId);
+    // Clear the time display interval
+    if (intervalId) {
+        clearInterval(intervalId);
+    }
+
+    // --- Laravel Reverb / Echo Clean-up ---
+    if (window.Echo) {
+        window.Echo.leave("visitors"); // Stop listening to the channel when component unmounts
+        console.log(
+            'Stopped listening for VisitorRegistered events on "visitors" channel.'
+        );
+    }
 });
 
 const visitorInsidePieChart = computed(() => {
@@ -223,6 +257,21 @@ function getRowClass(visitor: VisitorForm) {
         return "text-white bg-red-400 hover:bg-red-300 data-[state=hover]:bg-red-300";
     }
     return "bg-white hover:bg-white data-[state=hover]:bg-white";
+}
+
+function trimToHourMinute(timeString) {
+    if (!timeString) return "-";
+    return timeString.slice(0, 5); // "16:43:08" → "16:43"
+}
+
+function trimVisitorType(visitorType) {
+    if (visitorType === "visitor") {
+        return "V";
+    } else if (visitorType === "contractor") {
+        return "C";
+    } else {
+        return "D";
+    }
 }
 </script>
 
@@ -337,7 +386,7 @@ function getRowClass(visitor: VisitorForm) {
                             :data="visitorInOutByHourData"
                             index="name"
                             :categories="['total_in', 'total_out']"
-                            :colors="['blue', 'pink', 'orange', 'red']"
+                            :colors="['red', 'green',]"
                             class="w-full h-3/4"
                         />
                     </div>
@@ -407,43 +456,56 @@ function getRowClass(visitor: VisitorForm) {
                             <TableRow
                                 class="border border-gray-300 font-black divide-x divide-gray-300 text-black"
                             >
-                                <TableHead class="font-black text-black"
-                                    >Visitor Name</TableHead
-                                >
-                                <TableHead class="font-black text-black"
-                                    >Vehicle Number</TableHead
-                                >
-                                <TableHead class="font-black text-black"
-                                    >Date</TableHead
-                                >
-                                <TableHead class="font-black text-black"
-                                    >Time Register</TableHead
-                                >
-                                <TableHead class="font-black text-black"
-                                    >Time In</TableHead
-                                >
-                                <TableHead class="font-black text-black"
-                                    >Time Out</TableHead
-                                >
-                                <TableHead class="font-black text-black"
-                                    >Company</TableHead
-                                >
-                                <TableHead class="font-black text-black"
-                                    >Reasons</TableHead
-                                >
-                                <TableHead class="font-black text-black"
-                                    >IC Number</TableHead
-                                >
-                                <TableHead class="font-black text-black"
-                                    >Passport</TableHead
-                                >
-                                <TableHead class="font-black text-black"
+                                <TableHead
+                                    class="font-black text-black text-center bg-gray-100"
                                     >Pass Number</TableHead
                                 >
-                                <TableHead class="font-black text-black"
+                                <TableHead
+                                    class="font-black text-black text-center bg-gray-100"
+                                    >Visitor Name</TableHead
+                                >
+                                <TableHead
+                                    class="font-black text-black text-center bg-gray-100"
+                                    >Vehicle Number</TableHead
+                                >
+                                <TableHead
+                                    class="font-black text-black text-center bg-gray-100"
+                                    >Date</TableHead
+                                >
+                                <TableHead
+                                    class="font-black text-black text-center bg-gray-100"
+                                    >Time Register</TableHead
+                                >
+                                <TableHead
+                                    class="font-black text-black text-center bg-gray-100"
+                                    >Time In</TableHead
+                                >
+                                <TableHead
+                                    class="font-black text-black text-center bg-gray-100"
+                                    >Time Out</TableHead
+                                >
+                                <TableHead
+                                    class="font-black text-black text-center bg-gray-100"
+                                    >Company</TableHead
+                                >
+                                <TableHead
+                                    class="font-black text-black text-center bg-gray-100"
+                                    >Reasons</TableHead
+                                >
+                                <TableHead
+                                    class="font-black text-black text-center bg-gray-100"
+                                    >IC Number</TableHead
+                                >
+                                <TableHead
+                                    class="font-black text-black text-center bg-gray-100"
+                                    >Passport</TableHead
+                                >
+                                <TableHead
+                                    class="font-black text-black text-center bg-gray-100"
                                     >Phone Number</TableHead
                                 >
-                                <TableHead class="font-black text-black"
+                                <TableHead
+                                    class="font-black text-black text-center bg-gray-100"
                                     >Visitor Type</TableHead
                                 >
                             </TableRow>
@@ -459,19 +521,20 @@ function getRowClass(visitor: VisitorForm) {
                                     'border border-gray-300 divide-x divide-gray-300',
                                 ]"
                             >
-                                <TableCell>{{
+                                <TableCell class="text-center">{{ visitor.pass_number }}</TableCell>
+                                <TableCell class="text-center">{{
                                     visitor.visitor_name
                                 }}</TableCell>
-                                <TableCell>{{
+                                <TableCell class="text-center">{{
                                     visitor.vehicle_number
                                 }}</TableCell>
-                                <TableCell>{{ visitor.date }}</TableCell>
-                                <TableCell>{{
-                                    visitor.time_register
+                                <TableCell class="text-center">{{ visitor.date }}</TableCell>
+                                <TableCell class="text-center">{{
+                                    trimToHourMinute(visitor.time_register)
                                 }}</TableCell>
-                                <TableCell>
+                                <TableCell class="text-center">
                                     <template v-if="visitor.time_in">
-                                        {{ visitor.time_in }}
+                                        {{ trimToHourMinute(visitor.time_in) }}
                                     </template>
                                     <template v-else>
                                         <Button
@@ -482,9 +545,9 @@ function getRowClass(visitor: VisitorForm) {
                                         </Button>
                                     </template>
                                 </TableCell>
-                                <TableCell>
+                                <TableCell class="text-center">
                                     <template v-if="visitor.time_out">
-                                        {{ visitor.time_out }}
+                                        {{ trimToHourMinute(visitor.time_out) }}
                                     </template>
                                     <template v-else>
                                         <Button
@@ -495,22 +558,21 @@ function getRowClass(visitor: VisitorForm) {
                                         </Button>
                                     </template>
                                 </TableCell>
-                                <TableCell>{{
+                                <TableCell class="text-center">{{
                                     visitor.visitor_company
                                 }}</TableCell>
-                                <TableCell>{{ visitor.purpose }}</TableCell>
-                                <TableCell>{{
+                                <TableCell class="text-center">{{ visitor.purpose }}</TableCell>
+                                <TableCell class="text-center">{{
                                     maskIC(visitor.ic_number)
                                 }}</TableCell>
-                                <TableCell>{{
+                                <TableCell class="text-center">{{
                                     maskIC(visitor.passport)
                                 }}</TableCell>
-                                <TableCell>{{ visitor.pass_number }}</TableCell>
-                                <TableCell>{{
+                                <TableCell class="text-center">{{
                                     maskPhoneNum(visitor.phone_number)
                                 }}</TableCell>
-                                <TableCell>{{
-                                    visitor.visitor_type
+                                <TableCell class="text-center">{{
+                                    trimVisitorType(visitor.visitor_type)
                                 }}</TableCell>
                             </TableRow>
                         </TableBody>

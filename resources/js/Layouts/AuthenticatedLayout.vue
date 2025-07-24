@@ -39,7 +39,7 @@ console.log(user.email);
 </script>
 
 <template>
-    <SidebarProvider>
+    <SidebarProvider :defaultOpen="false">
         <AppSidebar />
         <SidebarInset class="flex flex-col min-h-screen overflow-hidden ">
             <header
