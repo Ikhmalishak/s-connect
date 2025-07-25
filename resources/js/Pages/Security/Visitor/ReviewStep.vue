@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, watch, nextTick } from "vue";
 import { CheckCircle } from "lucide-vue-next";
 
 const props = defineProps<{
@@ -7,6 +7,7 @@ const props = defineProps<{
     videoEnded: boolean;
     securityGuidelinesConfirmed: boolean;
     visitorType: string;
+    resetReview?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -15,6 +16,34 @@ const emit = defineEmits<{
 
 const hasScrolledToBottom = ref(false);
 const contractorScrolled = ref(false);
+
+// Refs for the scrollable containers
+const securityGuidelinesContainer = ref<HTMLElement>();
+const contractorGuidelinesContainer = ref<HTMLElement>();
+
+// Watch for reset trigger
+watch(() => props.resetReview, async (newVal) => {
+    if (newVal) {
+        await resetScrollState();
+    }
+});
+
+async function resetScrollState() {
+    // Reset scroll state flags
+    hasScrolledToBottom.value = false;
+    contractorScrolled.value = false;
+    
+    // Wait for next tick to ensure DOM is updated
+    await nextTick();
+    
+    // Reset scroll positions to top
+    if (securityGuidelinesContainer.value) {
+        securityGuidelinesContainer.value.scrollTop = 0;
+    }
+    if (contractorGuidelinesContainer.value) {
+        contractorGuidelinesContainer.value.scrollTop = 0;
+    }
+}
 
 const handleScroll = (e: Event) => {
     const el = e.target as HTMLElement;
@@ -37,10 +66,10 @@ const handleConfirmChange = (checked: boolean) => {
 
 <template>
     <div>
-        <pre>{{ props.visitorType }}</pre>
         <h3 class="text-lg font-semibold mb-4">Review & Submit</h3>
 
         <div
+            ref="securityGuidelinesContainer"
             class="h-64 overflow-y-auto border p-4 rounded mb-4"
             @scroll="handleScroll"
         >
@@ -68,6 +97,7 @@ const handleConfirmChange = (checked: boolean) => {
 
         <div
             v-if="visitorType === 'contractor'"
+            ref="contractorGuidelinesContainer"
             class="h-64 overflow-y-auto border p-4 rounded mb-4"
             @scroll="handleContractorScroll"
         >
@@ -195,7 +225,7 @@ const handleConfirmChange = (checked: boolean) => {
                     </ul>
                 </div>
 
-                <!-- 3.3 Contractors -->
+                <!-- 3.5 SKP Security Guide -->
                 <div class="mt-4">
                     <h3 class="text-xl font-medium text-gray-700">
                         3.5 SKP Security Guide are responsible for:

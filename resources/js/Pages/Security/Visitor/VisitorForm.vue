@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, toRef } from "vue";
+import { ref, computed, watch, nextTick } from "vue";
 import { useForm } from "vee-validate";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,12 +36,13 @@ const resultModalOpen = ref(false);
 // Video state
 const videoEnded = ref(false);
 const securityGuidelinesConfirmed = ref(false);
+const resetVideoTrigger = ref(false); // Add this
+const resetReviewTrigger = ref(false); // Add this
 
 // Step control
 const currentStep = ref(1);
 
 // Mock data
-// const sites = ref(["Site A", "Site B", "Site C", "Main Office", "Warehouse"]);
 const visitorCompany = ref([
     { id: 1, name: "Company A" },
     { id: 2, name: "Company B" },
@@ -89,6 +90,7 @@ function confirmPaxCount(count: number) {
 // Form validation
 const isFormValid = computed(() => {
     const step1Valid =
+        values.visitors &&
         values.visitors.length > 0 &&
         values.visitors.every(
             (v) =>
@@ -133,9 +135,7 @@ const onSubmit = handleSubmit(async (formValues) => {
 
     try {
         const response = await axios.post("/visitor/submit", formValues);
-
         console.log("Form submitted successfully:", response.data);
-
         resultModalOpen.value = true;
     } catch (error) {
         console.error("Submission error:", error);
@@ -143,7 +143,7 @@ const onSubmit = handleSubmit(async (formValues) => {
     }
 });
 
-function handleModalClose() {
+async function handleModalClose() {
     resultModalOpen.value = false;
 
     // Reset form values
@@ -153,6 +153,16 @@ function handleModalClose() {
     currentStep.value = 1;
     videoEnded.value = false;
     securityGuidelinesConfirmed.value = false;
+
+    // Trigger video reset
+    resetVideoTrigger.value = true;
+    await nextTick();
+    resetVideoTrigger.value = false;
+
+    // Trigger review step reset
+    resetReviewTrigger.value = true;
+    await nextTick();
+    resetReviewTrigger.value = false;
 
     // Reopen pax modal if you want users to input number of visitors again
     paxModalOpen.value = true;
@@ -175,6 +185,14 @@ function handleGuidelinesConfirm(confirmed: boolean) {
     securityGuidelinesConfirmed.value = confirmed;
     setFieldValue("security_guidelines_confirmed", confirmed);
 }
+
+watch(currentStep, async (newStep) => {
+    if (newStep === 4) {
+        resetReviewTrigger.value = true;
+        await nextTick();
+        resetReviewTrigger.value = false;
+    }
+});
 </script>
 
 <template>
@@ -238,37 +256,41 @@ function handleGuidelinesConfirm(confirmed: boolean) {
                 <!-- Step 1 -->
                 <PersonalInfoStep
                     v-show="currentStep === 1"
-                    :visitors="values.visitors"
-                    :errors="errors"
+                    :visitors="values.visitors || []"
+                    :errors="errors || {}"
                 />
 
                 <!-- Step 2 -->
                 <VisitDetailsStep
                     v-show="currentStep === 2"
-                    :values="values"
-                    :errors="errors"
-                    :visitor-company="visitorCompany"
-                    :purposes="purposes"
+                    :values="values || {}"
+                    :errors="errors || {}"
+                    :visitor-company="visitorCompany || []"
+                    :purposes="purposes || []"
                 />
 
                 <!-- Step 3 -->
                 <VideoDetailsStep
                     v-show="currentStep === 3"
-                    :is-form-valid="isFormValid"
-                    :video-ended="videoEnded"
+                    :is-form-valid="isFormValid ?? false"
+                    :video-ended="videoEnded ?? false"
+                    :reset-video="resetVideoTrigger ?? false"
                     @video-ended="handleVideoEnded"
                 />
 
                 <!-- Step 4 -->
                 <ReviewStep
                     v-show="currentStep === 4"
-                    :values="values"
-                    :video-ended="videoEnded"
-                    :security-guidelines-confirmed="securityGuidelinesConfirmed"
+                    :values="values || {}"
+                    :video-ended="videoEnded ?? false"
+                    :security-guidelines-confirmed="
+                        securityGuidelinesConfirmed ?? false
+                    "
+                    :reset-review="resetReviewTrigger ?? false"
                     @update:security-guidelines-confirmed="
                         handleGuidelinesConfirm
                     "
-                    :visitor-type="visitorType" 
+                    :visitor-type="visitorType || ''"
                 />
 
                 <!-- Navigation Buttons -->

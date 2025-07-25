@@ -105,6 +105,12 @@ const legendClass = computed(() => {
       return 'flex flex-col gap-2 min-w-48';
   }
 });
+
+function formatCategoryName(name) {
+  return name
+    .replace(/_/g, ' ')         // Replace underscores with spaces
+    .replace(/\b\w/g, c => c.toUpperCase()); // Capitalize each word
+}
 </script>
 
 <template>
@@ -170,7 +176,7 @@ const legendClass = computed(() => {
             :style="{ backgroundColor: item.color }"
           />
           <span :class="cn('text-sm font-medium', legendPosition === 'bottom' ? 'text-xs' : 'text-sm')">
-            {{ item.name }}
+            {{ formatCategoryName(item.name) }}
           </span>
         </div>
         

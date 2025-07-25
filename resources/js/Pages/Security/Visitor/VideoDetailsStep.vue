@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import { Play, CheckCircle, Clock } from "lucide-vue-next";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 const props = defineProps<{
   isFormValid: boolean;
   videoEnded: boolean;
+  resetVideo?: boolean; // Add this prop
 }>();
 
 const emit = defineEmits<{
@@ -19,6 +20,25 @@ const currentTime = ref(0);
 const duration = ref(0);
 const hasStarted = ref(false);
 const showConfirmation = ref(false);
+
+// Watch for reset trigger
+watch(() => props.resetVideo, (newVal) => {
+  if (newVal) {
+    resetVideoState();
+  }
+});
+
+function resetVideoState() {
+  isPlaying.value = false;
+  currentTime.value = 0;
+  hasStarted.value = false;
+  showConfirmation.value = false;
+  
+  if (videoRef.value) {
+    videoRef.value.currentTime = 0;
+    videoRef.value.pause();
+  }
+}
 
 const progress = computed(() => {
   return duration.value > 0 ? (currentTime.value / duration.value) * 100 : 0;

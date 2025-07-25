@@ -12,6 +12,9 @@ import {
     defaultColors,
 } from "@/components/ui/chart";
 
+const xAxisLabel = "Time (hours)";
+const yAxisLabel = "Visitors";
+
 const props = defineProps({
     data: { type: Array, required: true },
     categories: { type: Array, required: true },
@@ -46,7 +49,7 @@ const colors = computed(() =>
 
 const legendItems = ref(
     props.categories.map((category, i) => ({
-        name: category,
+        name: formatCategoryName(category),
         color: colors.value[i],
         inactive: false,
     }))
@@ -57,9 +60,23 @@ const isMounted = useMounted();
 function handleLegendItemClick(d, i) {
     emits("legendItemClick", d, i);
 }
+
+function formatCategoryName(name) {
+  return name
+    .replace(/_/g, ' ')         // Replace underscores with spaces
+    .replace(/\b\w/g, c => c.toUpperCase()); // Capitalize each word
+}
+
 </script>
 
 <template>
+    <!-- Y-Axis label -->
+    <div
+        class="absolute left-0 top-1/2 -translate-y-1/2 -rotate-90 text-sm text-gray-500"
+    >
+        {{ yAxisLabel }}
+    </div>
+
     <div
         :class="
             cn('w-full h-[400px] flex flex-col items-end', $attrs.class ?? '')
@@ -180,5 +197,9 @@ function handleLegendItemClick(d, i) {
 
             <slot />
         </VisXYContainer>
+    </div>
+    <!-- X-Axis label -->
+    <div class="text-center text-sm text-gray-500 mt-10">
+        {{ xAxisLabel }}
     </div>
 </template>
