@@ -3,13 +3,13 @@ import { ref, computed, watch, nextTick } from "vue";
 import { useForm } from "vee-validate";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import PaxModal from "./PaxModal.vue";
-import PersonalInfoStep from "./PersonalInfoStep.vue";
-import VisitDetailsStep from "./VisitDetailsStep.vue";
-import VideoDetailsStep from "./VideoDetailsStep.vue";
-import ReviewStep from "./ReviewStep.vue";
+import PaxModal from "../../../Components/VisitorFormComponent/PaxModal.vue";
+import PersonalInfoStep from "../../../Components/VisitorFormComponent/PersonalInfoStep.vue";
+import VisitDetailsStep from "../../../Components/VisitorFormComponent/VisitDetailsStep.vue";
+import VideoDetailsStep from "../../../Components/VisitorFormComponent/VideoDetailsStep.vue";
+import ReviewStep from "../../../Components/VisitorFormComponent/ReviewStep.vue";
 import VisitorFormHeader from "@/Components/VisitorFormHeader.vue";
-import ResultModal from "./ResultModal.vue";
+import ResultModal from "../../../Components/VisitorFormComponent/ResultModal.vue";
 import axios from "axios";
 
 // Form setup

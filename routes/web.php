@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\GatePassController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ItRequestController;
 use App\Http\Controllers\VisitorCompanyController;
@@ -47,10 +48,13 @@ Route::middleware('auth')->group(function () {
     Route::post('/visitor/{visitor}/acknowledge', [VisitorController::class, 'updateAcknowledge']);
     Route::get('/api/visitors', [VisitorController::class, 'refreshVisitorTablePage']);
     Route::get('/visitor/form/archive', [VisitorController::class, 'getArchivedVisitorForm']);
+    Route::get('/visitor/visitor-inside',[VisitorController::class, 'getVisitorInside']);
 
-    //route for purpose and site
+    //route for purpose and site and gate pass
     Route::apiResource('purposes', PurposeController::class);
     Route::apiResource('sites', SiteController::class);
+    Route::apiResource('gate-passes',GatePassController::class);
+
 });
 
 Route::get('/visitor/form', [VisitorController::class, 'getArchivedVisitorForm']);

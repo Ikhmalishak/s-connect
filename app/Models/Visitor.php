@@ -8,6 +8,7 @@ class Visitor extends Model
 {
     //fillable
     protected $fillable = [
+        'gate_pass_id',
         'visitor_name',
         'vehicle_number',
         'time_register',
@@ -19,11 +20,17 @@ class Visitor extends Model
         'visitor_company',
         'reasons',
         'ic_number',
-        'pass_number',
         'phone_number',
         'date',
         'remarks',
-        'passport', 
+        'passport',
         'visitor_type'
     ];
+
+    public function gatePass()
+    {
+        return $this->belongsTo(GatePass::class);
+    }
+
 }
+

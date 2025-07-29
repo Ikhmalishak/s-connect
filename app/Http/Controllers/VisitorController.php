@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\GatePass;
 use App\Models\Visitor;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -15,7 +16,7 @@ class VisitorController extends Controller
         //return index page with data
         $visitor = Visitor::orderByDesc('id')->get();
 
-        return Inertia::render('Security/Visitor/VisitorTable', [
+        return Inertia::render('Security/Visitor/VisitorDashboard', [
             'data' => $visitor,
         ]);
     }
@@ -29,7 +30,8 @@ class VisitorController extends Controller
         $endOfDay = Carbon::now();
 
         // Get all visitors
-        $visitor = Visitor::latest()->take($limit)->get();
+        $visitor = Visitor::with('gatePass:id,pass_number')
+            ->latest()->take($limit)->get();
 
         // Currently inside
         $visitor_inside = Visitor::whereNotNull('time_in')
@@ -78,6 +80,20 @@ class VisitorController extends Controller
         ]);
     }
 
+    public function getVisitorInside()
+    {
+        $date = now()->toDateString(); // or Carbon::today()->toDateString()
+
+        $visitor_inside = Visitor::whereNotNull('time_in')
+            ->whereNull('time_out')
+            ->whereDate('date', $date)
+            ->with('gatePass')
+            ->get();
+
+        return response()->json([
+            'data' => $visitor_inside
+        ]);
+    }
 
     public function getVisitorForm()
     {
@@ -88,7 +104,6 @@ class VisitorController extends Controller
     public function getArchivedVisitorForm()
     {
         //return form page
-        // return Inertia::render('Security/Visitor/ArchivedVisitorForm');
         return Inertia::render('Security/Visitor/ArchivedFormSeparated');
 
     }
@@ -127,41 +142,70 @@ class VisitorController extends Controller
             'visitors.*.phone_number' => 'required|string',
         ]);
 
-        $timeRegister = $validated['time_register'] ?? now()->format('H:i');
-        $date = $validated['date'] ?? now()->format('Y-m-d');
-        $site = auth()->user()->site;
-        $company = $validated['visitor_company'] ? $validated['visitor_company'] : "N/A";
+        return DB::transaction(function () use ($validated) {
 
-        foreach ($validated['visitors'] as $visitor) {
-            $ic = $visitor['id_type'] === 'IC' ? $visitor['id_number'] : "N/A";
-            $passport = $visitor['id_type'] === 'Passport' ? $visitor['id_number'] : "N/A";
+            $timeRegister = $validated['time_register'] ??= now()->format('H:i');
+            $date = $validated['date'] ??= now()->format('Y-m-d');
+            $site = auth()->user()->site;
+            $company = $validated['visitor_company'] ? $validated['visitor_company'] : "N/A";
 
-            $new_visitor = Visitor::create([
-                'visitor_name' => $visitor['visitor_name'],
-                'ic_number' => $ic,
-                'passport' => $passport,
-                'pass_number' => $visitor['pass_number'] ?? null,
-                'phone_number' => $visitor['phone_number'],
-                'purpose' => $validated['purpose'],
-                'remarks' => $validated['remarks'] ?? null,
-                'site' => $site,
-                'time_register' => $timeRegister,
-                'date' => $date,
-                'visitor_type' => $validated['visitor_type'],
-                'vehicle_number' => $validated['vehicle_number'],
-                'visitor_company' => $company,
-                'is_acknowledge' => true,
+            $createdVisitors = [];
+            foreach ($validated['visitors'] as $visitor) {
+                $ic = $visitor['id_type'] === 'IC' ? $visitor['id_number'] : "N/A";
+                $passport = $visitor['id_type'] === 'Passport' ? $visitor['id_number'] : "N/A";
+
+                $pass_id = $this->getPassNumber($validated['visitor_type']);
+
+                $new_visitor = Visitor::create([
+                    'visitor_name' => $visitor['visitor_name'],
+                    'gate_pass_id' => $pass_id->id,
+                    'ic_number' => $ic,
+                    'passport' => $passport,
+                    'phone_number' => $visitor['phone_number'],
+                    'purpose' => $validated['purpose'],
+                    'remarks' => $validated['remarks'] ?? null,
+                    'site' => $site,
+                    'time_register' => $timeRegister,
+                    'date' => $date,
+                    'visitor_type' => $validated['visitor_type'],
+                    'vehicle_number' => $validated['vehicle_number'],
+                    'visitor_company' => $company,
+                    'is_acknowledge' => true,
+                ]);
+
+                event(new VisitorRegistered($new_visitor));
+
+                $createdVisitors[] = [
+                    ...$new_visitor->toArray(),
+                    'pass_number' => $pass_id->pass_number
+                ];
+            }
+
+            return response()->json([
+                'message' => 'Visitor registered successfully.',
+                'data' => $createdVisitors,
             ]);
-
-            event(new VisitorRegistered($new_visitor));
-        }
-
-        return response()->json([
-            'message' => 'Visitor registered successfully.',
-            'data' => $validated
-        ]);
+        });
     }
 
+    public function getPassNumber($visitor_type)
+    {
+        return DB::transaction(function () use ($visitor_type) {
+            $gate_pass = GatePass::where('pass_type', $visitor_type)
+                ->where('state', 'free')
+                ->lockForUpdate() // Prevents race condition
+                ->first();
+
+            if (!$gate_pass) {
+                throw new \Exception('There are no available passes');
+            }
+
+            $gate_pass->state = 'occupied';
+            $gate_pass->save();
+
+            return $gate_pass;
+        });
+    }
 
     //function to update check in time
     public function checkIn($id)
@@ -193,6 +237,7 @@ class VisitorController extends Controller
 
         return redirect()->back();
     }
+
     //function to update the acknowledge
     public function updateAcknowledge($id)
     {
@@ -201,42 +246,5 @@ class VisitorController extends Controller
         $visitor->save();
 
         return redirect()->back();
-    }
-
-    public function show(Visitor $Visitor)
-    {
-        //
-    }
-
-    public function edit(Visitor $visitor)
-    {
-        return Inertia::render('Security/Visitor/VisitorForm', [
-            'visitor' => $visitor
-        ]);
-    }
-
-    public function update(Request $request, Visitor $visitor)
-    {
-        $validated = $request->validate([
-            'visitor_name' => ['required', 'string', 'max:255'],
-            'vehicle_number' => ['required', 'string', 'max:20'],
-            'time_register' => ['nullable', 'regex:/^\d{2}:\d{2}$/'],
-            'time_in' => ['nullable', 'regex:/^\d{2}:\d{2}$/'],
-            'time_out' => ['nullable', 'regex:/^\d{2}:\d{2}$/'],
-            'reasons' => ['required', 'string', 'max:200'],
-            'ic_number' => ['required', 'string', 'size:12'],
-            'pass_number' => ['required', 'string', 'max:20'],
-            'phone_number' => ['required', 'string', 'max:20'],
-            'visitor_company_id' => ['required', 'integer', 'exists:visitor_companies,id'],
-        ]);
-
-        $visitor->update($validated);
-
-        return redirect('/visitor')->with('success', 'Visitor updated.');
-    }
-
-    public function destroy(Visitor $Visitor)
-    {
-        //
     }
 }

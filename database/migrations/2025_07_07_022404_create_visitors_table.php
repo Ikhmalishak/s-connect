@@ -12,6 +12,7 @@ return new class extends Migration {
     {
         Schema::create('visitors', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('gate_pass_id')->nullable()->constrained('gate_passes');
             $table->string('visitor_name');
             $table->string('visitor_type');
             $table->string('vehicle_number')->nullable();
@@ -26,7 +27,6 @@ return new class extends Migration {
             $table->string('remarks')->nullable();
             $table->string('ic_number')->nullable();
             $table->string('passport')->nullable();
-            $table->string('pass_number')->nullable();
             $table->string('phone_number');
             $table->boolean('is_acknowledge')->default(false); // did they watch the video etc.
             $table->string('person_to_meet')->nullable(); // for meetings
