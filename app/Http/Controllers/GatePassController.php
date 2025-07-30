@@ -16,7 +16,14 @@ class GatePassController extends Controller
 
         return response()->json($gate_pass);
     }
+    public function getGatePassData(){
+        $available_gatepass = GatePass::where('state','free')
+        ->count();
 
+        return response()->json([
+            'available_gatepass' => $available_gatepass,
+        ]);
+    }
     /**
      * Show the form for creating a new resource.
      */

@@ -8,12 +8,29 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectLabel,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { Link } from "@inertiajs/vue3";
 import NotificationBadge from "@/Components/NotificationBadge.vue";
 import { IdCardLanyard } from "lucide-vue-next";
+import { ScanBarcode } from "lucide-vue-next";
+import { UserRoundPlus } from "lucide-vue-next";
+import { ScanQrCode } from "lucide-vue-next";
 import { ref, watch } from "vue";
 import { Card } from "@/components/ui/card";
 
@@ -40,14 +57,22 @@ interface VisitorForm {
 const props = defineProps<{
     visitors: VisitorForm[];
     limit: string;
+    count: number;
 }>();
 
-const emit = defineEmits(['update:limit', 'search', 'checkIn', 'checkOut', 'openGatePassModal']);
+const emit = defineEmits([
+    "update:limit",
+    "search",
+    "checkIn",
+    "checkOut",
+    "openGatePassModal",
+    "openCheckoutModal",
+]);
 
 const searchQuery = ref("");
 
 watch(searchQuery, (newVal) => {
-    emit('search', newVal);
+    emit("search", newVal);
 });
 
 function maskIC(ic: string) {
@@ -101,13 +126,13 @@ function getRowClass(visitor: VisitorForm) {
             </span>
         </div>
 
-        <Card class="p-5 shadow-2xl max-h-[700px] shadow-opacity-60">
+        <Card class="p-3 shadow-2xl max-h-[700px] shadow-opacity-60">
             <div class="flex space-x-4 justify-between mb-2">
                 <div class="flex items-center gap-4">
                     <div class="flex flex-row space-x-2">
-                        <Input
+                        <input
                             v-model="searchQuery"
-                            class="w-400 bg-gray-300"
+                            class="w-400 bg-gray-300 text-black placeholder:text-black border-none rounded-lg text-sm"
                             placeholder="Search by name..."
                         />
                     </div>
@@ -115,14 +140,10 @@ function getRowClass(visitor: VisitorForm) {
 
                 <div class="flex items-center gap-4">
                     <div>
-                        <button @click="emit('openGatePassModal')">
-                            <NotificationBadge :count="10">
-                                <IdCardLanyard class="w-6 h-6" />
-                            </NotificationBadge>
-                        </button>
-                    </div>
-                    <div>
-                        <Select :model-value="limit" @update:model-value="emit('update:limit', $event)">
+                        <Select
+                            :model-value="limit"
+                            @update:model-value="emit('update:limit', $event)"
+                        >
                             <SelectTrigger>
                                 <SelectValue placeholder="Select limit" />
                             </SelectTrigger>
@@ -135,24 +156,54 @@ function getRowClass(visitor: VisitorForm) {
                             </SelectContent>
                         </Select>
                     </div>
-                    <!-- Tooltip Wrapper -->
-                    <div class="relative group">
-                        <Link href="/visitor/form/new">
-                            <button class="p-2 hover:bg-gray-100 rounded">
-                                <img
-                                    src="/assets/add-user.png"
-                                    alt="Add User"
-                                    class="w-6 h-6"
-                                />
-                            </button>
-                        </Link>
 
-                        <!-- Tooltip -->
-                        <div
-                            class="absolute top-2 -translate-y-1/2 ml-2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10"
-                        >
-                            Add Visitor
-                        </div>
+                    <div>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger>
+                                    <button @click="emit('openCheckoutModal')">
+                                        <ScanQrCode class="w-9 h-9" />
+                                    </button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Checkout By Scanner</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    </div>
+
+                    <div>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger>
+                                    <button @click="emit('openGatePassModal')">
+                                        <NotificationBadge :count="count">
+                                            <IdCardLanyard class="w-9 h-9" />
+                                        </NotificationBadge>
+                                    </button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Gate Pass Available</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    </div>
+
+                    <div>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger>
+                                    <Link href="/visitor/form/new">
+                                        <button>
+                                            <UserRoundPlus class="w-9 h-9" />
+                                        </button>
+                                    </Link>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Add User</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
                     </div>
                 </div>
             </div>
@@ -163,6 +214,10 @@ function getRowClass(visitor: VisitorForm) {
                         <TableRow
                             class="border border-gray-300 font-black divide-x divide-gray-300 text-black"
                         >
+                            <TableHead
+                                class="font-black text-black text-center bg-gray-100"
+                                >No</TableHead
+                            >
                             <TableHead
                                 class="font-black text-black text-center bg-gray-100"
                                 >Pass Number</TableHead
@@ -221,13 +276,16 @@ function getRowClass(visitor: VisitorForm) {
                         class="border border-gray-300 divide-x divide-gray-300"
                     >
                         <TableRow
-                            v-for="visitor in visitors"
+                            v-for="(visitor, index) in visitors"
                             :key="visitor.id"
                             :class="[
                                 getRowClass(visitor),
                                 'border border-gray-300 divide-x divide-gray-300',
                             ]"
                         >
+                            <TableCell class="text-center">
+                                {{ index + 1 }}
+                            </TableCell>
                             <TableCell class="text-center">{{
                                 visitor.gate_pass?.pass_number || "-"
                             }}</TableCell>

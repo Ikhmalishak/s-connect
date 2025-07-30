@@ -36,20 +36,15 @@ const resultModalOpen = ref(false);
 // Video state
 const videoEnded = ref(false);
 const securityGuidelinesConfirmed = ref(false);
-const resetVideoTrigger = ref(false); // Add this
-const resetReviewTrigger = ref(false); // Add this
+const resetVideoTrigger = ref(false);
+const resetReviewTrigger = ref(false);
 
 // Step control
 const currentStep = ref(1);
 
-// Mock data
-const visitorCompany = ref([
-    { id: 1, name: "Company A" },
-    { id: 2, name: "Company B" },
-    { id: 3, name: "Company C" },
-    { id: 4, name: "Contractor XYZ" },
-    { id: 5, name: "Vendor ABC" },
-]);
+// Loading state for acknowledgement check
+const checkingAcknowledgement = ref(false);
+
 const purposes = ref([
     "Meeting",
     "Delivery",
@@ -59,18 +54,29 @@ const purposes = ref([
     "Other",
 ]);
 
-// Debug: Watch values changes
-watch(
-    values,
-    (newValues) => {
-        console.log("Form values changed:", newValues);
-    },
-    { deep: true }
-);
-
+// Watch visitor type
 watch(visitorType, (newVal) => {
     setFieldValue("visitor_type", newVal);
 });
+
+function handleReset() {
+    // Reset vee-validate form fields
+    resetForm();
+
+    // Reset your custom states
+    paxCount.value = 1;
+    paxModalOpen.value = true;
+    paxInputValue.value = "1";
+    currentStep.value = 1;
+    videoEnded.value = false;
+    securityGuidelinesConfirmed.value = false;
+    resetVideoTrigger.value = true;
+    
+    // Optional delay to re-trigger video reset
+    nextTick(() => {
+        resetVideoTrigger.value = false;
+    });
+}
 
 // Confirm Pax Count
 function confirmPaxCount(count: number) {
@@ -108,15 +114,50 @@ const isFormValid = computed(() => {
     return step1Valid && step2Valid;
 });
 
-// Step navigation
-function nextStep() {
-    if (currentStep.value < 4) {
-        if (currentStep.value === 3 && !videoEnded.value) {
-            alert(
-                "Please watch the security briefing video before proceeding."
+// Step navigation with acknowledgement check
+async function nextStep() {
+    if (currentStep.value === 2) {
+        checkingAcknowledgement.value = true;
+
+        try {
+            const results = await Promise.all(
+                values.visitors.map((visitor) =>
+                    axios.post("/visitor/check-acknowledgement", {
+                        id_type: visitor.id_type,
+                        id_number: visitor.id_number,
+                    })
+                )
             );
-            return;
+
+            // Simulate at least 2 seconds delay for UX
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+
+            // Check if **all visitors are acknowledged**
+            const allAcknowledged = results.every(
+                (res) => res.data.acknowledged
+            );
+
+            if (allAcknowledged) {
+                setFieldValue("video_watched", true);
+                setFieldValue("security_guidelines_confirmed", true);
+                videoEnded.value = true;
+                securityGuidelinesConfirmed.value = true;
+                currentStep.value = 4;
+                return;
+            }
+        } catch (error) {
+            console.error("Acknowledgement check failed:", error);
+        } finally {
+            checkingAcknowledgement.value = false;
         }
+    }
+
+    if (currentStep.value === 3 && !videoEnded.value) {
+        alert("Please watch the security briefing video before proceeding.");
+        return;
+    }
+
+    if (currentStep.value < 4) {
         currentStep.value++;
     }
 }
@@ -265,7 +306,6 @@ watch(currentStep, async (newStep) => {
                     v-show="currentStep === 2"
                     :values="values || {}"
                     :errors="errors || {}"
-                    :visitor-company="visitorCompany || []"
                     :purposes="purposes || []"
                 />
 
@@ -295,26 +335,51 @@ watch(currentStep, async (newStep) => {
 
                 <!-- Navigation Buttons -->
                 <div class="flex justify-between items-center pt-6 border-t">
-                    <Button
-                        type="button"
-                        variant="outline"
-                        @click="prevStep"
-                        :disabled="currentStep === 1"
-                    >
-                        Back
-                    </Button>
+                    <div class="flex gap-2">
+                        <Button
+                            v-if="currentStep === 1"
+                            type="button"
+                            variant="outline"
+                            @click="handleReset"
+                            :disabled="
+                                checkingAcknowledgement
+                            "
+                        >
+                            Reset
+                        </Button>
+                        <Button
+                            v-if="currentStep != 1"
+                            type="button"
+                            variant="outline"
+                            @click="prevStep"
+                            :disabled="
+                                currentStep === 1 || checkingAcknowledgement
+                            "
+                        >
+                            Back
+                        </Button>
+                    </div>
+
                     <div class="flex gap-2">
                         <Button
                             v-if="currentStep < 4"
                             type="button"
                             @click="nextStep"
-                            :disabled="currentStep === 3 && !videoEnded"
+                            :disabled="
+                                checkingAcknowledgement ||
+                                (currentStep === 3 && !videoEnded)
+                            "
                         >
-                            {{
-                                currentStep === 3 && !videoEnded
-                                    ? "Watch Video First"
-                                    : "Next"
-                            }}
+                            <span v-if="checkingAcknowledgement"
+                                >Checking Acknowledgement...</span
+                            >
+                            <span v-else>
+                                {{
+                                    currentStep === 3 && !videoEnded
+                                        ? "Watch Video First"
+                                        : "Next"
+                                }}
+                            </span>
                         </Button>
                         <Button
                             v-if="currentStep === 4"

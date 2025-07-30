@@ -20,8 +20,6 @@ import {
 const props = defineProps<{
   values: any;
   errors: any;
-  // sites: string[];
-  visitorCompany: any[];
   purposes: string[];
 }>();
 </script>
@@ -45,48 +43,16 @@ const props = defineProps<{
         </FormItem>
       </FormField>
 
-      <!-- <FormField v-slot="{ componentField }" name="site">
-        <FormItem>
-          <FormLabel>Site <span class="text-red-500">*</span></FormLabel>
-          <Select v-bind="componentField">
-            <FormControl>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Site" />
-              </SelectTrigger>
-            </FormControl>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem v-for="s in sites" :key="s" :value="s">
-                  {{ s }}
-                </SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-          <FormMessage />
-        </FormItem>
-      </FormField> -->
-
       <FormField v-slot="{ componentField }" name="visitor_company">
         <FormItem>
-          <FormLabel>Visitor Company <span class="text-red-500">*</span></FormLabel>
-          <Select v-bind="componentField">
-            <FormControl>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Company" />
-              </SelectTrigger>
-            </FormControl>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem
-                  v-for="company in visitorCompany"
-                  :key="company.id"
-                  :value="company.name"
-                >
-                  {{ company.name }}
-                </SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+          <FormLabel>Visitor Company</FormLabel>
+          <FormControl>
+            <Input
+              type="text"
+              v-bind="componentField"
+              placeholder="Enter company name "
+            />
+          </FormControl>
           <FormMessage />
         </FormItem>
       </FormField>

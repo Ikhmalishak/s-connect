@@ -25,7 +25,7 @@ const props = defineProps<{
     currentTime: Date;
 }>();
 
-const emit = defineEmits(['close']);
+const emit = defineEmits(["close"]);
 
 const duration = (time_in) => {
     const now = new Date(props.currentTime);
@@ -42,18 +42,16 @@ const duration = (time_in) => {
         <Transition name="modal-fade">
             <div
                 v-if="show"
-                class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999]"
+                class="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center z-[9999]"
                 @click.self="emit('close')"
             >
                 <Transition name="modal-scale" appear>
                     <div
                         v-if="show"
-                        class="bg-white p-6 rounded-lg shadow-xl w-[80%] max-w-2xl max-h-[80vh] overflow-y-auto"
+                        class="bg-white p-6 rounded-lg shadow-[0_4px_20px_rgba(255,255,255,0.6)] w-[80%] max-w-2xl max-h-[80vh] overflow-y-auto"
                     >
                         <div class="flex justify-between items-center mb-4">
-                            <h2 class="text-xl font-bold">
-                                Visitor Details
-                            </h2>
+                            <h2 class="text-xl font-bold">Visitor Details</h2>
                             <button
                                 @click="emit('close')"
                                 class="text-gray-500 hover:text-gray-700 text-xl font-bold"
@@ -71,6 +69,11 @@ const duration = (time_in) => {
                                     <TableRow
                                         class="border border-gray-300 font-black divide-x divide-gray-300 text-black text-center bg-gray-100"
                                     >
+                                        <TableHead
+                                            class="text-center text-black font-black"
+                                        >
+                                            No.</TableHead
+                                        >
                                         <TableHead
                                             class="w-[100px] text-center text-black font-black"
                                         >
@@ -94,12 +97,10 @@ const duration = (time_in) => {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody
-                                class="border border-gray-300 divide-x divide-gray-300"
+                                    class="border border-gray-300 divide-x divide-gray-300"
                                 >
                                     <TableRow
-                                        v-for="(
-                                            visitor, index
-                                        ) in visitors"
+                                        v-for="(visitor, index) in visitors"
                                         :key="visitor.id"
                                         :class="[
                                             index % 2 === 1
@@ -109,10 +110,10 @@ const duration = (time_in) => {
                                         ]"
                                     >
                                         <TableCell class="font-medium">
-                                            {{
-                                                visitor.gate_pass
-                                                    .pass_number
-                                            }}
+                                            {{ index + 1 }}
+                                        </TableCell>
+                                        <TableCell class="font-medium">
+                                            {{ visitor.gate_pass.pass_number }}
                                         </TableCell>
                                         <TableCell>{{
                                             visitor.visitor_name

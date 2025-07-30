@@ -13,7 +13,7 @@ return new class extends Migration {
         Schema::create('gate_passes', function (Blueprint $table) {
             $table->id();
             $table->string('pass_number')->unique();
-            $table->enum('pass_type', ['visitor', 'contractor']);
+            $table->enum('pass_type', ['visitor', 'contractor','driver']);
             $table->enum('state', ['free', 'occupied'])->default('free');
             $table->timestamps();
         });

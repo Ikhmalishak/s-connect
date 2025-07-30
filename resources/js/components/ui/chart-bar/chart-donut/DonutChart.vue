@@ -33,7 +33,7 @@ const props = defineProps({
 });
 
 // Add emit definition
-const emit = defineEmits(['central-click']);
+const emit = defineEmits(["central-click"]);
 
 const valueFormatter = props.valueFormatter ?? ((tick) => `${tick}`);
 const category = computed(() => props.category);
@@ -54,7 +54,9 @@ const legendItems = computed(() =>
         name: item[props.index],
         color: colors.value[i],
         value: item[props.category],
-        percentage: ((item[props.category] / totalValue.value) * 100).toFixed(1),
+        percentage: ((item[props.category] / totalValue.value) * 100).toFixed(
+            1
+        ),
         inactive:
             activeSegmentKey.value !== undefined &&
             activeSegmentKey.value !== item[props.index],
@@ -110,19 +112,24 @@ const legendClass = computed(() => {
 });
 
 function formatCategoryName(name) {
-    return name
-        .replace(/_/g, " ")
-        .replace(/\b\w/g, (c) => c.toUpperCase());
+    return name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 // Modified to emit event instead of managing modal
 function handleCentralSubClick() {
-    emit('central-click');
+    emit("central-click");
 }
 </script>
 
 <template>
-    <div :class="cn('relative w-full h-48 flex flex-col items-end', $attrs.class ?? '')">
+    <div
+        :class="
+            cn(
+                'relative w-full h-48 flex flex-col items-end',
+                $attrs.class ?? ''
+            )
+        "
+    >
         <VisSingleContainer
             :style="{ height: isMounted ? '100%' : 'auto' }"
             :margin="{ left: 20, right: 20 }"
@@ -168,20 +175,15 @@ function handleCentralSubClick() {
                     },
                 }"
             />
-            
+
             <!-- Center clickable label overlay -->
+            <!-- Optional Label (top-right corner of donut container) -->
             <div
                 v-if="type === 'donut'"
-                class="absolute inset-0 flex items-center justify-center pointer-events-none mt-8"
+                class="absolute top-0 right-0  pointer-events-auto cursor-pointer text-lg text-black font-black transition"
+                @click="handleCentralSubClick"
             >
-                <div
-                    class="text-center pointer-events-auto cursor-pointer hover:bg-gray-100 rounded-full p-2 transition-colors"
-                    @click="handleCentralSubClick"
-                >
-                    <div class="text-sm text-gray-500 font-medium">
-                        {{ props.centralSubLabel ?? "" }}
-                    </div>
-                </div>
+                {{ props.centralSubLabel ?? "" }}
             </div>
 
             <slot />
@@ -194,36 +196,56 @@ function handleCentralSubClick() {
         <div
             v-for="item in legendItems"
             :key="item.name"
-            :class="cn(
-                'flex items-center cursor-pointer transition-opacity duration-200 hover:opacity-80',
-                legendPosition === 'bottom' ? 'flex-col text-center' : 'justify-between',
-                item.inactive ? 'opacity-40' : 'opacity-100'
-            )"
+            :class="
+                cn(
+                    'flex items-center cursor-pointer transition-opacity duration-200 hover:opacity-80',
+                    legendPosition === 'bottom'
+                        ? 'flex-col text-center'
+                        : 'justify-between',
+                    item.inactive ? 'opacity-40' : 'opacity-100'
+                )
+            "
             @click="handleLegendClick(item.name)"
         >
-            <div :class="cn(
-                'flex items-center',
-                legendPosition === 'bottom' ? 'mb-1' : 'mr-2'
-            )">
+            <div
+                :class="
+                    cn(
+                        'flex items-center',
+                        legendPosition === 'bottom' ? 'mb-1' : 'mr-2'
+                    )
+                "
+            >
                 <div
-                    :class="cn(
-                        'w-3 h-3 rounded-full mr-2',
-                        legendPosition === 'bottom' ? 'mr-1' : 'mr-2'
-                    )"
+                    :class="
+                        cn(
+                            'w-3 h-3 rounded-full mr-2',
+                            legendPosition === 'bottom' ? 'mr-1' : 'mr-2'
+                        )
+                    "
                     :style="{ backgroundColor: item.color }"
                 />
-                <span :class="cn(
-                    'text-sm font-medium',
-                    legendPosition === 'bottom' ? 'text-xs' : 'text-sm'
-                )">
+                <span
+                    :class="
+                        cn(
+                            'text-sm font-medium',
+                            legendPosition === 'bottom' ? 'text-xs' : 'text-sm'
+                        )
+                    "
+                >
                     {{ formatCategoryName(item.name) }}
                 </span>
             </div>
 
-            <div :class="cn(
-                'flex flex-col',
-                legendPosition === 'bottom' ? 'items-center' : 'items-end'
-            )">
+            <div
+                :class="
+                    cn(
+                        'flex flex-col',
+                        legendPosition === 'bottom'
+                            ? 'items-center'
+                            : 'items-end'
+                    )
+                "
+            >
                 <span class="text-sm font-semibold">{{
                     valueFormatter(item.value)
                 }}</span>

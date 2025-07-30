@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\GatePass;
 use App\Models\Visitor;
+use App\Models\VisitorAcknowledgement;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Carbon\Carbon;
@@ -135,6 +136,8 @@ class VisitorController extends Controller
             'visitor_type' => 'required|string',
             'vehicle_number' => 'nullable|string',
             'visitor_company' => 'nullable|string',
+            'video_watched' => 'nullable|boolean',
+            'security_guidelines_confirmed' => 'nullable|boolean',
             'visitors' => 'required|array|min:1',
             'visitors.*.visitor_name' => 'required|string',
             'visitors.*.id_type' => 'required|in:IC,Passport',
@@ -143,19 +146,20 @@ class VisitorController extends Controller
         ]);
 
         return DB::transaction(function () use ($validated) {
-
             $timeRegister = $validated['time_register'] ??= now()->format('H:i');
             $date = $validated['date'] ??= now()->format('Y-m-d');
             $site = auth()->user()->site;
-            $company = $validated['visitor_company'] ? $validated['visitor_company'] : "N/A";
+            $company = $validated['visitor_company'] ?: "N/A";
 
             $createdVisitors = [];
+
             foreach ($validated['visitors'] as $visitor) {
                 $ic = $visitor['id_type'] === 'IC' ? $visitor['id_number'] : "N/A";
                 $passport = $visitor['id_type'] === 'Passport' ? $visitor['id_number'] : "N/A";
 
                 $pass_id = $this->getPassNumber($validated['visitor_type']);
 
+                // ✅ Save Visitor Record
                 $new_visitor = Visitor::create([
                     'visitor_name' => $visitor['visitor_name'],
                     'gate_pass_id' => $pass_id->id,
@@ -170,10 +174,24 @@ class VisitorController extends Controller
                     'visitor_type' => $validated['visitor_type'],
                     'vehicle_number' => $validated['vehicle_number'],
                     'visitor_company' => $company,
-                    'is_acknowledge' => true,
+                    'is_acknowledge' => $validated['video_watched'] && $validated['security_guidelines_confirmed'],
                 ]);
 
+                // ✅ Broadcast event
                 event(new VisitorRegistered($new_visitor));
+
+                // ✅ Only store/update acknowledgement record if they really watched & confirmed
+                if ($validated['video_watched'] && $validated['security_guidelines_confirmed']) {
+                    VisitorAcknowledgement::updateOrCreate(
+                        [
+                            'id_type' => $visitor['id_type'],
+                            'id_number' => $visitor['id_number'],
+                        ],
+                        [
+                            'acknowledged_at' => now(),
+                        ]
+                    );
+                }
 
                 $createdVisitors[] = [
                     ...$new_visitor->toArray(),
@@ -217,34 +235,85 @@ class VisitorController extends Controller
         return redirect()->back();
     }
 
-    //function to update check out time
     public function checkOut($id)
     {
-        $visitor = Visitor::findOrFail($id);
+        DB::transaction(function () use ($id) {
+            $visitor = Visitor::findOrFail($id);
+            $visitor->time_out = now();
 
-        $visitor->time_out = now();
+            // Find and free the related gate pass
+            $gate_pass = GatePass::find($visitor->gate_pass_id);
+            if ($gate_pass) {
+                $gate_pass->state = 'free';
+                $gate_pass->save();
+            }
 
-        // Ensure time_in is not null
-        if ($visitor->time_in) {
-            // Calculate the duration in minutes (or any format you want)
-            $duration = Carbon::parse($visitor->time_in)->diffInMinutes($visitor->time_out);
+            if ($visitor->time_in) {
+                $visitor->duration = Carbon::parse($visitor->time_in)->diffInMinutes(now());
+            }
 
-            // Optionally store it in the database (you'll need to add a `duration` column to the visitors table)
-            $visitor->duration = $duration;
-        }
-
-        $visitor->save();
+            $visitor->save();
+        });
 
         return redirect()->back();
     }
 
-    //function to update the acknowledge
-    public function updateAcknowledge($id)
-    {
-        $visitor = Visitor::findOrFail($id);
-        $visitor->is_acknowledge = true;
-        $visitor->save();
 
-        return redirect()->back();
+    public function checkOutByPass(Request $request)
+    {
+        $pass_number = $request->input('pass_number');
+
+        return DB::transaction(function () use ($pass_number) {
+            // Find the visitor currently using this gate pass
+            $visitor = Visitor::whereHas('gatePass', function ($q) use ($pass_number) {
+                $q->where('pass_number', $pass_number);
+            })
+                ->whereNull('time_out')
+                ->with('gatePass') // eager load related gate pass
+                ->first();
+
+            if (!$visitor) {
+                return response()->json(['message' => 'No active visitor found for this pass'], 404);
+            }
+
+            // ✅ Mark checkout time
+            $visitor->time_out = now();
+
+            // ✅ Calculate duration if time_in exists
+            if ($visitor->time_in) {
+                $visitor->duration = Carbon::parse($visitor->time_in)->diffInMinutes(now());
+            }
+
+            $visitor->save();
+
+            // ✅ Release the gate pass
+            if ($visitor->gatePass) {
+                $visitor->gatePass->state = 'free';
+                $visitor->gatePass->save();
+            }
+
+            return response()->json([
+                'message' => 'Visitor successfully checked out',
+                'visitor' => $visitor
+            ]);
+        });
+    }
+
+    //function to update the acknowledge
+    public function checkAcknowledgement(Request $request)
+    {
+        $request->validate([
+            'id_type' => 'required | string',
+            'id_number' => 'required | string'
+        ]);
+
+        $ack = VisitorAcknowledgement::where('id_type', $request->id_type)
+            ->where('id_number', $request->id_number)
+            ->where('acknowledged_at', '>=', now()->subYear())
+            ->first();
+
+        return response()->json([
+            'acknowledged' => (bool) $ack,
+        ]);
     }
 }

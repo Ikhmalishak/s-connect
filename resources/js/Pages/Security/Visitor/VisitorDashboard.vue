@@ -1,19 +1,8 @@
 <script setup lang="ts">
-import {
-    Table,
-    TableBody,
-    TableCaption,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
-import { usePage, Link } from "@inertiajs/vue3";
+import { usePage} from "@inertiajs/vue3";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import axios from "axios";
-import { Input } from "@/components/ui/input";
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import {
     Breadcrumb,
@@ -23,21 +12,12 @@ import {
     BreadcrumbItem,
     BreadcrumbLink,
 } from "@/components/ui/breadcrumb";
-import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectLabel,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 import VisitorStatsCards from "@/Components/VisitorTableComponent/VisitorStatCard.vue";
 import VisitorTable from "@/Components/VisitorTableComponent/VisitorTable.vue";
 import VisitorModal from "@/Components/VisitorTableComponent/VisitorModal.vue";
 import GatePassModal from "@/Components/VisitorTableComponent/GatePassModal.vue";
-import NotificationBadge from "@/Components/NotificationBadge.vue";
-import { IdCardLanyard } from "lucide-vue-next";
+import CheckoutModal from "@/Components/VisitorTableComponent/CheckoutModal.vue";
+import { show } from "@unovis/ts/components/tooltip/style";
 
 interface GatePass {
     id: number;
@@ -102,7 +82,9 @@ const isGatePassModalOpen = ref(false);
 const gatePassList = ref([]);
 const showVisitorModal = ref(false);
 const visitorInsideList = ref([]);
-const unreadMessages = 120;
+const totalAvailableGatePass = ref(0);
+const showCheckoutModal = ref(false);
+
 let intervalId;
 
 const filteredVisitors = computed(() => {
@@ -132,6 +114,7 @@ async function checkIn(id: number) {
     try {
         await axios.post(`/visitor/${id}/check-in`);
         await fetchVisitors();
+        await fetchVisitorInside();
     } catch (error) {
         console.error(error);
     }
@@ -141,6 +124,9 @@ async function checkOut(id: number) {
     try {
         await axios.post(`/visitor/${id}/check-out`);
         await fetchVisitors();
+        await fetchGatePassList();
+        await fetchTotalAvailableGatePass();
+        await fetchVisitorInside();
     } catch (error) {
         console.error(error);
     }
@@ -182,11 +168,21 @@ async function fetchVisitorInside() {
     }
 }
 
+async function fetchTotalAvailableGatePass() {
+    try {
+        const res = await axios.get("/gate-pass/total");
+        console.log("available gate pass",res.data.available_gatepass);
+        totalAvailableGatePass.value = res.data.available_gatepass;
+    } catch (e) {
+        console.log("Failed to fetch total available gate pass", e);
+    }
+}
 onMounted(() => {
     console.log("Mounted VisitorTable.vue");
     fetchVisitors();
     fetchGatePassList();
     fetchVisitorInside();
+    fetchTotalAvailableGatePass();
 
     intervalId = setInterval(() => {
         currentTime.value = new Date();
@@ -197,6 +193,8 @@ onMounted(() => {
             .listen(".visitor.registered", (e) => {
                 console.log("New VisitorRegistered event received:", e);
                 fetchVisitors();
+                fetchTotalAvailableGatePass();
+                fetchGatePassList();
             })
             .error((error) => {
                 console.error("WebSocket error on visitors channel:", error);
@@ -283,11 +281,13 @@ onUnmounted(() => {
         <VisitorTable
             :visitors="filteredVisitors"
             :limit="limitTable"
+            :count="totalAvailableGatePass"
             @update:limit="limitTable = $event"
             @search="searchQuery = $event"
             @check-in="checkIn"
             @check-out="checkOut"
             @open-gate-pass-modal="isGatePassModalOpen = true"
+            @open-checkout-modal="showCheckoutModal = true"
         />
 
         <VisitorModal
@@ -301,6 +301,12 @@ onUnmounted(() => {
             :show="isGatePassModalOpen"
             :gate-passes="gatePassList"
             @close="isGatePassModalOpen = false"
+        />
+
+        <CheckoutModal
+            :show="showCheckoutModal"
+            @refresh="() => { fetchVisitors(); fetchGatePassList(); fetchTotalAvailableGatePass(); }"
+            @close="showCheckoutModal = false"
         />
     </AuthenticatedLayout>
 </template>

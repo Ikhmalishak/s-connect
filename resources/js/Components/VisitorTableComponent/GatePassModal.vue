@@ -34,7 +34,7 @@ const emit = defineEmits(['close']);
                 <Transition name="slide-fade" appear>
                     <div
                         v-if="show"
-                        class="bg-white p-6 rounded-lg shadow-xl w-[80%] max-w-2xl max-h-[80vh] overflow-y-auto"
+                        class="bg-white p-6 rounded-lg shadow-xl w-[80%] max-w-2xl max-h-[60vh]"
                     >
                         <div class="flex justify-between items-center mb-4">
                             <h2 class="text-xl font-bold">
@@ -48,7 +48,7 @@ const emit = defineEmits(['close']);
                             </button>
                         </div>
 
-                        <div class="space-y-4">
+                        <div class="space-y-4 max-h-[40vh] overflow-y-auto">
                             <Table>
                                 <TableCaption
                                     >A list of gate pass.</TableCaption
@@ -78,7 +78,7 @@ const emit = defineEmits(['close']);
                                         :key="pass.id"
                                         :class="[
                                             pass.state === 'free'
-                                                ? 'bg-green-500'
+                                                ? 'bg-green-200'
                                                 : 'bg-red-300',
                                             'border border-gray-300 divide-x divide-gray-300',
                                         ]"
