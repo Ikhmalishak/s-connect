@@ -7,7 +7,7 @@ import { createApp, h } from "vue";
 import { ZiggyVue } from "../../vendor/tightenco/ziggy";
 import Toaster from "./components/ui/toast/Toaster.vue";
 
-const appName = import.meta.env.VITE_APP_NAME || "Laravel";
+const appName = import.meta.env.VITE_APP_NAME || "S-CONNECT";
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
