@@ -193,7 +193,7 @@ function getRowClass(visitor: VisitorForm) {
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger>
-                                    <Link href="/visitor/form/new">
+                                    <Link href="/visitor/form">
                                         <button>
                                             <UserRoundPlus class="w-9 h-9" />
                                         </button>
