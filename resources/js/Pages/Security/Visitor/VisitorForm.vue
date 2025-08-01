@@ -10,6 +10,7 @@ import VideoDetailsStep from "../../../Components/VisitorFormComponent/VideoDeta
 import ReviewStep from "../../../Components/VisitorFormComponent/ReviewStep.vue";
 import VisitorFormHeader from "@/Components/VisitorFormHeader.vue";
 import ResultModal from "../../../Components/VisitorFormComponent/ResultModal.vue";
+import LoadingOverlay from "@/Components/LoadingOverlay.vue";
 import axios from "axios";
 
 // Form setup
@@ -71,7 +72,7 @@ function handleReset() {
     videoEnded.value = false;
     securityGuidelinesConfirmed.value = false;
     resetVideoTrigger.value = true;
-    
+
     // Optional delay to re-trigger video reset
     nextTick(() => {
         resetVideoTrigger.value = false;
@@ -237,6 +238,11 @@ watch(currentStep, async (newStep) => {
 </script>
 
 <template>
+    <LoadingOverlay
+        :visible="checkingAcknowledgement"
+        message="Verifying visitor details, please wait..."
+    />
+
     <PaxModal
         v-model:open="paxModalOpen"
         v-model:pax-input="paxInputValue"
@@ -341,9 +347,7 @@ watch(currentStep, async (newStep) => {
                             type="button"
                             variant="outline"
                             @click="handleReset"
-                            :disabled="
-                                checkingAcknowledgement
-                            "
+                            :disabled="checkingAcknowledgement"
                         >
                             Reset
                         </Button>
@@ -370,9 +374,33 @@ watch(currentStep, async (newStep) => {
                                 (currentStep === 3 && !videoEnded)
                             "
                         >
-                            <span v-if="checkingAcknowledgement"
-                                >Checking Acknowledgement...</span
+                            <span
+                                v-if="checkingAcknowledgement"
+                                class="flex items-center gap-2"
                             >
+                                <svg
+                                    class="animate-spin h-4 w-4 text-white"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <circle
+                                        class="opacity-25"
+                                        cx="12"
+                                        cy="12"
+                                        r="10"
+                                        stroke="currentColor"
+                                        stroke-width="4"
+                                    ></circle>
+                                    <path
+                                        class="opacity-75"
+                                        fill="currentColor"
+                                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                                    ></path>
+                                </svg>
+                                Checking Acknowledgement...
+                            </span>
+
                             <span v-else>
                                 {{
                                     currentStep === 3 && !videoEnded

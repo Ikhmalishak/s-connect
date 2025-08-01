@@ -34,43 +34,25 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    //it request form
-    Route::get('/itrequestform', [ItRequestController::class, 'create']);
-
     //security form
     Route::get('/dashboard', action: [VisitorController::class, 'index'])->name('dashboard');
-    Route::get('/visitor/form', [VisitorController::class, 'getVisitorForm']);
-    Route::get('/visitor/acknowledge', [VisitorController::class, 'getVisitorAcknowledgeForm']);
     Route::post('/visitor/{id}/check-in', [VisitorController::class, 'checkIn']);
     Route::post('/visitor/{id}/check-out', [VisitorController::class, 'checkOut']);
-    Route::get('/visitor/{visitor}/edit', [VisitorController::class, 'edit']);
-    Route::put('/visitor/{visitor}', [VisitorController::class, 'update']);
-    Route::post('/visitor/{visitor}/acknowledge', [VisitorController::class, 'updateAcknowledge']);
     Route::get('/api/visitors', [VisitorController::class, 'refreshVisitorTablePage']);
-    Route::get('/visitor/form/archive', [VisitorController::class, 'getArchivedVisitorForm']);
-    Route::get('/visitor/visitor-inside',[VisitorController::class, 'getVisitorInside']);
+    Route::get('/visitor/visitor-inside', [VisitorController::class, 'getVisitorInside']);
     Route::post('/visitor/checkout-by-pass', [VisitorController::class, 'checkOutByPass']);
-    Route::post('/visitor/check-acknowledgement', [ VisitorController::class, 'checkAcknowledgement']);
+    Route::post('/visitor/check-acknowledgement', [VisitorController::class, 'checkAcknowledgement']);
+    Route::get('/visitor/form/', [VisitorController::class, 'getVisitorForm']);
+    Route::post('/visitor/submit',[VisitorController::class, 'store']);
 
     //route for purpose and site and gate pass
     Route::apiResource('purposes', PurposeController::class);
     Route::apiResource('sites', SiteController::class);
-    Route::apiResource('gate-passes',GatePassController::class);
+    Route::apiResource('gate-passes', GatePassController::class);
 
     //route for get total available gate pass
     Route::get('/gate-pass/total', [GatePassController::class, 'getGatePassData']);
 
 });
 
-Route::get('/visitor/form', [VisitorController::class, 'getArchivedVisitorForm']);
-Route::get('/visitor/form/new', [VisitorController::class, 'getVisitorForm']);
-Route::post('/form/submit', [HomeController::class, 'testSubmit']);
-Route::get('/table', [ItRequestController::class, 'index']);
-Route::post('/visitor/submit', action: [VisitorController::class, 'store']);
-Route::middleware(['auth', 'role:guard'])->group(function () {
-});
-
-
-//visitor company
-Route::get('/listvisitorcompany', [VisitorCompanyController::class, 'getVisitorCompany']);
 require __DIR__ . '/auth.php';
