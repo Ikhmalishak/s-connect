@@ -958,6 +958,7 @@ const handleConfirmChange = (checked: boolean) => {
                             <li>Working in an unsafe manner</li>
                             <li>Not wearing contractor badge or PPE</li>
                             <li>Poor workmanship or inappropriate behavior</li>
+                            <li>Smoking inside SKP premises</li>
                         </ul>
                         <p class="text-sm text-red-800 mt-2">
                             Failure to comply can lead to termination of
