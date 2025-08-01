@@ -101,7 +101,7 @@ onMounted(() => {
 <template>
   <div class="space-y-6">
     <div class="text-center">
-      <h2 class="text-2xl font-bold mb-2">Security Briefing</h2>
+      <h2 class="text-2xl font-bold mb-2">Safety Briefing & Security Guideline</h2>
       <p class="text-gray-600">
         Please watch the security briefing video before proceeding
       </p>
