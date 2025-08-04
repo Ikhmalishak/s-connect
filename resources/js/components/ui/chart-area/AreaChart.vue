@@ -55,6 +55,14 @@ const legendItems = ref(
     }))
 );
 
+const legendItems2 = ref(
+    props.categories.map((category, i) => ({
+        name: category,
+        color: colors.value[i],
+        inactive: false,
+    }))
+);
+
 const isMounted = useMounted();
 
 function handleLegendItemClick(d, i) {
@@ -126,7 +134,7 @@ function formatCategoryName(name) {
             <ChartCrosshair
                 v-if="showTooltip"
                 :colors="colors"
-                :items="legendItems"
+                :items="legendItems2"
                 :index="index"
                 :custom-tooltip="customTooltip"
             />

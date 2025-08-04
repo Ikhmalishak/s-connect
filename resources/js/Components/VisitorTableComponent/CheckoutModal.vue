@@ -3,11 +3,19 @@ import { ref, watch, nextTick, onMounted } from "vue";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
+import { ScanQrCode } from "lucide-vue-next";
+import {
+    Drawer,
+    DrawerClose,
+    DrawerContent,
+    DrawerDescription,
+    DrawerFooter,
+    DrawerHeader,
+    DrawerTitle,
+    DrawerTrigger,
+} from "@/components/ui/drawer";
 
-const props = defineProps<{
-    show: boolean;
-}>();
-
+const props = defineProps<{ show: boolean }>();
 const emit = defineEmits(["close", "refresh"]);
 
 const scannedPass = ref("");
@@ -15,106 +23,166 @@ const scannerInput = ref<any>(null);
 const isLoading = ref(false);
 const message = ref("");
 
-// Enhanced focus function for reliability
+// ✅ New modal state
+const resultTitle = ref("");
+const resultStatus = ref("success"); // success or error
+
+const drawerOpen = ref(false); // ✅ Controls drawer visibility
+
 const focusInput = async () => {
     await nextTick();
     setTimeout(() => {
-        // Handle different possible structures for UI library components
         let inputElement = null;
-        
         if (scannerInput.value) {
-            // Try direct access first (if it's already an input)
-            if (scannerInput.value.focus && typeof scannerInput.value.focus === 'function') {
-                inputElement = scannerInput.value;
-            }
-            // Try accessing $el property (Vue component)
+            if (scannerInput.value.focus) inputElement = scannerInput.value;
             else if (scannerInput.value.$el) {
-                inputElement = scannerInput.value.$el.tagName === 'INPUT' 
-                    ? scannerInput.value.$el 
-                    : scannerInput.value.$el.querySelector('input');
-            }
-            // Try direct querySelector on the element
-            else if (scannerInput.value.querySelector) {
-                inputElement = scannerInput.value.querySelector('input');
+                inputElement =
+                    scannerInput.value.$el.tagName === "INPUT"
+                        ? scannerInput.value.$el
+                        : scannerInput.value.$el.querySelector("input");
+            } else if (scannerInput.value.querySelector) {
+                inputElement = scannerInput.value.querySelector("input");
             }
         }
-        
-        if (inputElement && typeof inputElement.focus === 'function') {
+        if (inputElement && typeof inputElement.focus === "function") {
             inputElement.focus();
         }
     }, 100);
 };
 
-// ✅ Watch modal state to focus input and reset message
-watch(() => props.show, async (isVisible) => {
-    if (isVisible) {
-        message.value = "";       // reset message
-        scannedPass.value = "";   // reset scanned text
-        focusInput();             // focus input reliably
-    } else {
-        message.value = "";       // clear on close
-        scannedPass.value = "";
+watch(
+    () => props.show,
+    async (isVisible) => {
+        if (isVisible) {
+            message.value = "";
+            scannedPass.value = "";
+            focusInput();
+        } else {
+            message.value = "";
+            scannedPass.value = "";
+        }
     }
-});
+);
 
 const handleScanCheckout = async () => {
     if (!scannedPass.value) return;
     isLoading.value = true;
     message.value = "";
 
-    try {
-        const response = await axios.post("/visitor/checkout-by-pass", {
-            pass_number: scannedPass.value,
-        });
-        message.value = "✅ " + response.data.message;
+    setTimeout(async () => {
+        try {
+            const response = await axios.post("/visitor/checkout-by-pass", {
+                pass_number: scannedPass.value,
+            });
+            message.value = "✅ " + response.data.message;
 
-        emit("refresh"); // refresh visitor list
-    } catch (error: any) {
-        message.value = "❌ " + (error.response?.data?.message || "Checkout failed");
-    }
+            resultTitle.value = response.data.message;
+            resultStatus.value = "success";
 
-    scannedPass.value = "";
-    isLoading.value = false;
-    
-    // Ensure focus returns to input after checkout for continuous scanning
-    focusInput();
+            emit("refresh");
+        } catch (error: any) {
+            const msg = error.response?.data?.message || "Checkout failed";
+            message.value = "❌ " + msg;
+
+            resultTitle.value = msg;
+            resultStatus.value = "error";
+        } finally {
+            drawerOpen.value = true; // ✅ Open drawer no matter what
+            scannedPass.value = "";
+            isLoading.value = false;
+            focusInput();
+        }
+    }, 800);
 };
-
-onMounted(() => {
-    if (props.show) {
-        focusInput();
-    }
-});
 </script>
 
 <template>
+    <!-- Main Scanner Modal -->
     <div
         v-if="show"
-        class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
+        class="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50"
     >
-        <div class="bg-white rounded-lg shadow-lg w-96 p-6">
-            <h2 class="text-lg font-bold mb-4">Scanner Checkout</h2>
+        <div
+            class="bg-gray-100 rounded-2xl shadow-lg shadow-white max-w-4xl w-full h-80 p-8 relative"
+        >
+            <!-- ✅ Centered Icon & Title Side by Side -->
+            <div class="flex items-center justify-center mb-6">
+                <ScanQrCode class="w-12 h-12 text-gray-700 mr-3" />
+                <h2 class="text-4xl font-bold">Scan for Checkout</h2>
+            </div>
 
-            <!-- Scanner input with autofocus -->
             <Input
                 ref="scannerInput"
                 v-model="scannedPass"
                 @keyup.enter="handleScanCheckout"
                 type="text"
-                class="w-full"
-                placeholder="Scan pass number..."
+                class="w-full h-28 text-3xl shadow-2xl bg-white placeholder:text-3xl text-black font-bold rounded-lg text-center"
+                placeholder="Scan Pass QR..."
                 autocomplete="off"
                 autofocus
             />
 
-            <div v-if="message" class="mt-2 text-sm">{{ message }}</div>
-
-            <div class="mt-4 flex justify-end gap-2">
-                <Button @click="emit('close')" variant="outline">Close</Button>
-                <Button :disabled="isLoading" @click="handleScanCheckout">
-                    {{ isLoading ? "Processing..." : "Checkout" }}
-                </Button>
+            <div class="mt-6 flex justify-end gap-4">
+                <div class="text-xs">
+                    "Scan for Checkout" is a feature utilizing Visitor
+                    Management Systems (VMS) to streamline visitor exit
+                    processes. By scanning their pass ID at designated checkout
+                    points, visitors are efficiently logged out, ensuring
+                    accurate tracking and compliance with security protocols
+                    before leaving the premises.
+                </div>
+                <div class="flex flex row gap-2">
+                    <Button
+                        @click="emit('close')"
+                        variant="outline"
+                        class="text-lg px-6 py-3"
+                    >
+                        Close
+                    </Button>
+                    <Button
+                        :disabled="isLoading"
+                        @click="handleScanCheckout"
+                        class="text-lg px-6 py-3"
+                    >
+                        {{ isLoading ? "Processing..." : "Checkout" }}
+                    </Button>
+                </div>
             </div>
         </div>
+    </div>
+    <div>
+        <Drawer v-model:open="drawerOpen">
+            <DrawerContent
+                :class="
+                    resultStatus === 'success' ? 'bg-green-400' : 'bg-red-500'
+                "
+            >
+                <div class="mx-auto w-full max-w-sm">
+                    <DrawerHeader>
+                        <DrawerTitle
+                            class="text-4xl font-bold mb-4 text-center"
+                            :class="
+                                resultStatus === 'success'
+                                    ? 'text-white'
+                                    : 'text-white'
+                            "
+                        >
+                            {{
+                                resultStatus === "success"
+                                    ? "✅ Success"
+                                    : "❌ Error"
+                            }}
+                        </DrawerTitle>
+                        <DrawerDescription
+                            class="text-xl font-medium text-center text-white"
+                            >{{ resultTitle }}</DrawerDescription
+                        >
+                    </DrawerHeader>
+                    <DrawerFooter>
+                        <Button @click="drawerOpen = false">Close</Button>
+                    </DrawerFooter>
+                </div>
+            </DrawerContent>
+        </Drawer>
     </div>
 </template>

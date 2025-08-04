@@ -254,50 +254,50 @@ watch(currentStep, async (newStep) => {
     <div class="relative container mx-auto px-4 py-8 max-w-6xl">
         <VisitorFormHeader title="Visitor Registration Form" />
         <Card class="relative z-0 mt-4 mx-auto max-w-3xl w-full shadow-2xl">
-            <div class="px-6 py-4 border-b">
-                <div class="flex items-center justify-between">
-                    <div
-                        v-for="step in 4"
-                        :key="step"
-                        class="flex items-center"
-                        :class="{ 'opacity-50': step > currentStep }"
-                    >
-                        <div
-                            class="w-8 h-8 rounded-full flex items-center justify-center text- font-medium"
-                            :class="
-                                step <= currentStep
-                                    ? 'bg-green-600 text-white'
-                                    : 'bg-gray-200 text-gray-600'
-                            "
-                        >
-                            {{ step }}
-                        </div>
-                        <div
-                            v-if="step < 4"
-                            :class="[
-                                'ml-1 mr-1 w-48 h-0.5',
-                                step < currentStep
-                                    ? 'bg-green-600'
-                                    : 'bg-gray-200',
-                            ]"
-                        ></div>
-                    </div>
-                </div>
-                <div class="flex items-center justify-between">
-                    <div
-                        v-for="step in 4"
-                        :key="step"
-                        class="flex items-center"
-                        :class="{ 'opacity-50': step > currentStep }"
-                    >
-                        <div class="mt-2">
-                            <h3 class="text-sm font-semibold">
-                                {{ stepTitles[step] }}
-                            </h3>
-                        </div>
-                    </div>
-                </div>
+<!-- Replace the step progress section in your template with this: -->
+<div class="px-6 py-4 border-b">
+    <!-- Step circles and connecting lines -->
+    <div class="flex items-center justify-between mb-4">
+        <template v-for="step in 4" :key="step">
+            <!-- Step circle -->
+            <div
+                class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium z-10 relative"
+                :class="
+                    step <= currentStep
+                        ? 'bg-green-600 text-white'
+                        : 'bg-gray-200 text-gray-600'
+                "
+            >
+                {{ step }}
             </div>
+            
+            <!-- Connecting line (not for the last step) -->
+            <div
+                v-if="step < 4"
+                class="flex-1 h-0.5 mx-2"
+                :class="
+                    step < currentStep
+                        ? 'bg-green-600'
+                        : 'bg-gray-200'
+                "
+            ></div>
+        </template>
+    </div>
+    
+    <!-- Step titles -->
+    <div class="flex justify-between">
+        <div
+            v-for="step in 4"
+            :key="step"
+            class="flex-1 text-center"
+            :class="{ 'opacity-50': step > currentStep }"
+        >
+            <h3 class="text-xs sm:text-sm font-semibold px-1">
+                {{ stepTitles[step] }}
+            </h3>
+        </div>
+    </div>
+</div>
 
             <form @submit="onSubmit" class="p-6 space-y-6">
                 <!-- Step 1 -->

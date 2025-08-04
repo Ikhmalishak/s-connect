@@ -14,12 +14,8 @@ class VisitorController extends Controller
 {
     public function index()
     {
-        //return index page with data
-        $visitor = Visitor::orderByDesc('id')->get();
 
-        return Inertia::render('Security/Visitor/VisitorDashboard', [
-            'data' => $visitor,
-        ]);
+        return Inertia::render('Security/Visitor/VisitorDashboard');
     }
 
     public function refreshVisitorTablePage(Request $request)
@@ -32,7 +28,10 @@ class VisitorController extends Controller
 
         // Get all visitors
         $visitor = Visitor::with('gatePass:id,pass_number')
-            ->latest()->take($limit)->get();
+            ->whereDate('date', $date)
+            ->latest()
+            ->take($limit)
+            ->get();
 
         // Currently inside
         $visitor_inside = Visitor::whereNotNull('time_in')
@@ -258,42 +257,51 @@ class VisitorController extends Controller
         return redirect()->back();
     }
 
-
     public function checkOutByPass(Request $request)
     {
         $pass_number = $request->input('pass_number');
 
         return DB::transaction(function () use ($pass_number) {
-            // Find the visitor currently using this gate pass
+            // ✅ Find the visitor using this gate pass
             $visitor = Visitor::whereHas('gatePass', function ($q) use ($pass_number) {
                 $q->where('pass_number', $pass_number);
             })
                 ->whereNull('time_out')
-                ->with('gatePass') // eager load related gate pass
+                ->with('gatePass')
                 ->first();
 
+            // ✅ Case 1: Gate pass not assigned or already checked out
             if (!$visitor) {
-                return response()->json(['message' => 'No active visitor found for this pass'], 404);
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'No active visitor found for this gate pass (not assigned or already checked out).'
+                ], 404);
             }
 
-            // ✅ Mark checkout time
+            // ✅ Case 2: Visitor has gate pass but never checked in
+            if (is_null($visitor->time_in)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'This gate pass has not been checked in yet.'
+                ], 400);
+            }
+
+            // ✅ Case 3: Successful checkout
             $visitor->time_out = now();
 
-            // ✅ Calculate duration if time_in exists
-            if ($visitor->time_in) {
-                $visitor->duration = Carbon::parse($visitor->time_in)->diffInMinutes(now());
-            }
-
+            // Calculate duration
+            $visitor->duration = Carbon::parse($visitor->time_in)->diffInMinutes(now());
             $visitor->save();
 
-            // ✅ Release the gate pass
+            // Release the gate pass
             if ($visitor->gatePass) {
                 $visitor->gatePass->state = 'free';
                 $visitor->gatePass->save();
             }
 
             return response()->json([
-                'message' => 'Visitor successfully checked out',
+                'status' => 'success',
+                'message' => 'Visitors successfully checked out.',
                 'visitor' => $visitor
             ]);
         });

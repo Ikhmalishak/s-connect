@@ -27,10 +27,14 @@ import {
 } from "@/components/ui/select";
 import { Link } from "@inertiajs/vue3";
 import NotificationBadge from "@/Components/NotificationBadge.vue";
-import { IdCardLanyard } from "lucide-vue-next";
-import { ScanBarcode } from "lucide-vue-next";
-import { UserRoundPlus } from "lucide-vue-next";
-import { ScanQrCode } from "lucide-vue-next";
+import {
+    IdCardLanyard,
+    UserRoundPlus,
+    ScanQrCode,
+    Eye,
+    EyeClosed,
+    EyeOff,
+} from "lucide-vue-next";
 import { ref, watch } from "vue";
 import { Card } from "@/components/ui/card";
 
@@ -71,30 +75,26 @@ const emit = defineEmits([
 
 const searchQuery = ref("");
 
+// Track which visitors have unmasked values
+const unmasked = ref<Record<number, boolean>>({});
+
 watch(searchQuery, (newVal) => {
     emit("search", newVal);
 });
 
-function maskIC(ic: string) {
-    if (!ic) return "";
-    const visiblePart = ic.slice(-6);
-    const maskedPart = "*".repeat(Math.max(0, ic.length - 6));
+function maskValue(value: string) {
+    if (!value) return "";
+    const visiblePart = value.slice(-4);
+    const maskedPart = "*".repeat(Math.max(0, value.length - 4));
     return `${maskedPart}${visiblePart}`;
 }
 
-function maskPhoneNum(phoneNum: string) {
-    if (!phoneNum) return "";
-    const visiblePart = phoneNum.slice(-4);
-    const maskedPart = "*".repeat(Math.max(0, phoneNum.length - 5));
-    return `${maskedPart}${visiblePart}`;
-}
-
-function trimToHourMinute(timeString) {
+function trimToHourMinute(timeString: string) {
     if (!timeString) return "-";
     return timeString.slice(0, 5);
 }
 
-function trimVisitorType(visitorType) {
+function trimVisitorType(visitorType: string) {
     if (visitorType === "visitor") {
         return "V";
     } else if (visitorType === "contractor") {
@@ -112,6 +112,10 @@ function getRowClass(visitor: VisitorForm) {
         return "text-white bg-red-400 hover:bg-red-300 data-[state=hover]:bg-red-300";
     }
     return "bg-white hover:bg-white data-[state=hover]:bg-white";
+}
+
+function setRowMask(visitorId: number, state: boolean) {
+    unmasked.value[visitorId] = state;
 }
 </script>
 
@@ -270,6 +274,10 @@ function getRowClass(visitor: VisitorForm) {
                                 class="font-black text-black text-center bg-gray-100"
                                 >Visitor Type</TableHead
                             >
+                            <TableHead
+                                class="font-black text-black text-center bg-gray-100"
+                                >Data Unmasking</TableHead
+                            >
                         </TableRow>
                     </TableHeader>
                     <TableBody
@@ -334,18 +342,66 @@ function getRowClass(visitor: VisitorForm) {
                             <TableCell class="text-center">{{
                                 visitor.purpose
                             }}</TableCell>
-                            <TableCell class="text-center">{{
-                                maskIC(visitor.ic_number)
-                            }}</TableCell>
-                            <TableCell class="text-center">{{
-                                maskIC(visitor.passport)
-                            }}</TableCell>
-                            <TableCell class="text-center">{{
-                                maskPhoneNum(visitor.phone_number)
-                            }}</TableCell>
+                            <TableCell
+                                class="text-center"
+                                :class="{
+                                    'text-red-500 font-bold':
+                                        unmasked[visitor.id],
+                                }"
+                            >
+                                {{
+                                    unmasked[visitor.id]
+                                        ? visitor.ic_number
+                                        : maskValue(visitor.ic_number)
+                                }}
+                            </TableCell>
+
+                            <TableCell
+                                class="text-center"
+                                :class="{
+                                    'text-red-500 font-bold':
+                                        unmasked[visitor.id],
+                                }"
+                            >
+                                {{
+                                    unmasked[visitor.id]
+                                        ? visitor.passport
+                                        : maskValue(visitor.passport)
+                                }}
+                            </TableCell>
+
+                            <TableCell
+                                class="text-center"
+                                :class="{
+                                    'text-red-500 font-bold':
+                                        unmasked[visitor.id],
+                                }"
+                            >
+                                {{
+                                    unmasked[visitor.id]
+                                        ? visitor.phone_number
+                                        : maskValue(visitor.phone_number)
+                                }}
+                            </TableCell>
                             <TableCell class="text-center">{{
                                 trimVisitorType(visitor.visitor_type)
                             }}</TableCell>
+                            <TableCell class="text-center">
+                                <button
+                                    class="p-1 rounded hover:bg-gray-200"
+                                    @mouseenter="setRowMask(visitor.id, true)"
+                                    @mouseleave="setRowMask(visitor.id, false)"
+                                >
+                                    <component
+                                        :is="
+                                            unmasked[visitor.id]
+                                                ? Eye
+                                                : EyeClosed
+                                        "
+                                        class="w-5 h-5 text-gray-500 hover:text-black"
+                                    />
+                                </button>
+                            </TableCell>
                         </TableRow>
                     </TableBody>
                 </Table>
