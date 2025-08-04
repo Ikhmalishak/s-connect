@@ -173,7 +173,7 @@ const handleScanCheckout = async () => {
         <Drawer v-model:open="drawerOpen">
             <DrawerContent
                 :class="
-                    resultStatus === 'error' ? 'bg-green-400' : 'bg-red-500'
+                    resultStatus === 'success' ? 'bg-green-400' : 'bg-red-500'
                 "
             >
                 <div class="mx-auto w-full max-w-3xl">
@@ -187,7 +187,7 @@ const handleScanCheckout = async () => {
                             "
                         >
                             {{
-                                resultStatus === "error"
+                                resultStatus === "success"
                                     ? "✅ Success"
                                     : "❌ Error"
                             }}
