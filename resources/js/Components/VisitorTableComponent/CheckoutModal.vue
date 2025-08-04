@@ -14,6 +14,13 @@ import {
     DrawerTitle,
     DrawerTrigger,
 } from "@/components/ui/drawer";
+import { Info, CircleX } from "lucide-vue-next";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const props = defineProps<{ show: boolean }>();
 const emit = defineEmits(["close", "refresh"]);
@@ -105,6 +112,22 @@ const handleScanCheckout = async () => {
         <div
             class="bg-gray-100 rounded-2xl shadow-lg shadow-white max-w-4xl w-full h-80 p-8 relative"
         >
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger as-child>
+                        <button
+                            @click="emit('close')"
+                            class="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+                        >
+                            <CircleX class="w-8 h-8" />
+                        </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Close</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+
             <!-- ✅ Centered Icon & Title Side by Side -->
             <div class="flex items-center justify-center mb-6">
                 <ScanQrCode class="w-12 h-12 text-gray-700 mr-3" />
@@ -122,23 +145,19 @@ const handleScanCheckout = async () => {
                 autofocus
             />
 
-            <div class="mt-6 flex justify-end gap-4">
-                <div class="text-xs">
-                    "Scan for Checkout" is a feature utilizing Visitor
-                    Management Systems (VMS) to streamline visitor exit
-                    processes. By scanning their pass ID at designated checkout
-                    points, visitors are efficiently logged out, ensuring
-                    accurate tracking and compliance with security protocols
-                    before leaving the premises.
+            <div class="mt-6 flex justify-between gap-4">
+                <div class="flex flex-row gap-1">
+                    <Info class="w-12 h-12" />
+                    <p class="text-xs max-w-xl">
+                        "Scan for Checkout" is a feature utilizing Visitor
+                        Management Systems (VMS) to streamline visitor exit
+                        processes. By scanning their pass ID at designated
+                        checkout points, visitors are efficiently logged out,
+                        ensuring accurate tracking and compliance with security
+                        protocols before leaving the premises.
+                    </p>
                 </div>
-                <div class="flex flex row gap-2">
-                    <Button
-                        @click="emit('close')"
-                        variant="outline"
-                        class="text-lg px-6 py-3"
-                    >
-                        Close
-                    </Button>
+                <div>
                     <Button
                         :disabled="isLoading"
                         @click="handleScanCheckout"
@@ -154,10 +173,10 @@ const handleScanCheckout = async () => {
         <Drawer v-model:open="drawerOpen">
             <DrawerContent
                 :class="
-                    resultStatus === 'success' ? 'bg-green-400' : 'bg-red-500'
+                    resultStatus === 'error' ? 'bg-green-400' : 'bg-red-500'
                 "
             >
-                <div class="mx-auto w-full max-w-sm">
+                <div class="mx-auto w-full max-w-3xl">
                     <DrawerHeader>
                         <DrawerTitle
                             class="text-4xl font-bold mb-4 text-center"
@@ -168,7 +187,7 @@ const handleScanCheckout = async () => {
                             "
                         >
                             {{
-                                resultStatus === "success"
+                                resultStatus === "error"
                                     ? "✅ Success"
                                     : "❌ Error"
                             }}

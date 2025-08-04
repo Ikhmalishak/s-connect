@@ -83,6 +83,33 @@ const props = defineProps<{
                 </FormItem>
             </FormField>
 
+            <!-- <FormField :name="`visitors[${i}].type`" v-slot="{ componentField }">
+                <FormItem>
+                    <FormLabel
+                        >Driver Type
+                        <span class="text-red-500">*</span></FormLabel
+                    >
+                    <Select v-bind="componentField">
+                        <FormControl>
+                            <SelectTrigger
+                                ><SelectValue placeholder="Select Driver Type"
+                            /></SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            <SelectGroup>
+                                <SelectItem value="driver_shipment"
+                                    >Driver Shipment</SelectItem
+                                >
+                                <SelectItem value="driver_receiving"
+                                    >Driver Receiving</SelectItem
+                                >
+                            </SelectGroup>
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                </FormItem>
+            </FormField> -->
+
             <FormField
                 :name="`visitors[${i}].id_number`"
                 v-slot="{ componentField }"
