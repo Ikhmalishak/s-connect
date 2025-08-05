@@ -29,12 +29,12 @@ function confirm() {
         class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
     >
         <div class="max-w-md w-full bg-white p-6 rounded-xl shadow-xl">
-            <h2 class="text-xl font-semibold mb-6 text-center">Visitor Type</h2>
+            <h2 class="text-xl font-semibold mb-2 text-center">Visitor Type</h2>
 
             <div class="flex justify-center items-center gap-3">
                 <select
                     :value="visitorType"
-                    class="border border-gray-300 p-2 rounded-md w-32 text-center text-lg"
+                    class="border border-gray-300 p-2 rounded-md max-w-xs w-full text-center text-lg"
                     @change="
                         $emit(
                             'update:visitor-type',
@@ -42,13 +42,19 @@ function confirm() {
                         )
                     "
                 >
+                    <option value="" disabled selected hidden>
+                        Please Select Visitor Type
+                    </option>
                     <option value="visitor">Visitor</option>
-                    <option value="driver">Driver</option>
                     <option value="contractor">Contractor</option>
+                    <option value="driver-shipment">Driver - Shipment</option>
+                    <option value="driver-receiving">Driver - Receiving</option>
                 </select>
             </div>
 
-            <h2 class="text-xl font-semibold mt-4 mb-6 text-center">
+            <hr class="border-t border-gray-300 my-4" />
+
+            <h2 class="text-xl font-semibold mt-4 mb-2 text-center">
                 Number of Visitors
             </h2>
 

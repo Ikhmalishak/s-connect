@@ -55,4 +55,7 @@ Route::middleware('auth')->group(function () {
 
 });
 
+    Route::get('/visitor/form/{site}', [VisitorController::class, 'getVisitorForm']);
+    Route::post('/visitor/submit',[VisitorController::class, 'store']);
+
 require __DIR__ . '/auth.php';

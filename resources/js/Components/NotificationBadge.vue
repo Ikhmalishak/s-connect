@@ -23,7 +23,7 @@ const displayCount = computed(() => {
     <slot />
     <span
       v-if="count > 0"
-      class="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-bold h-4 w-4 flex items-center justify-center rounded-full border border-white"
+      class="absolute -top-1 -right-1 bg-red-600 text-white text-[12px] font-bold h-6 w-6 flex items-center justify-center rounded-full border border-white"
     >
       {{ displayCount }}
     </span>

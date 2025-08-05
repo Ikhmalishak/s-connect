@@ -10,12 +10,30 @@ import VideoDetailsStep from "../../../Components/VisitorFormComponent/VideoDeta
 import ReviewStep from "../../../Components/VisitorFormComponent/ReviewStep.vue";
 import VisitorFormHeader from "@/Components/VisitorFormHeader.vue";
 import ResultModal from "../../../Components/VisitorFormComponent/ResultModal.vue";
+import AcknowledgementModal from "@/Components/AcknowledgementModal.vue";
 import LoadingOverlay from "@/Components/LoadingOverlay.vue";
+import { usePage } from "@inertiajs/vue3";
 import axios from "axios";
+import { PageProps as InertiaPageProps } from "@inertiajs/core";
+
+interface Site {
+    id: number;
+    name: string;
+    site_code: string;
+}
+
+interface PageProps extends InertiaPageProps {
+    site: Site;
+}
+
+const page = usePage<PageProps>();
+
+const site = computed(() => page.props.site);
 
 // Form setup
 const { handleSubmit, setFieldValue, values, errors, resetForm } = useForm({
     initialValues: {
+        site_id: site.value?.id ?? "",
         visitors: [],
         vehicle_number: "",
         visitor_company: "",
@@ -28,7 +46,7 @@ const { handleSubmit, setFieldValue, values, errors, resetForm } = useForm({
     },
 });
 
-const visitorType = ref("visitor");
+const visitorType = ref("");
 const paxCount = ref(1);
 const paxModalOpen = ref(true);
 const paxInputValue = ref("1");
@@ -45,6 +63,13 @@ const currentStep = ref(1);
 
 // Loading state for acknowledgement check
 const checkingAcknowledgement = ref(false);
+const acknowledgementModalOpen = ref(false);
+const acknowledgementMessage = ref("");
+const isAcknowledged = ref(false);
+
+//form validation
+const personalInfoStepRef = ref(null);
+const visitDetailsStepRef = ref(null);
 
 const purposes = ref([
     "Meeting",
@@ -52,6 +77,8 @@ const purposes = ref([
     "Maintenance",
     "Inspection",
     "Training",
+    "Shipment",
+    "Receiving",
     "Other",
 ]);
 
@@ -105,18 +132,58 @@ const isFormValid = computed(() => {
                 !!v.id_type?.trim() &&
                 !!v.id_number?.trim() &&
                 !!v.phone_number?.trim()
-        );
+        ) &&
+        (personalInfoStepRef.value?.isValid() ?? true);
 
     const step2Valid =
-        !!values.visitor_company?.trim() &&
-        !!values.purpose?.trim() &&
-        (values.purpose !== "Meeting" || !!values.person_to_meet?.trim());
+        values.purpose?.trim() &&
+        (values.purpose !== "Meeting" || values.person_to_meet?.trim()) &&
+        (visitDetailsStepRef.value?.isValid() ?? true);
 
     return step1Valid && step2Valid;
 });
 
+const isStep1Valid = computed(() => {
+    const basicValid =
+        values.visitors &&
+        values.visitors.length > 0 &&
+        values.visitors.every(
+            (v) =>
+                v.visitor_name?.trim() &&
+                v.id_type?.trim() &&
+                v.id_number?.trim() &&
+                v.phone_number?.trim()
+        );
+
+    // Check custom validation from child component
+    const customValidationPassed = personalInfoStepRef.value?.isValid() ?? true;
+
+    return basicValid && customValidationPassed;
+});
+
+const isStep2Valid = computed(() => {
+    const basicValid =
+        values.purpose?.trim() &&
+        (values.purpose !== "Meeting" || values.person_to_meet?.trim());
+
+    // Check custom validation from child component
+    const customValidationPassed = visitDetailsStepRef.value?.isValid() ?? true;
+
+    return basicValid && customValidationPassed;
+});
+
 // Step navigation with acknowledgement check
 async function nextStep() {
+    if (currentStep.value === 1 && !isStep1Valid.value) {
+        alert("Please fill all required visitor information.");
+        return;
+    }
+
+    if (currentStep.value === 2 && !isStep2Valid.value) {
+        alert("Please complete visit details before proceeding.");
+        return;
+    }
+
     if (currentStep.value === 2) {
         checkingAcknowledgement.value = true;
 
@@ -130,21 +197,24 @@ async function nextStep() {
                 )
             );
 
-            // Simulate at least 2 seconds delay for UX
             await new Promise((resolve) => setTimeout(resolve, 2000));
 
-            // Check if **all visitors are acknowledged**
             const allAcknowledged = results.every(
                 (res) => res.data.acknowledged
             );
 
+            isAcknowledged.value = allAcknowledged;
+            acknowledgementMessage.value = allAcknowledged
+                ? "✅ You are already acknowledged. You can directly submit the form."
+                : "⚠️ You need to watch the safety video and read the guidelines before you can submit.";
+            acknowledgementModalOpen.value = true;
+
+            // Auto-fill flags if acknowledged
             if (allAcknowledged) {
                 setFieldValue("video_watched", true);
                 setFieldValue("security_guidelines_confirmed", true);
                 videoEnded.value = true;
                 securityGuidelinesConfirmed.value = true;
-                currentStep.value = 4;
-                return;
             }
         } catch (error) {
             console.error("Acknowledgement check failed:", error);
@@ -211,9 +281,9 @@ async function handleModalClose() {
 }
 
 const stepTitles = {
-    1: "Visitor Information",
+    1: "Visitor Details",
     2: "Visit Details",
-    3: "Security Briefing",
+    3: "Safety & Security",
     4: "Review & Submit",
 };
 
@@ -250,51 +320,81 @@ watch(currentStep, async (newStep) => {
         @confirm="confirmPaxCount"
     />
 
+    <AcknowledgementModal
+        :open="acknowledgementModalOpen"
+        :message="acknowledgementMessage"
+        :acknowledged="isAcknowledged"
+        @close="acknowledgementModalOpen = false"
+        @proceed="
+            currentStep = 4;
+            acknowledgementModalOpen = false;
+        "
+        @watch-video="
+            currentStep = 3;
+            acknowledgementModalOpen = false;
+        "
+    />
+
     <ResultModal :open="resultModalOpen" @update:open="handleModalClose" />
     <div class="relative container mx-auto px-4 py-8 max-w-6xl">
         <VisitorFormHeader title="Visitor Registration Form" />
         <Card class="relative z-0 mt-4 mx-auto max-w-3xl w-full shadow-2xl">
-            <!-- Replace the step progress section in your template with this: -->
+            <!-- Site name circle badge at top right -->
+            <div class="absolute -top-4 -right-2 z-10">
+                <div
+                    class="w-10 h-10 bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg border-4 border-white"
+                >
+                    <span
+                        class="text-md font-bold text-center leading-tight px-1"
+                    >
+                        {{ site.site_code || site.name }}
+                    </span>
+                </div>
+            </div>
+
             <div class="px-6 py-4 border-b">
                 <!-- Step circles and connecting lines -->
-                <div class="flex items-center justify-between mb-4">
-                    <template v-for="step in 4" :key="step">
-                        <!-- Step circle -->
-                        <div
-                            class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium z-10 relative"
-                            :class="
-                                step <= currentStep
-                                    ? 'bg-green-600 text-white'
-                                    : 'bg-gray-200 text-gray-600'
-                            "
-                        >
-                            {{ step }}
-                        </div>
+                <div class="mb-1">
+                    <div class="flex items-center justify-between">
+                        <template v-for="step in 4" :key="step">
+                            <!-- Step container -->
+                            <div
+                                class="flex flex-col items-center flex-shrink-0"
+                            >
+                                <!-- Step circle -->
+                                <div
+                                    class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium z-10 relative mb-2"
+                                    :class="
+                                        step <= currentStep
+                                            ? 'bg-green-600 text-white'
+                                            : 'bg-gray-200 text-gray-600'
+                                    "
+                                >
+                                    {{ step }}
+                                </div>
 
-                        <!-- Connecting line (not for the last step) -->
-                        <div
-                            v-if="step < 4"
-                            class="flex-1 h-0.5 mx-2"
-                            :class="
-                                step < currentStep
-                                    ? 'bg-green-600'
-                                    : 'bg-gray-200'
-                            "
-                        ></div>
-                    </template>
-                </div>
+                                <!-- Step title -->
+                                <h3
+                                    class="text-xs sm:text-sm font-semibold text-center px-1 max-w-20 leading-tight"
+                                    :class="{
+                                        'opacity-50': step > currentStep,
+                                    }"
+                                >
+                                    {{ stepTitles[step] }}
+                                </h3>
+                            </div>
 
-                <!-- Step titles -->
-                <div class="flex justify-between">
-                    <div
-                        v-for="step in 4"
-                        :key="step"
-                        class="flex-1 text-center"
-                        :class="{ 'opacity-50': step > currentStep }"
-                    >
-                        <h3 class="text-xs sm:text-sm font-semibold px-1">
-                            {{ stepTitles[step] }}
-                        </h3>
+                            <!-- Connecting line -->
+                            <div
+                                v-if="step < 4"
+                                class="flex-1 h-0.5 mt-[-1rem]"
+                                :class="
+                                    step < currentStep
+                                        ? 'bg-green-600'
+                                        : 'bg-gray-200'
+                                "
+                            ></div>
+                        </template>
                     </div>
                 </div>
             </div>
@@ -302,6 +402,7 @@ watch(currentStep, async (newStep) => {
             <form @submit="onSubmit" class="p-6 space-y-6">
                 <!-- Step 1 -->
                 <PersonalInfoStep
+                    ref="personalInfoStepRef"
                     v-show="currentStep === 1"
                     :visitors="values.visitors || []"
                     :errors="errors || {}"
@@ -309,6 +410,7 @@ watch(currentStep, async (newStep) => {
 
                 <!-- Step 2 -->
                 <VisitDetailsStep
+                    ref="visitDetailsStepRef"
                     v-show="currentStep === 2"
                     :values="values || {}"
                     :errors="errors || {}"
@@ -365,12 +467,25 @@ watch(currentStep, async (newStep) => {
                     </div>
 
                     <div class="flex gap-2">
+                        <p
+                            v-if="
+                                (currentStep === 1 && !isStep1Valid) ||
+                                (currentStep === 2 && !isStep2Valid)
+                            "
+                            class="text-red-500 text-sm mt-2 text-center"
+                        >
+                            ⚠️ Please fill in all required fields before
+                            proceeding.
+                        </p>
+
                         <Button
                             v-if="currentStep < 4"
                             type="button"
                             @click="nextStep"
                             :disabled="
                                 checkingAcknowledgement ||
+                                (currentStep === 1 && !isStep1Valid) ||
+                                (currentStep === 2 && !isStep2Valid) ||
                                 (currentStep === 3 && !videoEnded)
                             "
                         >

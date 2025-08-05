@@ -13,10 +13,10 @@ return new class extends Migration {
         Schema::create('visitors', function (Blueprint $table) {
             $table->id();
             $table->foreignId('gate_pass_id')->nullable()->constrained('gate_passes');
+            $table->foreignId('site_id')->nullable()->constrained('sites');
             $table->string('visitor_name');
             $table->string('visitor_type');
             $table->string('vehicle_number')->nullable();
-            $table->string('site');
             $table->time('time_register')->nullable();
             $table->date('date');
             $table->time('time_in')->nullable();

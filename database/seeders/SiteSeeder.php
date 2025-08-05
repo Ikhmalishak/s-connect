@@ -14,17 +14,15 @@ class SiteSeeder extends Seeder
     public function run(): void
     {
         $sites = [
-            "Site 1",
-            "Site 2",
-            "Site 3",
-            "Site 4"
+            ['name' => 'Site 1', 'site_code' => 'S1'],
+            ['name' => 'Site 2', 'site_code' => 'S2'],
+            ['name' => 'Site 3', 'site_code' => 'S3'],
+            ['name' => 'Site 4', 'site_code' => 'S4'],
         ];
 
-        // Loop and create each company
-        foreach ($sites as $name) {
-            Site::create([
-                'name' => $name,
-            ]);
+        foreach ($sites as $site) {
+            Site::create($site);
         }
     }
+
 }

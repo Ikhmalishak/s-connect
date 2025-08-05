@@ -191,7 +191,7 @@ function handleCentralSubClick() {
     </div>
 
     <!-- Legend -->
-    <div class="mt-4"></div>
+    <div class="mt-2"></div>
     <div v-if="showLegend" :class="legendClass">
         <div
             v-for="item in legendItems"

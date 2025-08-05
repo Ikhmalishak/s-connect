@@ -26,7 +26,7 @@ const props = defineProps<{
     visitorOutByHour: VisitorOutByHour[];
 }>();
 
-const emit = defineEmits(['donutClick']);
+const emit = defineEmits(["donutClick"]);
 
 const visitorInsidePieChart = computed(() => {
     const data = props.visitorIn.map((item) => ({
@@ -64,7 +64,7 @@ const visitorInOutByHourData = computed(() => {
 });
 
 function handleDonutClick(chartType: string) {
-    emit('donutClick', chartType);
+    emit("donutClick", chartType);
 }
 </script>
 
@@ -85,8 +85,9 @@ function handleDonutClick(chartType: string) {
                 <div
                     class="flex flex-wrap justify-center items-center gap-4 p-4 h-full"
                 >
+                    <!-- Donut Chart In -->
                     <div class="flex-1 h-full flex justify-center">
-                        <div class="w-full max-w-[250px] h-[200px]">
+                        <div class="w-full max-w-[250px] h-[185px]">
                             <DonutChart
                                 index="name"
                                 :category="'total'"
@@ -94,12 +95,12 @@ function handleDonutClick(chartType: string) {
                                 :type="'donut'"
                                 :colors="[
                                     visitorInsidePieChart.length === 1 &&
-                                    visitorInsidePieChart[0].name ===
-                                        'No Data'
+                                    visitorInsidePieChart[0].name === 'No Data'
                                         ? 'gray'
                                         : 'hsl(0, 100%, 70%)',
                                     'hsl(0, 85%, 60%)',
                                     'hsl(0, 75%, 50%)',
+                                    'hsl(0, 65%, 40%)',
                                 ]"
                                 centralSubLabel="In"
                                 class="w-4/5 h-4/5"
@@ -107,8 +108,10 @@ function handleDonutClick(chartType: string) {
                             />
                         </div>
                     </div>
+
+                    <!-- Donut Chart Out -->
                     <div class="flex-1 h-full flex justify-center">
-                        <div class="w-full max-w-[250px] h-[200px]">
+                        <div class="w-full max-w-[250px] h-[185px]">
                             <DonutChart
                                 index="name"
                                 :category="'total'"
@@ -116,12 +119,12 @@ function handleDonutClick(chartType: string) {
                                 :type="'donut'"
                                 :colors="[
                                     visitorOutsidePieChart.length === 1 &&
-                                    visitorOutsidePieChart[0].name ===
-                                        'No Data'
+                                    visitorOutsidePieChart[0].name === 'No Data'
                                         ? 'gray'
                                         : 'hsl(120, 50%, 75%)',
-                                    'hsl(120, 50%, 45%)',
-                                    'hsl(120, 50%, 25%)',
+                                    'hsl(120, 50%, 55%)',
+                                    'hsl(120, 50%, 35%)',
+                                    'hsl(120, 50%, 20%)',
                                 ]"
                                 central-sub-label="Out"
                                 class="w-4/5 h-4/5"

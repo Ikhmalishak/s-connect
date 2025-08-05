@@ -1007,6 +1007,48 @@ const handleConfirmChange = (checked: boolean) => {
                 </div>
             </section>
 
+            <!-- Section 7: Contractor Declaration -->
+            <section class="mb-4">
+                <h4 class="text-md font-semibold text-gray-800 mb-2">
+                    7.0 Contractor Declaration
+                </h4>
+                <div class="mb-3">
+                    <p class="text-sm font-medium text-gray-700 mb-1">
+                        7.1 Contractor Declaration Checklist
+                    </p>
+                    <ul
+                        class="list-disc list-inside text-sm text-gray-700 space-y-1 ml-4"
+                    >
+                         <li>
+                            I understand my duties under the Occupational Safety
+                            & Health Act and Environment Act in relation to the
+                            circumstances in which the work will be conducted.
+                        </li>
+                        <li>
+                            I hold current certifications, qualifications, and
+                            licenses required by legislation for this work.
+                        </li>
+                        <li>
+                            I have completed the SKP site induction and safety
+                            briefing.
+                        </li>
+                        <li>
+                            I will cease work immediately to ensure the
+                            workplace is safe and contact the SKP site contact
+                            if I notice or realize any danger to myself or
+                            others during the period of the work.
+                        </li>
+                        <li>
+                            I agree to comply with all site safety requirements
+                            and reasonable directions given by SKP.
+                        </li>
+                        <li>
+                            Smoking is strictly prohibited inside SKP premises.
+                        </li>
+                    </ul>
+                </div>
+            </section>
+            
             <!-- Emergency Contact Information -->
             <section class="mb-4">
                 <h4 class="text-md font-semibold text-gray-800 mb-2">
@@ -1027,6 +1069,7 @@ const handleConfirmChange = (checked: boolean) => {
                     </p>
                 </div>
             </section>
+
         </div>
 
         <div

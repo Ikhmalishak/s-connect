@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\GatePass;
+use App\Models\Site;
 use App\Models\Visitor;
 use App\Models\VisitorAcknowledgement;
 use Illuminate\Http\Request;
@@ -95,27 +96,17 @@ class VisitorController extends Controller
         ]);
     }
 
-    public function getVisitorForm()
+    public function getVisitorForm($siteCode)
     {
-        //return form page
-        return Inertia::render('Security/Visitor/VisitorForm');
-    }
-
-    public function getArchivedVisitorForm()
-    {
-        //return form page
-        return Inertia::render('Security/Visitor/ArchivedFormSeparated');
-
-    }
-
-    public function getVisitorAcknowledgeForm()
-    {
-        $visitor = Visitor::with('visitorCompany')->get();
+        $site = Site::where('site_code', $siteCode)->firstOrFail();
 
         //return form page
-        return Inertia::render('Security/Visitor/VisitorAcknowledgeTable', [
-            'data' => $visitor,
-        ]);
+        return Inertia::render(
+            'Security/Visitor/VisitorForm',
+            [
+                'site' => $site,
+            ]
+        );
     }
 
     /**
@@ -127,7 +118,7 @@ class VisitorController extends Controller
             'pass_number' => 'nullable|string',
             'purpose' => 'required|string',
             'remarks' => 'nullable|string',
-            'site' => 'nullable|string',
+            'site_id' => 'required|integer',
             'time_in' => 'nullable|string',
             'time_out' => 'nullable|string',
             'time_register' => 'nullable',
@@ -147,8 +138,8 @@ class VisitorController extends Controller
         return DB::transaction(function () use ($validated) {
             $timeRegister = $validated['time_register'] ??= now()->format('H:i');
             $date = $validated['date'] ??= now()->format('Y-m-d');
-            $site = auth()->user()->site;
             $company = $validated['visitor_company'] ?: "N/A";
+            $vehicle_number = $validated['vehicle_number'] ?: "N/A";
 
             $createdVisitors = [];
 
@@ -158,7 +149,6 @@ class VisitorController extends Controller
 
                 $pass_id = $this->getPassNumber($validated['visitor_type']);
 
-                // ✅ Save Visitor Record
                 $new_visitor = Visitor::create([
                     'visitor_name' => $visitor['visitor_name'],
                     'gate_pass_id' => $pass_id->id,
@@ -167,19 +157,19 @@ class VisitorController extends Controller
                     'phone_number' => $visitor['phone_number'],
                     'purpose' => $validated['purpose'],
                     'remarks' => $validated['remarks'] ?? null,
-                    'site' => $site,
+                    'site_id' => $validated['site_id'],
                     'time_register' => $timeRegister,
                     'date' => $date,
                     'visitor_type' => $validated['visitor_type'],
-                    'vehicle_number' => $validated['vehicle_number'],
+                    'vehicle_number' => $vehicle_number,
                     'visitor_company' => $company,
                     'is_acknowledge' => $validated['video_watched'] && $validated['security_guidelines_confirmed'],
                 ]);
 
-                // ✅ Broadcast event
+                //Broadcast event
                 event(new VisitorRegistered($new_visitor));
 
-                // ✅ Only store/update acknowledgement record if they really watched & confirmed
+                //Only store/update acknowledgement record if they really watched & confirmed
                 if ($validated['video_watched'] && $validated['security_guidelines_confirmed']) {
                     VisitorAcknowledgement::updateOrCreate(
                         [
@@ -207,6 +197,10 @@ class VisitorController extends Controller
 
     public function getPassNumber($visitor_type)
     {
+        // ✅ Normalize visitor type
+        if (str_starts_with($visitor_type, 'driver-')) {
+            $visitor_type = 'driver';
+        }
         return DB::transaction(function () use ($visitor_type) {
             $gate_pass = GatePass::where('pass_type', $visitor_type)
                 ->where('state', 'free')
