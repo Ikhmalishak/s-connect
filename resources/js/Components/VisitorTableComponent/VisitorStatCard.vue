@@ -141,7 +141,7 @@ function handleDonutClick(chartType: string) {
                 <span
                     class="bg-gray-100 text-black px-2 py-1 rounded-full text-xs font-small border shadow-md"
                 >
-                    Visitor In by Hour
+                    Visitor In/Out by Hour
                 </span>
             </div>
             <!-- Area Chart Card with Fixed Height -->

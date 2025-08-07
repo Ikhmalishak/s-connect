@@ -5,6 +5,8 @@ import { useMounted } from "@vueuse/core";
 import { computed, ref } from "vue";
 import { cn } from "@/lib/utils";
 import { ChartSingleTooltip, defaultColors } from "@/components/ui/chart";
+import { List } from "lucide-vue-next";
+import CustomTooltip from "@/Components/CustomTooltip.vue";
 
 const props = defineProps({
     data: { type: Array, required: true },
@@ -177,13 +179,19 @@ function handleCentralSubClick() {
             />
 
             <!-- Center clickable label overlay -->
-            <!-- Optional Label (top-right corner of donut container) -->
             <div
                 v-if="type === 'donut'"
-                class="absolute top-0 right-0  pointer-events-auto cursor-pointer text-lg text-black font-black transition"
-                @click="handleCentralSubClick"
+                class="absolute top-0 right-0 pointer-events-auto cursor-pointer text-lg text-black font-black transition"
             >
                 {{ props.centralSubLabel ?? "" }}
+            </div>
+
+            <div
+                v-if="type === 'donut' && centralSubLabel === 'In'"
+                class="absolute top-0 left-0 pointer-events-auto cursor-pointer text-lg text-black font-black transition mt-1"
+                @click="handleCentralSubClick"
+            >
+                <CustomTooltip text="Click to see more details" position="bottom"><List class="w-6 h-6" /></CustomTooltip>
             </div>
 
             <slot />

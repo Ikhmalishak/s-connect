@@ -1,3 +1,4 @@
+
 <script setup lang="ts">
 import {
   FormControl,
@@ -18,28 +19,36 @@ import {
 } from "@/components/ui/select";
 import { ref, watch } from "vue";
 
+interface FormValues {
+  vehicle_number?: string;
+  visitor_company?: string;
+  purpose?: string;
+  person_to_meet?: string;
+  remarks?: string;
+}
+
 const props = defineProps<{
-  values: any;
+  values: FormValues;
   errors: any;
   purposes: string[];
 }>();
+
+const emit = defineEmits(['update']);
 
 // Custom validation errors
 const validationErrors = ref<{[key: string]: string}>({});
 
 // Validation functions
 const validateVehicleNumber = (vehicleNumber: string): string => {
-  if (!vehicleNumber) return ""; // Optional field
+  if (!vehicleNumber) return "";
   
-  // Malaysian vehicle number format validation
   const cleanNumber = vehicleNumber.replace(/\s+/g, '').toUpperCase();
   
-  // Pattern for Malaysian vehicle numbers (ABC1234, AB1234C, etc.)
   const patterns = [
-    /^[A-Z]{1,3}\d{1,4}[A-Z]?$/, // Standard format: ABC1234, AB1234C
-    /^[A-Z]{2}\d{1,4}[A-Z]{1,2}$/, // Alternative format: AB1234CD
-    /^W[A-Z]{1,2}\d{1,4}[A-Z]?$/, // Wilayah format: WAB1234
-    /^[A-Z]\d{1,4}[A-Z]{2,3}$/ // Other formats: A1234BC
+    /^[A-Z]{1,3}\d{1,4}[A-Z]?$/,
+    /^[A-Z]{2}\d{1,4}[A-Z]{1,2}$/,
+    /^W[A-Z]{1,2}\d{1,4}[A-Z]?$/,
+    /^[A-Z]\d{1,4}[A-Z]{2,3}$/
   ];
   
   const isValidFormat = patterns.some(pattern => pattern.test(cleanNumber));
@@ -58,7 +67,6 @@ const validateVehicleNumber = (vehicleNumber: string): string => {
 const validateCompanyName = (company: string): string => {
   if (!company?.trim()) return " ";
   
-  // Allow letters, numbers, spaces, and common business symbols
   if (!/^[a-zA-Z0-9\s&.,()'-]+$/.test(company.trim())) {
     return "Company name contains invalid characters";
   }
@@ -78,7 +86,6 @@ const validatePersonToMeet = (person: string, purpose: string): string => {
   if (purpose === 'Meeting') {
     if (!person?.trim()) return "Person to meet is required for meetings";
     
-    // Only allow letters, spaces, apostrophes, and hyphens
     if (!/^[a-zA-Z\s'-]+$/.test(person.trim())) {
       return "Person name can only contain letters, spaces, apostrophes, and hyphens";
     }
@@ -96,17 +103,16 @@ const validatePersonToMeet = (person: string, purpose: string): string => {
 };
 
 const validateRemarks = (remarks: string): string => {
-  if (!remarks) return ""; // Optional field
+  if (!remarks) return "";
   
   if (remarks.length > 500) {
     return "Remarks cannot exceed 500 characters";
   }
   
-  // Basic check for inappropriate content patterns
   const inappropriatePatterns = [
     /\b(fuck|shit|damn|bitch)\b/i,
-    /<script|javascript:/i, // Basic XSS protection
-    /[<>{}]/g // HTML/code injection protection
+    /<script|javascript:/i,
+    /[<>{}]/g
   ];
   
   if (inappropriatePatterns.some(pattern => pattern.test(remarks))) {
@@ -116,23 +122,20 @@ const validateRemarks = (remarks: string): string => {
   return "";
 };
 
-// Format vehicle number as user types
 const formatVehicleNumber = (value: string): string => {
   return value.toUpperCase().replace(/\s+/g, '').substring(0, 8);
 };
 
-// Input handlers
 const handleVehicleNumberInput = (event: Event) => {
   const target = event.target as HTMLInputElement;
   const formatted = formatVehicleNumber(target.value);
   target.value = formatted;
   
-  // Update the form data
-  if (props.values) {
-    props.values.vehicle_number = formatted;
-  }
+  emit('update', {
+    field: 'vehicle_number',
+    value: formatted
+  });
   
-  // Validate
   const error = validateVehicleNumber(formatted);
   const errorKey = 'vehicle_number';
   
@@ -147,12 +150,11 @@ const handleCompanyInput = (event: Event) => {
   const target = event.target as HTMLInputElement;
   const value = target.value;
   
-  // Update the form data
-  if (props.values) {
-    props.values.visitor_company = value;
-  }
+  emit('update', {
+    field: 'visitor_company',
+    value
+  });
   
-  // Validate
   const error = validateCompanyName(value);
   const errorKey = 'visitor_company';
   
@@ -167,12 +169,11 @@ const handlePersonToMeetInput = (event: Event) => {
   const target = event.target as HTMLInputElement;
   const value = target.value;
   
-  // Update the form data
-  if (props.values) {
-    props.values.person_to_meet = value;
-  }
+  emit('update', {
+    field: 'person_to_meet',
+    value
+  });
   
-  // Validate
   const error = validatePersonToMeet(value, props.values?.purpose);
   const errorKey = 'person_to_meet';
   
@@ -187,12 +188,11 @@ const handleRemarksInput = (event: Event) => {
   const target = event.target as HTMLTextAreaElement;
   const value = target.value;
   
-  // Update the form data
-  if (props.values) {
-    props.values.remarks = value;
-  }
+  emit('update', {
+    field: 'remarks',
+    value
+  });
   
-  // Validate
   const error = validateRemarks(value);
   const errorKey = 'remarks';
   
@@ -203,7 +203,6 @@ const handleRemarksInput = (event: Event) => {
   }
 };
 
-// Watch for purpose changes to re-validate person_to_meet
 watch(() => props.values?.purpose, (newPurpose) => {
   if (props.values?.person_to_meet) {
     const error = validatePersonToMeet(props.values.person_to_meet, newPurpose);
@@ -216,20 +215,15 @@ watch(() => props.values?.purpose, (newPurpose) => {
     }
   }
   
-  // Clear person_to_meet error if purpose is not Meeting
   if (newPurpose !== 'Meeting') {
     delete validationErrors.value['person_to_meet'];
   }
 });
 
-// Expose validation state to parent component
 defineExpose({
   validationErrors,
   isValid: () => {
-    // Check if there are any validation errors
     const hasErrors = Object.keys(validationErrors.value).length > 0;
-    
-    // Check required fields
     const companyRequired = !props.values?.visitor_company?.trim();
     const purposeRequired = !props.values?.purpose?.trim();
     const personToMeetRequired = props.values?.purpose === 'Meeting' && !props.values?.person_to_meet?.trim();
@@ -238,7 +232,6 @@ defineExpose({
   }
 });
 </script>
-
 <template>
   <div class="space-y-6 ">
     <h2 class="text-xl font-semibold">Step 2: Visit Details</h2>

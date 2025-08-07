@@ -264,7 +264,7 @@ function setRowMask(visitorId: number, state: boolean) {
                                    class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
 
                             >
-                                Pass Number
+                                Pass #
                             </th>
                             <th
                                    class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
@@ -276,7 +276,7 @@ function setRowMask(visitorId: number, state: boolean) {
                                    class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
 
                             >
-                                Vehicle Number
+                                Vehicle #
                             </th>
                             <th
                                    class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
@@ -318,25 +318,25 @@ function setRowMask(visitorId: number, state: boolean) {
                                    class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
 
                             >
-                                IC Number
+                                IC #
                             </th>
                             <th
                                    class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
 
                             >
-                                Passport
+                                Passport #
                             </th>
                             <th
                                    class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
 
                             >
-                                Phone Number
+                                Phone #
                             </th>
                             <th
                                    class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
 
                             >
-                                Visitor Code
+                                VCode
                             </th>
                             <th
                                    class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
@@ -394,14 +394,14 @@ function setRowMask(visitorId: number, state: boolean) {
                                     {{ trimToHourMinute(visitor.time_out) }}
                                 </template>
                                 <template v-else>
-                                    <!-- <button
+                                    <button
                                         @click="emit('checkOut', visitor.id)"
-                                        class="h-6 px-2 text-xs leading-none bg-red-600 text-white rounded hover:bg-red-700"
+                                        class="h-6 px-2 text-xs leading-none bg-black text-white rounded"
                                         :disabled="!visitor.time_in"
                                     >
                                         Check Out
-                                    </button> -->
-                                    --:--
+                                    </button>
+                                    <!-- --:-- -->
                                 </template>
                             </td>
                             <td class="text-center p-2">

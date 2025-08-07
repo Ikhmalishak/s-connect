@@ -144,8 +144,24 @@ class VisitorController extends Controller
             $createdVisitors = [];
 
             foreach ($validated['visitors'] as $visitor) {
-                $ic = $visitor['id_type'] === 'IC' ? $visitor['id_number'] : "N/A";
+                // Clean IC number (digits only)
+                $ic = $visitor['id_type'] === 'IC'
+                    ? preg_replace('/\D/', '', $visitor['id_number'])
+                    : "N/A";
+
                 $passport = $visitor['id_type'] === 'Passport' ? $visitor['id_number'] : "N/A";
+
+                $rawPhone = isset($visitor['phone_number']) ? $visitor['phone_number'] : null;
+
+                if ($rawPhone) {
+                    // Remove all non-digit characters (e.g., spaces, dashes)
+                    $digitsOnly = preg_replace('/\D/', '', $rawPhone);
+
+                    // If it's the bypass code, return 'N/A'
+                    $phone = ($digitsOnly === '0000000000') ? 'N/A' : $digitsOnly;
+                } else {
+                    $phone = null;
+                }
 
                 $pass_id = $this->getPassNumber($validated['visitor_type']);
 
@@ -154,7 +170,7 @@ class VisitorController extends Controller
                     'gate_pass_id' => $pass_id->id,
                     'ic_number' => $ic,
                     'passport' => $passport,
-                    'phone_number' => $visitor['phone_number'],
+                    'phone_number' => $phone,
                     'purpose' => $validated['purpose'],
                     'remarks' => $validated['remarks'] ?? null,
                     'site_id' => $validated['site_id'],

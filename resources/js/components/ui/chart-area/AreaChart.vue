@@ -70,11 +70,10 @@ function handleLegendItemClick(d, i) {
 }
 
 function formatCategoryName(name) {
-  return name
-    .replace(/_/g, ' ')         // Replace underscores with spaces
-    .replace(/\b\w/g, c => c.toUpperCase()); // Capitalize each word
+    return name
+        .replace(/_/g, " ") // Replace underscores with spaces
+        .replace(/\b\w/g, (c) => c.toUpperCase()); // Capitalize each word
 }
-
 </script>
 
 <template>
@@ -97,10 +96,96 @@ function formatCategoryName(name) {
         />
 
         <VisXYContainer
+            ref="chartContainer"
             :style="{ height: isMounted ? '100%' : 'auto' }"
             :margin="{ left: 20, right: 20 }"
             :data="data"
         >
+            <!-- Overlay vertical lines at x = 8 and x = 18 -->
+            <!-- Light red line at x = 9 with label "Start Work" -->
+            <div class="absolute inset-0 pointer-events-none">
+                <svg class="w-full h-full">
+                    <line
+                        v-for="x in [9]"
+                        :key="'line-' + x"
+                        :x1="(x / 24) * 100 + '%'"
+                        y1="10%"
+                        :x2="(x / 24) * 100 + '%'"
+                        y2="90%"
+                        stroke="#fecaca"
+                        stroke-width="1"
+                        stroke-dasharray="4 4"
+                    />
+                    <text
+                        v-for="x in [9]"
+                        :key="'label-' + x"
+                        :x="(x / 24) * 100 + '%'"
+                        y="8%"
+                        fill="#fecaca"
+                        font-size="10"
+                        text-anchor="middle"
+                    >
+                        Start
+                    </text>
+                </svg>
+            </div>
+
+            <!-- Blue line at x = 13.2 with label "Rehat" -->
+            <div class="absolute inset-0 pointer-events-none">
+                <svg class="w-full h-full">
+                    <line
+                        v-for="x in [13.2]"
+                        :key="'line-' + x"
+                        :x1="(x / 24) * 100 + '%'"
+                        y1="10%"
+                        :x2="(x / 24) * 100 + '%'"
+                        y2="90%"
+                        stroke="#60a5fa"
+                        stroke-width="1"
+                        stroke-dasharray="4 4"
+                    />
+                    <text
+                        v-for="x in [13.2]"
+                        :key="'label-' + x"
+                        :x="(x / 24) * 100 + '%'"
+                        y="8%"
+                        fill="#60a5fa"
+                        font-size="10"
+                        text-anchor="middle"
+                    >
+                        Break
+                    </text>
+                </svg>
+            </div>
+
+            <!-- Green line at x = 18.6 with label "End" -->
+            <div class="absolute inset-0 pointer-events-none">
+                <svg class="w-full h-full">
+                    <line
+                        v-for="x in [18.6]"
+                        :key="'line-' + x"
+                        :x1="(x / 24) * 100 + '%'"
+                        y1="10%"
+                        :x2="(x / 24) * 100 + '%'"
+                        y2="90%"
+                        stroke="#bbf7d0"
+                        stroke-width="1"
+                        stroke-dasharray="4 4"
+                    />
+                    <text
+                        v-for="x in [18.6]"
+                        :key="'label-' + x"
+                        :x="(x / 24) * 100 + '%'"
+                        y="8%"
+                        fill="#bbf7d0"
+                        font-size="10"
+                        text-anchor="middle"
+                    >
+                        End
+                    </text>
+                </svg>
+            </div>
+
             <svg width="0" height="0">
                 <defs>
                     <linearGradient
@@ -197,7 +282,7 @@ function formatCategoryName(name) {
                 :grid-line="showGridLine"
                 :attributes="{
                     [Axis.selectors.grid]: {
-                        class: 'text-muted',
+                        class: 'text-muted', // colour line belakang
                     },
                 }"
                 tick-text-color="hsl(var(--vis-text-color))"
