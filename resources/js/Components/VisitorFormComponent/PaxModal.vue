@@ -79,7 +79,13 @@ function confirm() {
             <div class="mt-6 flex justify-center">
                 <button
                     @click="confirm"
-                    class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    :disabled="!visitorType"
+                    class="px-4 py-2 rounded text-white"
+                    :class="
+                        !visitorType
+                            ? 'bg-gray-400 cursor-not-allowed'
+                            : 'bg-blue-600 hover:bg-blue-700'
+                    "
                 >
                     Confirm
                 </button>

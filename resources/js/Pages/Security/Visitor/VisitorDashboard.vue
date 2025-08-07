@@ -17,7 +17,6 @@ import VisitorTable from "@/Components/VisitorTableComponent/VisitorTable.vue";
 import VisitorModal from "@/Components/VisitorTableComponent/VisitorModal.vue";
 import GatePassModal from "@/Components/VisitorTableComponent/GatePassModal.vue";
 import CheckoutModal from "@/Components/VisitorTableComponent/CheckoutModal.vue";
-import { show } from "@unovis/ts/components/tooltip/style";
 
 interface GatePass {
     id: number;
@@ -84,7 +83,6 @@ const showVisitorModal = ref(false);
 const visitorInsideList = ref([]);
 const totalAvailableGatePass = ref(0);
 const showCheckoutModal = ref(false);
-
 let intervalId;
 
 const filteredVisitors = computed(() => {

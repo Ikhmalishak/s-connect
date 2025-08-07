@@ -1,21 +1,11 @@
 <script setup lang="ts">
 import {
-    Table,
-    TableBody,
-    TableCaption,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
-import {
     Tooltip,
     TooltipContent,
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
     Select,
     SelectContent,
@@ -33,10 +23,19 @@ import {
     ScanQrCode,
     Eye,
     EyeClosed,
-    EyeOff,
 } from "lucide-vue-next";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuLabel,
+    DropdownMenuRadioGroup,
+    DropdownMenuRadioItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ref, watch } from "vue";
 import { Card } from "@/components/ui/card";
+import CustomTooltip from "../CustomTooltip.vue";
 
 interface VisitorForm {
     id: number;
@@ -155,7 +154,8 @@ function setRowMask(visitorId: number, state: boolean) {
                                 <SelectGroup>
                                     <SelectItem value="10">10</SelectItem>
                                     <SelectItem value="25">25</SelectItem>
-                                    <SelectItem value="30">30</SelectItem>
+                                    <SelectItem value="50">50</SelectItem>
+                                    <SelectItem value="100">100</SelectItem>
                                 </SelectGroup>
                             </SelectContent>
                         </Select>
@@ -194,156 +194,224 @@ function setRowMask(visitorId: number, state: boolean) {
                     </div>
 
                     <div>
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger>
-                                    <Link href="/visitor/form">
-                                        <button>
-                                            <UserRoundPlus class="w-9 h-9" />
-                                        </button>
-                                    </Link>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p>Add User</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger as-child>
+                                <CustomTooltip text="Add User" position="top">
+                                    <UserRoundPlus
+                                        class="w-9 h-9 cursor-pointer text-black"
+                                    />
+                                </CustomTooltip>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent class="w-56">
+                                <DropdownMenuLabel
+                                    >Select Site</DropdownMenuLabel
+                                >
+                                <DropdownMenuSeparator />
+                                <DropdownMenuRadioGroup>
+                                    <DropdownMenuRadioItem value="s1">
+                                        <Link
+                                            href="/visitor/form/s1"
+                                            class="block w-full"
+                                            >Site 1</Link
+                                        >
+                                    </DropdownMenuRadioItem>
+
+                                    <DropdownMenuRadioItem value="s2">
+                                        <Link
+                                            href="/visitor/form/s2"
+                                            class="block w-full"
+                                            >Site 2</Link
+                                        >
+                                    </DropdownMenuRadioItem>
+
+                                    <DropdownMenuRadioItem value="s3">
+                                        <Link
+                                            href="/visitor/form/s3"
+                                            class="block w-full"
+                                            >Site 3</Link
+                                        >
+                                    </DropdownMenuRadioItem>
+
+                                    <DropdownMenuRadioItem value="s4">
+                                        <Link
+                                            href="/visitor/form/s4"
+                                            class="block w-full"
+                                            >Site 4</Link
+                                        >
+                                    </DropdownMenuRadioItem>
+                                </DropdownMenuRadioGroup>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                 </div>
             </div>
 
-            <div class="flex-1 overflow-y-auto max-h-[420px]">
-                <Table class="min-w-full">
-                    <TableHeader>
-                        <TableRow
+            <div
+                class="flex-1 overflow-y-auto max-h-[420px] border border-gray-300"
+            >
+                <table class="min-w-full">
+                    <thead class="sticky top-0 bg-gray-100 z-40 border border-b-gray-300">
+                        <tr
                             class="border border-gray-300 font-black divide-x divide-gray-300 text-black"
                         >
-                            <TableHead
-                                class="font-black text-black text-center bg-gray-100"
-                                >No</TableHead
+                            <th
+                                   class="font-black text-black text-center bg-gray-100 p-3 sticky top-0 z-20 border-r border-gray-300 text-sm"
+
                             >
-                            <TableHead
-                                class="font-black text-black text-center bg-gray-100"
-                                >Pass Number</TableHead
+                                No
+                            </th>
+                            <th
+                                   class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
+
                             >
-                            <TableHead
-                                class="font-black text-black text-center bg-gray-100"
-                                >Visitor Name</TableHead
+                                Pass Number
+                            </th>
+                            <th
+                                   class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
+
                             >
-                            <TableHead
-                                class="font-black text-black text-center bg-gray-100"
-                                >Vehicle Number</TableHead
+                                Visitor Name
+                            </th>
+                            <th
+                                   class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
+
                             >
-                            <TableHead
-                                class="font-black text-black text-center bg-gray-100"
-                                >Date</TableHead
+                                Vehicle Number
+                            </th>
+                            <th
+                                   class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
+
                             >
-                            <TableHead
-                                class="font-black text-black text-center bg-gray-100"
-                                >Time Register</TableHead
+                                Date
+                            </th>
+                            <th
+                                   class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
+
                             >
-                            <TableHead
-                                class="font-black text-black text-center bg-gray-100"
-                                >Time In</TableHead
+                                Time Register
+                            </th>
+                            <th
+                                   class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
+
                             >
-                            <TableHead
-                                class="font-black text-black text-center bg-gray-100"
-                                >Time Out</TableHead
+                                Time In
+                            </th>
+                            <th
+                                   class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
+
                             >
-                            <TableHead
-                                class="font-black text-black text-center bg-gray-100"
-                                >Company</TableHead
+                                Time Out
+                            </th>
+                            <th
+                                   class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
+
                             >
-                            <TableHead
-                                class="font-black text-black text-center bg-gray-100"
-                                >Reasons</TableHead
+                                Company
+                            </th>
+                            <th
+                                   class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
+
                             >
-                            <TableHead
-                                class="font-black text-black text-center bg-gray-100"
-                                >IC Number</TableHead
+                                Reasons
+                            </th>
+                            <th
+                                   class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
+
                             >
-                            <TableHead
-                                class="font-black text-black text-center bg-gray-100"
-                                >Passport</TableHead
+                                IC Number
+                            </th>
+                            <th
+                                   class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
+
                             >
-                            <TableHead
-                                class="font-black text-black text-center bg-gray-100"
-                                >Phone Number</TableHead
+                                Passport
+                            </th>
+                            <th
+                                   class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
+
                             >
-                            <TableHead
-                                class="font-black text-black text-center bg-gray-100"
-                                >Visitor Code</TableHead
+                                Phone Number
+                            </th>
+                            <th
+                                   class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
+
                             >
-                            <TableHead
-                                class="font-black text-black text-center bg-gray-100"
-                                >DU</TableHead
+                                Visitor Code
+                            </th>
+                            <th
+                                   class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
+
                             >
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody
+                                DU
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody
                         class="border border-gray-300 divide-x divide-gray-300"
                     >
-                        <TableRow
+                        <tr
                             v-for="(visitor, index) in visitors"
                             :key="visitor.id"
+                            class="text-sm"
                             :class="[
                                 getRowClass(visitor),
                                 'border border-gray-300 divide-x divide-gray-300',
                             ]"
                         >
-                            <TableCell class="text-center">
+                            <td class="text-center p-2">
                                 {{ index + 1 }}
-                            </TableCell>
-                            <TableCell class="text-center">{{
-                                visitor.gate_pass?.pass_number || "-"
-                            }}</TableCell>
-                            <TableCell class="text-center">{{
-                                visitor.visitor_name
-                            }}</TableCell>
-                            <TableCell class="text-center">{{
-                                visitor.vehicle_number
-                            }}</TableCell>
-                            <TableCell class="text-center">{{
-                                visitor.date
-                            }}</TableCell>
-                            <TableCell class="text-center">{{
-                                trimToHourMinute(visitor.time_register)
-                            }}</TableCell>
-                            <TableCell class="text-center">
+                            </td>
+                            <td class="text-center p-2">
+                                {{ visitor.gate_pass?.pass_number || "-" }}
+                            </td>
+                            <td class="text-center p-2">
+                                {{ visitor.visitor_name }}
+                            </td>
+                            <td class="text-center p-2">
+                                {{ visitor.vehicle_number }}
+                            </td>
+                            <td class="text-center p-2">
+                                {{ visitor.date }}
+                            </td>
+                            <td class="text-center p-2">
+                                {{ trimToHourMinute(visitor.time_register) }}
+                            </td>
+                            <td class="text-center p-2">
                                 <template v-if="visitor.time_in">
                                     {{ trimToHourMinute(visitor.time_in) }}
                                 </template>
                                 <template v-else>
-                                    <Button
+                                    <button
                                         @click="emit('checkIn', visitor.id)"
-                                        class="h-6 px-2 text-xs leading-none"
+                                        class="h-6 px-2 text-xs leading-none bg-black text-white rounded"
                                     >
                                         Check In
-                                    </Button>
+                                    </button>
                                 </template>
-                            </TableCell>
-                            <TableCell class="text-center">
+                            </td>
+                            <td class="text-center p-2">
                                 <template v-if="visitor.time_out">
                                     {{ trimToHourMinute(visitor.time_out) }}
                                 </template>
                                 <template v-else>
-                                    <Button
+                                    <!-- <button
                                         @click="emit('checkOut', visitor.id)"
-                                        class="h-6 px-2 text-xs leading-none"
+                                        class="h-6 px-2 text-xs leading-none bg-red-600 text-white rounded hover:bg-red-700"
                                         :disabled="!visitor.time_in"
                                     >
                                         Check Out
-                                    </Button>
+                                    </button> -->
+                                    --:--
                                 </template>
-                            </TableCell>
-                            <TableCell class="text-center">{{
-                                visitor.visitor_company
-                            }}</TableCell>
-                            <TableCell class="text-center">{{
-                                visitor.purpose
-                            }}</TableCell>
-                            <TableCell
-                                class="text-center"
+                            </td>
+                            <td class="text-center p-2">
+                                {{ visitor.visitor_company }}
+                            </td>
+                            <td class="text-center p-2">
+                                {{ visitor.purpose }}
+                            </td>
+                            <td
+                                class="text-center p-2"
                                 :class="{
                                     'text-black font-bold':
                                         unmasked[visitor.id],
@@ -354,10 +422,9 @@ function setRowMask(visitorId: number, state: boolean) {
                                         ? visitor.ic_number
                                         : maskValue(visitor.ic_number)
                                 }}
-                            </TableCell>
-
-                            <TableCell
-                                class="text-center"
+                            </td>
+                            <td
+                                class="text-center p-2"
                                 :class="{
                                     'text-black font-bold':
                                         unmasked[visitor.id],
@@ -368,10 +435,9 @@ function setRowMask(visitorId: number, state: boolean) {
                                         ? visitor.passport
                                         : maskValue(visitor.passport)
                                 }}
-                            </TableCell>
-
-                            <TableCell
-                                class="text-center"
+                            </td>
+                            <td
+                                class="text-center p-2"
                                 :class="{
                                     'text-black font-bold':
                                         unmasked[visitor.id],
@@ -382,11 +448,11 @@ function setRowMask(visitorId: number, state: boolean) {
                                         ? visitor.phone_number
                                         : maskValue(visitor.phone_number)
                                 }}
-                            </TableCell>
-                            <TableCell class="text-center">{{
-                                trimVisitorType(visitor.visitor_type)
-                            }}</TableCell>
-                            <TableCell class="text-center">
+                            </td>
+                            <td class="text-center p-2">
+                                {{ trimVisitorType(visitor.visitor_type) }}
+                            </td>
+                            <td class="text-center p-2">
                                 <button
                                     class="p-1 rounded hover:bg-gray-200"
                                     @mouseenter="setRowMask(visitor.id, true)"
@@ -408,10 +474,10 @@ function setRowMask(visitorId: number, state: boolean) {
                                         }"
                                     />
                                 </button>
-                            </TableCell>
-                        </TableRow>
-                    </TableBody>
-                </Table>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </Card>
     </div>

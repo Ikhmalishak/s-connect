@@ -248,152 +248,169 @@ defineExpose({
 </script>
 
 <template>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-        <div
-            v-for="(visitor, i) in visitors"
-            :key="i"
-            class="border p-4 rounded-md bg-gray-50"
-        >
-            <h3 class="font-semibold text-gray-700 mb-2">
-                {{
-                    visitor.visitor_type
-                        .replace("-", " ")
-                        .replace(/\b\w/g, (char) => char.toUpperCase())
-                }}
-                #{{ i + 1 }}
-            </h3>
-
-            <!-- Name Field -->
-            <FormField
-                :name="`visitors[${i}].visitor_name`"
-                v-slot="{ componentField }"
+    <div class="space-y-6">
+        <h2 class="text-xl font-semibold">Step 1: Visitor Details</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+            <div
+                v-for="(visitor, i) in visitors"
+                :key="i"
+                class="border p-4 rounded-md bg-gray-50"
             >
-                <FormItem>
-                    <FormLabel>
-                        {{
-                            visitor.visitor_type
-                                .replace("-", " ")
-                                .replace(/\b\w/g, (char) => char.toUpperCase())
-                        }}
-                        Name <span class="text-red-500">*</span>
-                    </FormLabel>
-                    <FormControl>
-                        <Input
-                            v-bind="componentField"
-                            @input="handleNameInput(i, $event)"
-                            placeholder="Graham Bell"
-                            :class="
-                                validationErrors[`visitors[${i}].visitor_name`]
-                                    ? 'border-red-500'
-                                    : ''
-                            "
-                        />
-                    </FormControl>
-                    <div
-                        v-if="validationErrors[`visitors[${i}].visitor_name`]"
-                        class="text-red-500 text-sm mt-1"
-                    >
-                        {{ validationErrors[`visitors[${i}].visitor_name`] }}
-                    </div>
-                    <FormMessage />
-                </FormItem>
-            </FormField>
+                <h3 class="font-semibold text-gray-700 mb-2">
+                    {{
+                        visitor.visitor_type
+                            .replace("-", " ")
+                            .replace(/\b\w/g, (char) => char.toUpperCase())
+                    }}
+                    #{{ i + 1 }}
+                </h3>
 
-            <!-- ID Type Field -->
-            <FormField
-                :name="`visitors[${i}].id_type`"
-                v-slot="{ componentField }"
-            >
-                <FormItem>
-                    <FormLabel>
-                        ID Type <span class="text-red-500">*</span>
-                    </FormLabel>
-                    <Select v-bind="componentField">
+                <!-- Name Field -->
+                <FormField
+                    :name="`visitors[${i}].visitor_name`"
+                    v-slot="{ componentField }"
+                >
+                    <FormItem>
+                        <FormLabel>
+                            {{
+                                visitor.visitor_type
+                                    .replace("-", " ")
+                                    .replace(/\b\w/g, (char) =>
+                                        char.toUpperCase()
+                                    )
+                            }}
+                            Name <span class="text-red-500">*</span>
+                        </FormLabel>
                         <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select ID Type" />
-                            </SelectTrigger>
+                            <Input
+                                v-bind="componentField"
+                                @input="handleNameInput(i, $event)"
+                                placeholder="Graham Bell"
+                                :class="
+                                    validationErrors[
+                                        `visitors[${i}].visitor_name`
+                                    ]
+                                        ? 'border-red-500'
+                                        : ''
+                                "
+                            />
                         </FormControl>
-                        <SelectContent>
-                            <SelectGroup>
-                                <SelectItem value="IC"
-                                    >Identification Card</SelectItem
-                                >
-                                <SelectItem value="Passport"
-                                    >Passport</SelectItem
-                                >
-                            </SelectGroup>
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                </FormItem>
-            </FormField>
-
-            <!-- ID Number Field -->
-            <FormField
-                :name="`visitors[${i}].id_number`"
-                v-slot="{ componentField }"
-            >
-                <FormItem>
-                    <FormLabel>
-                        ID Number <span class="text-red-500">*</span>
-                    </FormLabel>
-                    <FormControl>
-                        <Input
-                            v-bind="componentField"
-                            @input="handleIdNumberInput(i, $event)"
-                            :placeholder="
-                                visitor.id_type === 'IC'
-                                    ? 'XXXXXX-XX-XXXX'
-                                    : 'Passport Number'
+                        <div
+                            v-if="
+                                validationErrors[`visitors[${i}].visitor_name`]
                             "
-                            :class="
-                                validationErrors[`visitors[${i}].id_number`]
-                                    ? 'border-red-500'
-                                    : ''
-                            "
-                        />
-                    </FormControl>
-                    <div
-                        v-if="validationErrors[`visitors[${i}].id_number`]"
-                        class="text-red-500 text-sm mt-1"
-                    >
-                        {{ validationErrors[`visitors[${i}].id_number`] }}
-                    </div>
-                    <FormMessage />
-                </FormItem>
-            </FormField>
+                            class="text-red-500 text-sm mt-1"
+                        >
+                            {{
+                                validationErrors[`visitors[${i}].visitor_name`]
+                            }}
+                        </div>
+                        <FormMessage />
+                    </FormItem>
+                </FormField>
 
-            <!-- Phone Number Field -->
-            <FormField
-                :name="`visitors[${i}].phone_number`"
-                v-slot="{ componentField }"
-            >
-                <FormItem>
-                    <FormLabel>
-                        Phone Number <span class="text-red-500">*</span>
-                    </FormLabel>
-                    <FormControl>
-                        <Input
-                            v-bind="componentField"
-                            @input="handlePhoneInput(i, $event)"
-                            placeholder="01X-XXX XXXX"
-                            :class="
+                <!-- ID Type Field -->
+                <FormField
+                    :name="`visitors[${i}].id_type`"
+                    v-slot="{ componentField }"
+                >
+                    <FormItem>
+                        <FormLabel>
+                            ID Type <span class="text-red-500">*</span>
+                        </FormLabel>
+                        <Select v-bind="componentField">
+                            <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select ID Type" />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                <SelectGroup>
+                                    <SelectItem value="IC"
+                                        >Identification Card</SelectItem
+                                    >
+                                    <SelectItem value="Passport"
+                                        >Passport</SelectItem
+                                    >
+                                </SelectGroup>
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                </FormField>
+
+                <!-- ID Number Field -->
+                <FormField
+                    :name="`visitors[${i}].id_number`"
+                    v-slot="{ componentField }"
+                >
+                    <FormItem>
+                        <FormLabel>
+                            ID Number <span class="text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                            <Input
+                                v-bind="componentField"
+                                @input="handleIdNumberInput(i, $event)"
+                                :placeholder="
+                                    visitor.id_type === 'IC'
+                                        ? 'XXXXXX-XX-XXXX'
+                                        : 'Passport Number'
+                                "
+                                :class="
+                                    validationErrors[`visitors[${i}].id_number`]
+                                        ? 'border-red-500'
+                                        : ''
+                                "
+                            />
+                        </FormControl>
+                        <div
+                            v-if="validationErrors[`visitors[${i}].id_number`]"
+                            class="text-red-500 text-sm mt-1"
+                        >
+                            {{ validationErrors[`visitors[${i}].id_number`] }}
+                        </div>
+                        <FormMessage />
+                    </FormItem>
+                </FormField>
+
+                <!-- Phone Number Field -->
+                <FormField
+                    :name="`visitors[${i}].phone_number`"
+                    v-slot="{ componentField }"
+                >
+                    <FormItem>
+                        <FormLabel>
+                            Phone Number <span class="text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                            <Input
+                                v-bind="componentField"
+                                @input="handlePhoneInput(i, $event)"
+                                placeholder="01X-XXX XXXX"
+                                :class="
+                                    validationErrors[
+                                        `visitors[${i}].phone_number`
+                                    ]
+                                        ? 'border-red-500'
+                                        : ''
+                                "
+                            />
+                        </FormControl>
+                        <div
+                            v-if="
                                 validationErrors[`visitors[${i}].phone_number`]
-                                    ? 'border-red-500'
-                                    : ''
                             "
-                        />
-                    </FormControl>
-                    <div
-                        v-if="validationErrors[`visitors[${i}].phone_number`]"
-                        class="text-red-500 text-sm mt-1"
-                    >
-                        {{ validationErrors[`visitors[${i}].phone_number`] }}
-                    </div>
-                    <FormMessage />
-                </FormItem>
-            </FormField>
+                            class="text-red-500 text-sm mt-1"
+                        >
+                            {{
+                                validationErrors[`visitors[${i}].phone_number`]
+                            }}
+                        </div>
+                        <FormMessage />
+                    </FormItem>
+                </FormField>
+            </div>
         </div>
     </div>
 </template>

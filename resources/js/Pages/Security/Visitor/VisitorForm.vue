@@ -99,6 +99,7 @@ function handleReset() {
     videoEnded.value = false;
     securityGuidelinesConfirmed.value = false;
     resetVideoTrigger.value = true;
+    visitorType.value = "";
 
     // Optional delay to re-trigger video reset
     nextTick(() => {
@@ -278,6 +279,8 @@ async function handleModalClose() {
 
     // Reopen pax modal if you want users to input number of visitors again
     paxModalOpen.value = true;
+    visitorType.value = "";
+
 }
 
 const stepTitles = {
@@ -399,7 +402,7 @@ watch(currentStep, async (newStep) => {
                 </div>
             </div>
 
-            <form @submit="onSubmit" class="p-6 space-y-6">
+            <form @submit="onSubmit" class="px-6 py-2 mb-2 space-y-6">
                 <!-- Step 1 -->
                 <PersonalInfoStep
                     ref="personalInfoStepRef"

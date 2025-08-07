@@ -240,7 +240,7 @@ defineExpose({
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div class="space-y-6 ">
     <h2 class="text-xl font-semibold">Step 2: Visit Details</h2>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">

@@ -84,7 +84,7 @@ const handleConfirmChange = (checked: boolean) => {
 
 <template>
     <div>
-        <h3 class="text-lg font-semibold mb-4">Review & Submit</h3>
+        <h3 class="text-lg font-semibold mb-4">Step 4 : Review & Submit</h3>
 
         <div
             ref="securityGuidelinesContainer"
