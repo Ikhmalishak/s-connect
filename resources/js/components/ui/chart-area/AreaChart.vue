@@ -168,7 +168,7 @@ function formatCategoryName(name) {
                         y1="10%"
                         :x2="(x / 24) * 100 + '%'"
                         y2="90%"
-                        stroke="#bbf7d0"
+                        stroke="#4ade80"
                         stroke-width="1"
                         stroke-dasharray="4 4"
                     />
@@ -177,7 +177,7 @@ function formatCategoryName(name) {
                         :key="'label-' + x"
                         :x="(x / 24) * 100 + '%'"
                         y="8%"
-                        fill="#bbf7d0"
+                        fill="#4ade80"
                         font-size="10"
                         text-anchor="middle"
                     >
