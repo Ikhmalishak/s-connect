@@ -33,8 +33,8 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             DepartmentSeeder::class,
-            VisitorCompanySeeder::class,
             GatePassSeeder::class,
+            SiteSeeder::class,
         ]);
     }
 }

@@ -30,6 +30,7 @@ return new class extends Migration {
             $table->string('phone_number');
             $table->boolean('is_acknowledge')->default(false); // did they watch the video etc.
             $table->string('person_to_meet')->nullable(); // for meetings
+            $table->string('other_reasons')->nullable(); // if visitor choose purpose others
             $table->timestamps();
         });
     }

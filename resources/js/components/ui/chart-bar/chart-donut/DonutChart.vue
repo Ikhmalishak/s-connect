@@ -52,17 +52,27 @@ const colors = computed(() =>
 );
 
 const legendItems = computed(() =>
-    props.data.map((item, i) => ({
-        name: item[props.index],
-        color: colors.value[i],
-        value: item[props.category],
-        percentage: ((item[props.category] / totalValue.value) * 100).toFixed(
-            1
-        ),
-        inactive:
-            activeSegmentKey.value !== undefined &&
-            activeSegmentKey.value !== item[props.index],
-    }))
+  props.data.map((item, i) => {
+    let rawName = item[props.index];
+
+    // Sanitize name
+    if (rawName === 'inbound-shipment/transfer') {
+      rawName = 'Driver Inbound-Ship/Transfer';
+    }
+    if (rawName === 'outbound-shipment/transfer') {
+      rawName = 'Driver Outbound-Ship/Transfer';
+    }
+
+    return {
+      name: rawName,
+      color: colors.value[i],
+      value: item[props.category],
+      percentage: ((item[props.category] / totalValue.value) * 100).toFixed(1),
+      inactive:
+        activeSegmentKey.value !== undefined &&
+        activeSegmentKey.value !== item[props.index],
+    };
+  })
 );
 
 const totalValue = computed(() =>

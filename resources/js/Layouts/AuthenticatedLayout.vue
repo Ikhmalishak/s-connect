@@ -49,19 +49,7 @@ console.log(user.email);
                 <Separator orientation="vertical" class="mr-2 h-4" />
                 <!-- Breadcrumb slot -->
                 <slot name="breadcrumb" />
-                <!-- <Breadcrumb>
-                    <BreadcrumbList>
-                        <BreadcrumbItem class="hidden md:block">
-                            <BreadcrumbLink href="#">
-                                Building Your Application
-                            </BreadcrumbLink>
-                        </BreadcrumbItem>
-                        <BreadcrumbSeparator class="hidden md:block" />
-                        <BreadcrumbItem>
-                            <BreadcrumbPage>Data Fetching</BreadcrumbPage>
-                        </BreadcrumbItem>
-                    </BreadcrumbList>
-                </Breadcrumb> -->
+
                 <div
                     class="flex flex-row items-center absolute inset-y right-3"
                 >

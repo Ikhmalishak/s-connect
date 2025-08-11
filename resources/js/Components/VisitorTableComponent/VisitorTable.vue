@@ -5,7 +5,6 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Button } from "@/components/ui/button";
 import {
     Select,
     SelectContent,
@@ -36,6 +35,7 @@ import {
 import { ref, watch } from "vue";
 import { Card } from "@/components/ui/card";
 import CustomTooltip from "../CustomTooltip.vue";
+import { EyeOff } from "lucide-vue-next";
 
 interface VisitorForm {
     id: number;
@@ -48,6 +48,7 @@ interface VisitorForm {
     time_in: string;
     time_out: string;
     visitor_company: string;
+    other_reasons: string;
     purpose: string;
     ic_number: string;
     passport: string;
@@ -250,97 +251,84 @@ function setRowMask(visitorId: number, state: boolean) {
                 class="flex-1 overflow-y-auto max-h-[420px] border border-gray-300"
             >
                 <table class="min-w-full">
-                    <thead class="sticky top-0 bg-gray-100 z-40 border border-b-gray-300">
+                    <thead
+                        class="sticky top-0 bg-gray-100 z-40 border border-b-gray-300"
+                    >
                         <tr
                             class="border border-gray-300 font-black divide-x divide-gray-300 text-black"
                         >
                             <th
-                                   class="font-black text-black text-center bg-gray-100 p-3 sticky top-0 z-20 border-r border-gray-300 text-sm"
-
+                                class="font-black text-black text-center bg-gray-100 p-3 sticky top-0 z-20 border-r border-gray-300 text-sm"
                             >
                                 No
                             </th>
                             <th
-                                   class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
-
+                                class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
                             >
                                 Pass #
                             </th>
                             <th
-                                   class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
-
+                                class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
                             >
                                 Visitor Name
                             </th>
                             <th
-                                   class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
-
+                                class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
                             >
                                 Vehicle #
                             </th>
                             <th
-                                   class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
-
+                                class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
                             >
                                 Date
                             </th>
                             <th
-                                   class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
-
+                                class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
                             >
-                                Time Register
+                                Time Reg
                             </th>
                             <th
-                                   class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
-
+                                class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
                             >
                                 Time In
                             </th>
                             <th
-                                   class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
-
+                                class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
                             >
                                 Time Out
                             </th>
                             <th
-                                   class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
-
+                                class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
                             >
                                 Company
                             </th>
                             <th
-                                   class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
-
+                                class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
                             >
                                 Reasons
                             </th>
                             <th
-                                   class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
-
+                                class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
                             >
                                 IC #
                             </th>
                             <th
-                                   class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
-
+                                class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
                             >
                                 Passport #
                             </th>
                             <th
-                                   class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
-
+                                class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
                             >
                                 Phone #
                             </th>
                             <th
-                                   class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
-
+                                class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
                             >
                                 VCode
                             </th>
                             <th
-                                   class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
-
+                                class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
                             >
                                 DU
                             </th>
@@ -365,13 +353,17 @@ function setRowMask(visitorId: number, state: boolean) {
                                 {{ visitor.gate_pass?.pass_number || "-" }}
                             </td>
                             <td class="text-center p-2">
-                                {{ visitor.visitor_name }}
+                                {{ visitor.visitor_name.toUpperCase() }}
                             </td>
                             <td class="text-center p-2">
                                 {{ visitor.vehicle_number }}
                             </td>
                             <td class="text-center p-2">
-                                {{ visitor.date }}
+                                {{
+                                    new Date(visitor.date).toLocaleDateString(
+                                        "en-GB"
+                                    )
+                                }}
                             </td>
                             <td class="text-center p-2">
                                 {{ trimToHourMinute(visitor.time_register) }}
@@ -394,21 +386,25 @@ function setRowMask(visitorId: number, state: boolean) {
                                     {{ trimToHourMinute(visitor.time_out) }}
                                 </template>
                                 <template v-else>
-                                    <button
+                                    <!-- <button
                                         @click="emit('checkOut', visitor.id)"
                                         class="h-6 px-2 text-xs leading-none bg-black text-white rounded"
                                         :disabled="!visitor.time_in"
                                     >
                                         Check Out
-                                    </button>
-                                    <!-- --:-- -->
+                                    </button> -->
+                                    --:--
                                 </template>
                             </td>
                             <td class="text-center p-2">
-                                {{ visitor.visitor_company }}
+                                {{ visitor.visitor_company.toUpperCase() }}
                             </td>
                             <td class="text-center p-2">
-                                {{ visitor.purpose }}
+                                {{
+                                    visitor.purpose === "Other"
+                                        ? `Other - ${visitor.other_reasons}`
+                                        : visitor.purpose
+                                }}
                             </td>
                             <td
                                 class="text-center p-2"
@@ -454,6 +450,15 @@ function setRowMask(visitorId: number, state: boolean) {
                             </td>
                             <td class="text-center p-2">
                                 <button
+                                    v-if="visitor.time_in"
+                                    class="p-1 rounded cursor-not-allowed"
+                                    title="Cannot unmask after check-in"
+                                >
+                                    <EyeOff class="w-5 h-5 text-black" />
+                                </button>
+
+                                <button
+                                    v-else
                                     class="p-1 rounded hover:bg-gray-200"
                                     @mouseenter="setRowMask(visitor.id, true)"
                                     @mouseleave="setRowMask(visitor.id, false)"

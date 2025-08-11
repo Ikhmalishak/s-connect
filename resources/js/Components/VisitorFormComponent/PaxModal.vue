@@ -29,6 +29,9 @@ function confirm() {
         class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
     >
         <div class="max-w-md w-full bg-white p-6 rounded-xl shadow-xl">
+
+            <img src="/assets/ss2.png" alt="" />
+
             <h2 class="text-xl font-semibold mb-2 text-center">Visitor Type</h2>
 
             <div class="flex justify-center items-center gap-3">
@@ -47,14 +50,18 @@ function confirm() {
                     </option>
                     <option value="visitor">Visitor</option>
                     <option value="contractor">Contractor</option>
-                    <option value="driver-shipment">Driver - Shipment</option>
-                    <option value="driver-receiving">Driver - Receiving</option>
+                    <option value="inbound-shipment/transfer">
+                        Inbound Shipment/Transfer
+                    </option>
+                    <option value="outbound-shipment/transfer">
+                        Outbound Shipment/Transfer
+                    </option>
                 </select>
             </div>
 
-            <hr class="border-t border-gray-300 my-4" />
+            <hr class="border-t border-gray-300 my-4 mt-8" />
 
-            <h2 class="text-xl font-semibold mt-4 mb-2 text-center">
+            <h2 class="text-xl font-semibold mt-10 mb-2 text-center">
                 Number of Visitors
             </h2>
 
@@ -89,6 +96,17 @@ function confirm() {
                 >
                     Confirm
                 </button>
+            </div>
+
+            <hr class="border-t border-gray-300 my-4 mt-8" />
+
+            <div class="text-xs text-center">
+                Our Visitor Management System (VMS) is fully compliant with ISO
+                27001 information security standards and the Personal Data
+                Protection Act (PDPA). All personal data is encrypted and
+                handled solely for security and operational purposes, ensuring
+                it is stored, processed, and protected according to legal
+                requirements and industry best practices.
             </div>
         </div>
     </div>

@@ -20,7 +20,7 @@ class VisitorRegistered implements ShouldBroadcast
 
     public function __construct(Visitor $visitor)
     {
-        Log::info('testttt');
+        Log::info('register visitor event');
         $this->visitor = $visitor;
     }
 
@@ -37,8 +37,8 @@ class VisitorRegistered implements ShouldBroadcast
     }
 
     public function broadcastAs(): string
-{
-    return 'visitor.registered';
-}
+    {
+        return 'visitor.registered';
+    }
 
 }

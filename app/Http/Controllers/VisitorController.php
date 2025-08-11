@@ -124,6 +124,8 @@ class VisitorController extends Controller
             'time_register' => 'nullable',
             'date' => 'nullable|date',
             'visitor_type' => 'required|string',
+            'person_to_meet' => 'nullable|string',
+            'other_reasons' => 'nullable|string',
             'vehicle_number' => 'nullable|string',
             'visitor_company' => 'nullable|string',
             'video_watched' => 'nullable|boolean',
@@ -175,6 +177,8 @@ class VisitorController extends Controller
                     'remarks' => $validated['remarks'] ?? null,
                     'site_id' => $validated['site_id'],
                     'time_register' => $timeRegister,
+                    'person_to_meet' => $validated['person_to_meet'] ?? null,
+                    'other_reasons' => $validated['other_reasons'] ?? null,
                     'date' => $date,
                     'visitor_type' => $validated['visitor_type'],
                     'vehicle_number' => $vehicle_number,
@@ -214,9 +218,13 @@ class VisitorController extends Controller
     public function getPassNumber($visitor_type)
     {
         // ✅ Normalize visitor type
-        if (str_starts_with($visitor_type, 'driver-')) {
+        if (
+            str_starts_with($visitor_type, 'inbound-') ||
+            str_starts_with($visitor_type, 'outbound-')
+        ) {
             $visitor_type = 'driver';
         }
+
         return DB::transaction(function () use ($visitor_type) {
             $gate_pass = GatePass::where('pass_type', $visitor_type)
                 ->where('state', 'free')

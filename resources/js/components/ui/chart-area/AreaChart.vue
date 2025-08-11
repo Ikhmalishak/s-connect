@@ -106,12 +106,12 @@ function formatCategoryName(name) {
             <div class="absolute inset-0 pointer-events-none">
                 <svg class="w-full h-full">
                     <line
-                        v-for="x in [9]"
+                        v-for="x in [8.9]"
                         :key="'line-' + x"
                         :x1="(x / 24) * 100 + '%'"
                         y1="10%"
                         :x2="(x / 24) * 100 + '%'"
-                        y2="90%"
+                        y2="86%"
                         stroke="#fecaca"
                         stroke-width="1"
                         stroke-dasharray="4 4"
@@ -139,7 +139,7 @@ function formatCategoryName(name) {
                         :x1="(x / 24) * 100 + '%'"
                         y1="10%"
                         :x2="(x / 24) * 100 + '%'"
-                        y2="90%"
+                        y2="86%"
                         stroke="#60a5fa"
                         stroke-width="1"
                         stroke-dasharray="4 4"
@@ -162,18 +162,18 @@ function formatCategoryName(name) {
             <div class="absolute inset-0 pointer-events-none">
                 <svg class="w-full h-full">
                     <line
-                        v-for="x in [18.6]"
+                        v-for="x in [20.6]"
                         :key="'line-' + x"
                         :x1="(x / 24) * 100 + '%'"
                         y1="10%"
                         :x2="(x / 24) * 100 + '%'"
-                        y2="90%"
+                        y2="86%"
                         stroke="#4ade80"
                         stroke-width="1"
                         stroke-dasharray="4 4"
                     />
                     <text
-                        v-for="x in [18.6]"
+                        v-for="x in [20.6]"
                         :key="'label-' + x"
                         :x="(x / 24) * 100 + '%'"
                         y="8%"

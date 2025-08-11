@@ -35,6 +35,7 @@ type FormField =
   | "visitor_company"
   | "purpose"
   | "person_to_meet"
+  | "other_reasons"
   | "remarks"
   | "video_watched"
   | "security_guidelines_confirmed"
@@ -62,6 +63,7 @@ interface Values {
   visitor_company: string;
   purpose: string;
   person_to_meet: string;
+  other_reasons: string;
   remarks: string;
   video_watched: boolean;
   security_guidelines_confirmed: boolean;
@@ -77,6 +79,7 @@ const { handleSubmit, setFieldValue, values, errors, resetForm } = useForm<Value
     visitor_company: "",
     purpose: "",
     person_to_meet: "",
+    other_reasons: "",
     remarks: "",
     video_watched: false,
     security_guidelines_confirmed: false,
@@ -105,11 +108,12 @@ const visitDetailsStepRef = ref<{ isValid: () => boolean } | null>(null);
 const purposes = ref([
   "Meeting",
   "Delivery",
-  "Maintenance",
-  "Inspection",
+  "Service/Installation/Maintenance",
+  "Sorting/Rework",
+  "Interview",
   "Training",
-  "Shipment",
-  "Receiving",
+  "Shipping - Inbound",
+  "Shipping - Outbound",
   "Other",
 ]);
 

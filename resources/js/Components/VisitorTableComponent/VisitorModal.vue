@@ -8,6 +8,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import { ref, computed, onMounted } from "vue";
 
 interface Visitor {
     id: number;
@@ -26,6 +27,8 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(["close"]);
+const currentTime = ref(new Date());
+let intervalId;
 
 const duration = (time_in) => {
     const now = new Date(props.currentTime);
@@ -35,6 +38,21 @@ const duration = (time_in) => {
     const diffMins = Math.floor(diffMs / (1000 * 60));
     return diffMins;
 };
+
+const formattedDate = computed(() =>
+    currentTime.value.toLocaleDateString("en-GB", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+    })
+);
+
+onMounted(() => {
+    intervalId = setInterval(() => {
+        currentTime.value = new Date();
+    }, 1000);
+});
 </script>
 
 <template>
@@ -52,12 +70,19 @@ const duration = (time_in) => {
                     >
                         <div class="flex justify-between items-center mb-4">
                             <h2 class="text-xl font-bold">Visitor Details</h2>
-                            <button
-                                @click="emit('close')"
-                                class="text-gray-500 hover:text-gray-700 text-xl font-bold"
-                            >
-                                ×
-                            </button>
+                            <div class="flex flex-row gap-2 items-center">
+                                <div
+                                    class="flex flex-row space-x-4 text-base font-normal text-gray-600 text-right"
+                                >
+                                    <div>{{ formattedDate }}</div>
+                                </div>
+                                <button
+                                    @click="emit('close')"
+                                    class="text-gray-500 hover:text-gray-700 text-xl font-bold"
+                                >
+                                    ×
+                                </button>
+                            </div>
                         </div>
 
                         <div class="space-y-4">
@@ -77,7 +102,7 @@ const duration = (time_in) => {
                                         <TableHead
                                             class="w-[100px] text-center text-black font-black"
                                         >
-                                            Gate Pass ID
+                                            GPass ID
                                         </TableHead>
                                         <TableHead
                                             class="text-center text-black font-black"
@@ -101,6 +126,7 @@ const duration = (time_in) => {
                                 >
                                     <TableRow
                                         v-for="(visitor, index) in visitors"
+                                        class="text-center"
                                         :key="visitor.id"
                                         :class="[
                                             index % 2 === 1

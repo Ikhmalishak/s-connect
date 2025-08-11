@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm } from "@inertiajs/vue3";
 
 defineProps({
     canResetPassword: {
@@ -15,14 +15,14 @@ defineProps({
 });
 
 const form = useForm({
-    email: '',
-    password: '',
+    email: "",
+    password: "",
     remember: false,
 });
 
 const submit = () => {
-    form.post(route('login.submit'), {
-        onFinish: () => form.reset('password'),
+    form.post(route("login.submit"), {
+        onFinish: () => form.reset("password"),
     });
 };
 </script>
@@ -54,7 +54,9 @@ const submit = () => {
                         </div>
                         <div class="grid gap-2">
                             <div class="flex items-center">
-                                <Label for="password" class="text-white">Password</Label>
+                                <Label for="password" class="text-white"
+                                    >Password</Label
+                                >
                                 <Link
                                     v-if="canResetPassword"
                                     :href="route('password.request')"
@@ -71,17 +73,23 @@ const submit = () => {
                                 v-model="form.password"
                             />
                         </div>
-                        <Button type="submit" class="w-1/3 mx-auto text-black bg-white">
+                        <Button
+                            type="submit"
+                            class="w-1/3 mx-auto text-black bg-white"
+                        >
                             Login
                         </Button>
                     </div>
                 </form>
                 <div class="flex items-center justify-center">
-                    <img
-                        src="/assets/LOGO-3.png"
-                        alt="Image"
-                        class="mx-auto my-auto h-80 w-80 object-contain dark:brightness-[0.2] dark:grayscale"
-                    />
+                    <div>
+                        <img
+                            src="/assets/LOGO-3.png"
+                            alt="Image"
+                            class="mx-auto my-auto h-80 w-80 object-contain dark:brightness-[0.2] dark:grayscale"
+                        />
+                        <div class="text-center">V1.1</div>
+                    </div>
                 </div>
             </CardContent>
         </Card>

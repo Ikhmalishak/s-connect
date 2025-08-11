@@ -22,7 +22,9 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-const props = defineProps<{ show: boolean }>();
+const props = defineProps<{ 
+    show: boolean 
+}>();
 const emit = defineEmits(["close", "refresh"]);
 
 const scannedPass = ref("");
