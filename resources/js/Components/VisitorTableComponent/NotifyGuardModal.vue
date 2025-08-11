@@ -54,8 +54,7 @@ const emit = defineEmits(["close"]);
                             </button>
                         </div>
                         <p>
-                            Please ensure all the visitor checked out or check
-                            back lol
+                            Please ensure all the visitor checked out!!
                         </p>
 
                         <div class="space-y-4">
