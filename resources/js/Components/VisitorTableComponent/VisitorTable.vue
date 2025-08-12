@@ -305,7 +305,7 @@ function setRowMask(visitorId: number, state: boolean) {
                             <th
                                 class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
                             >
-                                Reasons
+                                Purposes
                             </th>
                             <th
                                 class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
@@ -393,7 +393,7 @@ function setRowMask(visitorId: number, state: boolean) {
                                     >
                                         Check Out
                                     </button> -->
-                                    --:--
+                                    -- : --
                                 </template>
                             </td>
                             <td class="text-center p-2">

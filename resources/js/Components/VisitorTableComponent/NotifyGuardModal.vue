@@ -43,7 +43,7 @@ const emit = defineEmits(["close"]);
                     >
                         <div class="flex justify-between items-center mb-4">
                             <h2 class="text-xl font-bold text-red-700">
-                                There are still visitor Inside
+                               <span class="text-3xl">⚠︎</span> There are still visitors on the premises.
                             </h2>
 
                             <button
@@ -84,7 +84,7 @@ const emit = defineEmits(["close"]);
                                         <TableHead
                                             class="text-center text-black font-black"
                                         >
-                                            Reason</TableHead
+                                            Purpose</TableHead
                                         >
                                     </TableRow>
                                 </TableHeader>
