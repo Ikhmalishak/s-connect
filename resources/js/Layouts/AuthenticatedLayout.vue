@@ -25,9 +25,9 @@ const page = usePage();
 const user = page.props.auth.user;
 
 // Idle state
-const isIdle = ref(false);
+const isIdle = ref(true);
 let idleTimer = null;
-const idleLimit = 5 * 60 * 1000; // 5 minutes
+const idleLimit = 10 * 60 * 1000; // 5 minutes
 
 function resetIdleTimer() {
     clearTimeout(idleTimer);
@@ -111,9 +111,10 @@ onBeforeUnmount(() => {
             class="absolute inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
         >
             <Card class="w-full max-w-md p-6 text-center shadow-lg">
-                <h2 class="text-2xl font-semibold mb-2">You’ve been idle</h2>
+                <img src="/assets/ss2.png" alt="">
+                <h2 class="text-2xl font-semibold mb-2">Screen Protection Activated</h2>
                 <p class="text-gray-600 dark:text-gray-300 mb-4">
-                    It’s been a while since your last activity.
+                    Simply touch or move your mouse to deactivate the screen protection.
                 </p>
             </Card>
         </div>

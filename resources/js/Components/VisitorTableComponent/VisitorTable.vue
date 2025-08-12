@@ -71,6 +71,7 @@ const emit = defineEmits([
     "checkOut",
     "openGatePassModal",
     "openCheckoutModal",
+    "openDetailsModal",
 ]);
 
 const searchQuery = ref("");
@@ -137,7 +138,7 @@ function setRowMask(visitorId: number, state: boolean) {
                         <input
                             v-model="searchQuery"
                             class="w-400 bg-gray-300 text-black placeholder:text-black border-none rounded-lg text-sm"
-                            placeholder="Search by name..."
+                            placeholder="Search..."
                         />
                     </div>
                 </div>
@@ -352,7 +353,10 @@ function setRowMask(visitorId: number, state: boolean) {
                             <td class="text-center p-2">
                                 {{ visitor.gate_pass?.pass_number || "-" }}
                             </td>
-                            <td class="text-center p-2">
+                            <td
+                                class="text-center p-2 cursor-pointer hover:underline"
+                                @click="emit('openDetailsModal', visitor.id)"
+                            >
                                 {{ visitor.visitor_name.toUpperCase() }}
                             </td>
                             <td class="text-center p-2">
@@ -373,12 +377,13 @@ function setRowMask(visitorId: number, state: boolean) {
                                     {{ trimToHourMinute(visitor.time_in) }}
                                 </template>
                                 <template v-else>
-                                    <button
+                                    <!-- <button
                                         @click="emit('checkIn', visitor.id)"
                                         class="h-6 px-2 text-xs leading-none bg-black text-white rounded"
                                     >
                                         Check In
-                                    </button>
+                                    </button> -->
+                                    -- : --
                                 </template>
                             </td>
                             <td class="text-center p-2">

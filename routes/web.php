@@ -40,10 +40,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/visitor/{id}/check-out', [VisitorController::class, 'checkOut']);
     Route::get('/api/visitors', [VisitorController::class, 'refreshVisitorTablePage']);
     Route::get('/visitor/visitor-inside', [VisitorController::class, 'getVisitorInside']);
-    Route::post('/visitor/checkout-by-pass', [VisitorController::class, 'checkOutByPass']);
+    Route::post('/visitor/scan-by-pass', [VisitorController::class, 'scanByPass']);
     Route::post('/visitor/check-acknowledgement', [VisitorController::class, 'checkAcknowledgement']);
     Route::get('/visitor/form/', [VisitorController::class, 'getVisitorForm']);
     Route::post('/visitor/submit',[VisitorController::class, 'store']);
+    Route::post('/visitors/{visitorId}/remarks', [VisitorController::class, 'editRemarks'])->name('visitors.editRemarks');
 
     //route for purpose and site and gate pass
     Route::apiResource('purposes', PurposeController::class);

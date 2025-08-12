@@ -22,8 +22,8 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-const props = defineProps<{ 
-    show: boolean 
+const props = defineProps<{
+    show: boolean;
 }>();
 const emit = defineEmits(["close", "refresh"]);
 
@@ -80,7 +80,7 @@ const handleScanCheckout = async () => {
 
     setTimeout(async () => {
         try {
-            const response = await axios.post("/visitor/checkout-by-pass", {
+            const response = await axios.post("/visitor/scan-by-pass", {
                 pass_number: scannedPass.value,
             });
             message.value = "✅ " + response.data.message;
@@ -133,7 +133,7 @@ const handleScanCheckout = async () => {
             <!-- ✅ Centered Icon & Title Side by Side -->
             <div class="flex items-center justify-center mb-6">
                 <ScanQrCode class="w-12 h-12 text-gray-700 mr-3" />
-                <h2 class="text-4xl font-bold">Scan for Checkout</h2>
+                <h2 class="text-4xl font-bold">Scan to Check In / Out</h2>
             </div>
 
             <Input
@@ -151,12 +151,12 @@ const handleScanCheckout = async () => {
                 <div class="flex flex-row gap-1">
                     <Info class="w-12 h-12" />
                     <p class="text-xs max-w-xl">
-                        "Scan for Checkout" is a feature utilizing Visitor
-                        Management Systems (VMS) to streamline visitor exit
-                        processes. By scanning their pass ID at designated
-                        checkout points, visitors are efficiently logged out,
-                        ensuring accurate tracking and compliance with security
-                        protocols before leaving the premises.
+                        This feature allows visitors to quickly
+                        <strong>check in or check out</strong>
+                        by scanning their pass ID at designated points. The
+                        system automatically updates their status in real time,
+                        ensuring accurate logs and smooth security compliance
+                        for both arrival and departure.
                     </p>
                 </div>
                 <div>
@@ -165,7 +165,7 @@ const handleScanCheckout = async () => {
                         @click="handleScanCheckout"
                         class="text-lg px-6 py-3"
                     >
-                        {{ isLoading ? "Processing..." : "Checkout" }}
+                        {{ isLoading ? "Processing..." : "Submit Scan" }}
                     </Button>
                 </div>
             </div>

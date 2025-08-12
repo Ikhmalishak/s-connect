@@ -18,6 +18,7 @@ import VisitorModal from "@/Components/VisitorTableComponent/VisitorModal.vue";
 import GatePassModal from "@/Components/VisitorTableComponent/GatePassModal.vue";
 import CheckoutModal from "@/Components/VisitorTableComponent/CheckoutModal.vue";
 import NotifyGuardModal from "@/Components/VisitorTableComponent/NotifyGuardModal.vue";
+import DetailsModal from "@/Components/VisitorTableComponent/DetailsModal.vue";
 
 interface GatePass {
     id: number;
@@ -89,17 +90,9 @@ const visitorInsideList = ref([]);
 const totalAvailableGatePass = ref(0);
 const showCheckoutModal = ref(false);
 const showNotifyModal = ref(false);
+const selectedVisitor = ref(null);
+const showDetailsModal = ref(false);
 let intervalId;
-
-const filteredVisitors = computed(() => {
-    const items = visitorForms.value;
-    if (!searchQuery.value) return items;
-    return items.filter((visitor) =>
-        visitor.visitor_name
-            .toLowerCase()
-            .includes(searchQuery.value.toLowerCase())
-    );
-});
 
 const formattedDate = computed(() =>
     currentTime.value.toLocaleDateString("en-GB", {
@@ -135,6 +128,25 @@ async function checkOut(id: number) {
         console.error(error);
     }
 }
+
+const filteredVisitors = computed(() => {
+    const items = visitorForms.value;
+    if (!searchQuery.value) return items;
+
+    const query = searchQuery.value.toLowerCase();
+
+    return items.filter((visitor) => {
+        const passnumber = visitor.gate_pass?.pass_number;
+
+        return (
+            Object.values(visitor).some(
+                (value) =>
+                    value && value.toString().toLowerCase().includes(query)
+            ) ||
+            (passnumber && passnumber.toString().toLowerCase().includes(query))
+        );
+    });
+});
 
 async function fetchVisitors(limit = limitTable.value) {
     try {
@@ -180,6 +192,41 @@ async function fetchTotalAvailableGatePass() {
     } catch (e) {
         console.log("Failed to fetch total available gate pass", e);
     }
+}
+
+const handleUpdateRemarks = async (data) => {
+    try {
+        console.log(data);
+        const response = await axios.post(
+            `/visitors/${data.visitorId}/remarks`,
+            {
+                remarks: data.remarks,
+            }
+        );
+
+        if (response.data.success) {
+            // Update local state
+            selectedVisitor.value.remarks = data.remarks;
+            console.log("Remarks updated successfully!");
+        }
+    } catch (error) {
+        if (error.response) {
+            // Server responded with error status
+            console.error("Server error:", error.response.data.message);
+            if (error.response.status === 422) {
+                // Validation errors
+                console.error("Validation errors:", error.response.data.errors);
+            }
+        } else {
+            // Network error
+            console.error("Network error:", error.message);
+        }
+    }
+};
+
+function openDetailsModal(visitorId) {
+    selectedVisitor.value = visitorForms.value.find((v) => v.id === visitorId);
+    showDetailsModal.value = true;
 }
 
 onMounted(() => {
@@ -321,6 +368,7 @@ onUnmounted(() => {
             @check-out="checkOut"
             @open-gate-pass-modal="isGatePassModalOpen = true"
             @open-checkout-modal="showCheckoutModal = true"
+            @open-details-modal="openDetailsModal"
         />
 
         <VisitorModal
@@ -336,6 +384,13 @@ onUnmounted(() => {
             @close="isGatePassModalOpen = false"
         />
 
+        <DetailsModal
+            :show="showDetailsModal"
+            :visitors="selectedVisitor"
+            @close="showDetailsModal = false"
+            @updateRemarks="handleUpdateRemarks"
+        />
+
         <CheckoutModal
             :show="showCheckoutModal"
             @refresh="
@@ -343,6 +398,7 @@ onUnmounted(() => {
                     fetchVisitors();
                     fetchGatePassList();
                     fetchTotalAvailableGatePass();
+                    fetchVisitorInside();
                 }
             "
             @close="showCheckoutModal = false"

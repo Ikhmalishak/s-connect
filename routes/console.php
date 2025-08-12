@@ -8,5 +8,7 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Schedule::command('app:notify-guard-about-visitors')->dailyAt('07:30');
+Schedule::command('app:notify-guard-about-visitors')->dailyAt('06:30');
+Schedule::command('app:notify-guard-about-visitors')->dailyAt('18:30');
 Schedule::command('app:notify-guard-about-visitors')->dailyAt('19:30');
+Schedule::command('app:notify-guard-about-visitors')->dailyAt('20:30');

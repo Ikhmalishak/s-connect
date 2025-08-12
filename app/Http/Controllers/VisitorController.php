@@ -6,11 +6,14 @@ use App\Models\GatePass;
 use App\Models\Site;
 use App\Models\Visitor;
 use App\Models\VisitorAcknowledgement;
+use Exception;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Events\VisitorRegistered;
+use Illuminate\Validation\ValidationException;
 class VisitorController extends Controller
 {
     public function index()
@@ -232,7 +235,7 @@ class VisitorController extends Controller
                 ->first();
 
             if (!$gate_pass) {
-                throw new \Exception('There are no available passes');
+                throw new Exception('There are no available passes');
             }
 
             $gate_pass->state = 'occupied';
@@ -275,53 +278,73 @@ class VisitorController extends Controller
         return redirect()->back();
     }
 
-    public function checkOutByPass(Request $request)
+    public function scanByPass(Request $request)
     {
         $pass_number = $request->input('pass_number');
 
         return DB::transaction(function () use ($pass_number) {
-            // ✅ Find the visitor using this gate pass
+            // Find visitor by pass
             $visitor = Visitor::whereHas('gatePass', function ($q) use ($pass_number) {
                 $q->where('pass_number', $pass_number);
             })
-                ->whereNull('time_out')
+                ->where(function ($query) {
+                    $query->whereNull('time_out') // still in premises
+                        ->orWhereNull('time_in'); // not yet checked in
+                })
                 ->with('gatePass')
                 ->first();
 
-            // ✅ Case 1: Gate pass not assigned or already checked out
             if (!$visitor) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'No active visitor found for this gate pass (not assigned or already checked out).'
+                    'message' => 'No active visitor found for this gate pass.'
                 ], 404);
             }
 
-            // ✅ Case 2: Visitor has gate pass but never checked in
+            // Case 1: Check-in
             if (is_null($visitor->time_in)) {
+                $visitor->time_in = now();
+                $visitor->save();
+
+                // Mark gate pass as occupied
+                if ($visitor->gatePass) {
+                    $visitor->gatePass->state = 'occupied';
+                    $visitor->gatePass->save();
+                }
+
                 return response()->json([
-                    'status' => 'error',
-                    'message' => 'This gate pass has not been checked in yet.'
-                ], 400);
+                    'status' => 'success',
+                    'action' => 'check-in',
+                    'message' => 'Visitor successfully checked in.',
+                    'visitor' => $visitor
+                ]);
             }
 
-            // ✅ Case 3: Successful checkout
-            $visitor->time_out = now();
+            // Case 2: Check-out
+            if (is_null($visitor->time_out)) {
+                $visitor->time_out = now();
+                $visitor->duration = Carbon::parse($visitor->time_in)->diffInMinutes(now());
+                $visitor->save();
 
-            // Calculate duration
-            $visitor->duration = Carbon::parse($visitor->time_in)->diffInMinutes(now());
-            $visitor->save();
+                // Release the gate pass
+                if ($visitor->gatePass) {
+                    $visitor->gatePass->state = 'free';
+                    $visitor->gatePass->save();
+                }
 
-            // Release the gate pass
-            if ($visitor->gatePass) {
-                $visitor->gatePass->state = 'free';
-                $visitor->gatePass->save();
+                return response()->json([
+                    'status' => 'success',
+                    'action' => 'check-out',
+                    'message' => 'Visitor successfully checked out.',
+                    'visitor' => $visitor
+                ]);
             }
 
+            // Case 3: Already checked in and out
             return response()->json([
-                'status' => 'success',
-                'message' => 'Visitors successfully checked out.',
-                'visitor' => $visitor
-            ]);
+                'status' => 'error',
+                'message' => 'This visitor has already completed their visit.'
+            ], 400);
         });
     }
 
@@ -341,5 +364,53 @@ class VisitorController extends Controller
         return response()->json([
             'acknowledged' => (bool) $ack,
         ]);
+    }
+
+    public function editRemarks(Request $request, $visitorId)
+    {
+        try {
+            // Find the visitor
+            $visitor = Visitor::findOrFail($visitorId);
+
+            // Validate the request
+            $request->validate([
+                'remarks' => 'nullable|string|max:500', // Adjust max length as needed
+            ]);
+
+            // Update the remarks
+            $visitor->remarks = $request->input('remarks');
+            $visitor->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Remarks updated successfully',
+                'data' => [
+                    'id' => $visitor->id,
+                    'remarks' => $visitor->remarks,
+                    'updated_at' => $visitor->updated_at
+                ]
+            ], 200);
+
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Visitor not found',
+                'error' => 'The specified visitor does not exist'
+            ], 404);
+
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while updating remarks',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }
