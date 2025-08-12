@@ -34,6 +34,7 @@ const message = ref("");
 
 // ✅ New modal state
 const resultTitle = ref("");
+const resultAction = ref(null);
 const resultStatus = ref("success"); // success or error
 
 const drawerOpen = ref(false); // ✅ Controls drawer visibility
@@ -83,8 +84,10 @@ const handleScanCheckout = async () => {
             const response = await axios.post("/visitor/scan-by-pass", {
                 pass_number: scannedPass.value,
             });
+            console.log("Checkout", response);
             message.value = "✅ " + response.data.message;
 
+            resultAction.value = response.data.action;
             resultTitle.value = response.data.message;
             resultStatus.value = "success";
 
@@ -174,17 +177,25 @@ const handleScanCheckout = async () => {
     <div>
         <Drawer v-model:open="drawerOpen">
             <DrawerContent
-                :class="
-                    resultStatus === 'success' ? 'bg-green-400' : 'bg-red-500'
-                "
+                :class="{
+                    'bg-green-400':
+                        resultStatus === 'success' &&
+                        resultAction == 'check-out',
+                    'bg-yellow-400':
+                        resultStatus === 'success' &&
+                        resultAction === 'check-in',
+                    'bg-red-500': resultStatus === 'error',
+                }"
             >
+                >
                 <div class="mx-auto w-full max-w-3xl">
                     <DrawerHeader>
                         <DrawerTitle
                             class="text-4xl font-bold mb-4 text-center"
                             :class="
-                                resultStatus === 'success'
-                                    ? 'text-white'
+                                resultStatus === 'success' &&
+                                resultAction === 'check-in'
+                                    ? 'text-black'
                                     : 'text-white'
                             "
                         >
@@ -194,13 +205,28 @@ const handleScanCheckout = async () => {
                                     : "❌ Error"
                             }}
                         </DrawerTitle>
+
                         <DrawerDescription
-                            class="text-xl font-medium text-center text-white"
-                            >{{ resultTitle }}</DrawerDescription
+                            class="text-xl font-medium text-center"
+                            :class="
+                                resultStatus === 'success' &&
+                                resultAction === 'check-in'
+                                    ? 'text-black'
+                                    : 'text-white'
+                            "
                         >
+                            {{ resultTitle }}
+                        </DrawerDescription>
                     </DrawerHeader>
                     <DrawerFooter>
-                        <Button @click="drawerOpen = false">Close</Button>
+                        <div class="flex justify-center w-full">
+                            <Button
+                                class="max-w-xs w-full"
+                                @click="drawerOpen = false"
+                            >
+                                Close
+                            </Button>
+                        </div>
                     </DrawerFooter>
                 </div>
             </DrawerContent>
