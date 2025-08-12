@@ -329,7 +329,7 @@ onUnmounted(() => {
         </template>
 
         <Card
-            class="shadow-lg shadow-opacity-30 p-4 mb-4 text-2xl font-bold flex items-center justify-between bg-gray-100"
+            class="shadow-lg shadow-opacity-30 p-2 mb-4 text-2xl font-bold flex items-center justify-between bg-gray-100"
         >
             <div class="flex flex-row items-center">
                 <img src="assets/ss1.png" class="h-12 w-12" alt="" />
