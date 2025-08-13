@@ -27,7 +27,7 @@ const user = page.props.auth.user;
 // Idle state
 const isIdle = ref(true);
 let idleTimer = null;
-const idleLimit = 10 * 60 * 1000; // 5 minutes
+const idleLimit = 5 * 60 * 1000; // 5 minutes
 
 function resetIdleTimer() {
     clearTimeout(idleTimer);
