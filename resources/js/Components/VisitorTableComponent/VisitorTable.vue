@@ -62,6 +62,7 @@ const props = defineProps<{
     visitors: VisitorForm[];
     limit: string;
     count: number;
+    totalVisitorToday: number;
 }>();
 
 const emit = defineEmits([
@@ -154,10 +155,10 @@ function setRowMask(visitorId: number, state: boolean) {
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectGroup>
-                                    <SelectItem value="10">10</SelectItem>
                                     <SelectItem value="25">25</SelectItem>
                                     <SelectItem value="50">50</SelectItem>
                                     <SelectItem value="100">100</SelectItem>
+                                    <SelectItem value="200">200</SelectItem>
                                 </SelectGroup>
                             </SelectContent>
                         </Select>
@@ -348,7 +349,7 @@ function setRowMask(visitorId: number, state: boolean) {
                             ]"
                         >
                             <td class="text-center p-2">
-                                {{ index + 1 }}
+                                {{ totalVisitorToday - index }}
                             </td>
                             <td class="text-center p-2">
                                 {{ visitor.gate_pass?.pass_number || "-" }}

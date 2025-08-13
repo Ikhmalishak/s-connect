@@ -14,7 +14,7 @@ interface Visitor {
 
 const props = defineProps<{
     show: boolean;
-    visitors: Visitor;
+    visitors: Visitor | null;
 }>();
 
 const emit = defineEmits(["close", "updateRemarks"]);

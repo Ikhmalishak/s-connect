@@ -75,12 +75,15 @@ class VisitorController extends Controller
             ->orderBy("hour")
             ->get();
 
+        $total_visitor_today = Visitor::whereDate('date', $date)->count();
+
         return response()->json([
             'visitor_inside' => $visitor_inside,
             'visitor_today' => $visitor_today,
             'visitor' => $visitor,
             'visitor_in_by_hour' => $visitor_in_by_hour,
             'visitor_out_by_hour' => $visitor_out_by_hour,
+            'total_visitor_today' => $total_visitor_today,
         ]);
     }
 

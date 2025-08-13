@@ -69,6 +69,7 @@ interface VisitorResponse {
     visitor_inside: VisitorForm2[];
     visitor_in_by_hour: VisitorInByHour[];
     visitor_out_by_hour: VisitorOutByHour[];
+    total_visitor_today: number;
 }
 
 const { props: pageProps } = usePage();
@@ -80,7 +81,8 @@ const visitorIn = ref<VisitorForm2[]>([]);
 const visitorInByHour = ref<VisitorInByHour[]>([]);
 const visitorOutByHour = ref<VisitorOutByHour[]>([]);
 const notifyVisitors = ref<VisitorForm[]>([]);
-const limitTable = ref("10");
+const totalVisitorToday = ref(0);
+const limitTable = ref("25");
 const searchQuery = ref("");
 const currentTime = ref(new Date());
 const isGatePassModalOpen = ref(false);
@@ -158,6 +160,7 @@ async function fetchVisitors(limit = limitTable.value) {
         visitorIn.value = res.data.visitor_inside;
         visitorInByHour.value = res.data.visitor_in_by_hour;
         visitorOutByHour.value = res.data.visitor_out_by_hour;
+        totalVisitorToday.value = res.data.total_visitor_today;
         console.log("Fetched:", res.data);
     } catch (e) {
         console.error("Failed to fetch visitors", e);
@@ -362,6 +365,7 @@ onUnmounted(() => {
             :visitors="filteredVisitors"
             :limit="limitTable"
             :count="totalAvailableGatePass"
+            :total-visitor-today="totalVisitorToday"
             @update:limit="limitTable = $event"
             @search="searchQuery = $event"
             @check-in="checkIn"
