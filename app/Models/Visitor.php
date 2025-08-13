@@ -25,7 +25,8 @@ class Visitor extends Model
         'remarks',
         'passport',
         'visitor_type',
-        'other_reasons'
+        'other_reasons',
+        'person_to_meet',
     ];
 
     public function gatePass()

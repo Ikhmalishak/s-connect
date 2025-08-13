@@ -46,6 +46,7 @@ interface VisitorForm {
     gate_pass_id?: number;
     gate_pass: GatePass;
     other_reasons: string;
+    person_to_meet:string;
 }
 
 interface VisitorForm2 {

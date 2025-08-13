@@ -53,6 +53,7 @@ interface VisitorForm {
     ic_number: string;
     passport: string;
     phone_number: string;
+    person_to_meet: string;
     gate_pass?: {
         pass_number: string;
     };
@@ -409,6 +410,8 @@ function setRowMask(visitorId: number, state: boolean) {
                                 {{
                                     visitor.purpose === "Other"
                                         ? `Other - ${visitor.other_reasons}`
+                                        : visitor.purpose === "Meeting"
+                                        ? `Meeting - ${visitor.person_to_meet}`
                                         : visitor.purpose
                                 }}
                             </td>
