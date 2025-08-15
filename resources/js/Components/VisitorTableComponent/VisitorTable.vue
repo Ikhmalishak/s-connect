@@ -69,8 +69,6 @@ const props = defineProps<{
 const emit = defineEmits([
     "update:limit",
     "search",
-    "checkIn",
-    "checkOut",
     "openGatePassModal",
     "openCheckoutModal",
     "openDetailsModal",
@@ -379,12 +377,6 @@ function setRowMask(visitorId: number, state: boolean) {
                                     {{ trimToHourMinute(visitor.time_in) }}
                                 </template>
                                 <template v-else>
-                                    <!-- <button
-                                        @click="emit('checkIn', visitor.id)"
-                                        class="h-6 px-2 text-xs leading-none bg-black text-white rounded"
-                                    >
-                                        Check In
-                                    </button> -->
                                     -- : --
                                 </template>
                             </td>
@@ -393,13 +385,6 @@ function setRowMask(visitorId: number, state: boolean) {
                                     {{ trimToHourMinute(visitor.time_out) }}
                                 </template>
                                 <template v-else>
-                                    <!-- <button
-                                        @click="emit('checkOut', visitor.id)"
-                                        class="h-6 px-2 text-xs leading-none bg-black text-white rounded"
-                                        :disabled="!visitor.time_in"
-                                    >
-                                        Check Out
-                                    </button> -->
                                     -- : --
                                 </template>
                             </td>

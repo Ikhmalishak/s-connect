@@ -248,39 +248,6 @@ class VisitorController extends Controller
         });
     }
 
-    //function to update check in time
-    public function checkIn($id)
-    {
-        $visitor = Visitor::findOrFail($id);
-        $visitor->time_in = now();
-        $visitor->save();
-
-        return redirect()->back();
-    }
-
-    public function checkOut($id)
-    {
-        DB::transaction(function () use ($id) {
-            $visitor = Visitor::findOrFail($id);
-            $visitor->time_out = now();
-
-            // Find and free the related gate pass
-            $gate_pass = GatePass::find($visitor->gate_pass_id);
-            if ($gate_pass) {
-                $gate_pass->state = 'free';
-                $gate_pass->save();
-            }
-
-            if ($visitor->time_in) {
-                $visitor->duration = Carbon::parse($visitor->time_in)->diffInMinutes(now());
-            }
-
-            $visitor->save();
-        });
-
-        return redirect()->back();
-    }
-
     public function scanByPass(Request $request)
     {
         $pass_number = $request->input('pass_number');

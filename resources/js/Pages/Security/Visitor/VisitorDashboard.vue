@@ -110,28 +110,6 @@ const formattedTime = computed(() =>
     currentTime.value.toLocaleTimeString("en-GB")
 );
 
-async function checkIn(id: number) {
-    try {
-        await axios.post(`/visitor/${id}/check-in`);
-        await fetchVisitors();
-        await fetchVisitorInside();
-    } catch (error) {
-        console.error(error);
-    }
-}
-
-async function checkOut(id: number) {
-    try {
-        await axios.post(`/visitor/${id}/check-out`);
-        await fetchVisitors();
-        await fetchGatePassList();
-        await fetchTotalAvailableGatePass();
-        await fetchVisitorInside();
-    } catch (error) {
-        console.error(error);
-    }
-}
-
 const filteredVisitors = computed(() => {
     const items = visitorForms.value;
     if (!searchQuery.value) return items;
@@ -369,8 +347,6 @@ onUnmounted(() => {
             :total-visitor-today="totalVisitorToday"
             @update:limit="limitTable = $event"
             @search="searchQuery = $event"
-            @check-in="checkIn"
-            @check-out="checkOut"
             @open-gate-pass-modal="isGatePassModalOpen = true"
             @open-checkout-modal="showCheckoutModal = true"
             @open-details-modal="openDetailsModal"

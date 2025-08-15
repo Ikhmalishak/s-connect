@@ -36,8 +36,6 @@ Route::middleware('auth')->group(function () {
 
     //security form
     Route::get('/dashboard', action: [VisitorController::class, 'index'])->name('dashboard');
-    Route::post('/visitor/{id}/check-in', [VisitorController::class, 'checkIn']);
-    Route::post('/visitor/{id}/check-out', [VisitorController::class, 'checkOut']);
     Route::get('/api/visitors', [VisitorController::class, 'refreshVisitorTablePage']);
     Route::get('/visitor/visitor-inside', [VisitorController::class, 'getVisitorInside']);
     Route::post('/visitor/scan-by-pass', [VisitorController::class, 'scanByPass']);
@@ -47,7 +45,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/visitors/{visitorId}/remarks', [VisitorController::class, 'editRemarks'])->name('visitors.editRemarks');
 
     //route for purpose and site and gate pass
-    Route::apiResource('purposes', PurposeController::class);
     Route::apiResource('sites', SiteController::class);
     Route::apiResource('gate-passes', GatePassController::class);
 
