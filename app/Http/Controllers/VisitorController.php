@@ -24,7 +24,7 @@ class VisitorController extends Controller
 
     public function getVisitorTableData(Request $request)
     {
-        $limit = $request->input('limit', 10);
+        $limit = $request->input('limit', 25);
         $keyword = $request->input('keyword');
 
         $query = Visitor::with('gatePass:id,pass_number')
@@ -44,7 +44,12 @@ class VisitorController extends Controller
             });
         }
 
-        $visitors = $query->latest()->take($limit)->get();
+    // Apply limit only if no search keyword
+    if (!$keyword) {
+        $query->take($limit);
+    }
+
+    $visitors = $query->latest()->get();
 
         return response()->json([
             'visitor' => $visitors,
