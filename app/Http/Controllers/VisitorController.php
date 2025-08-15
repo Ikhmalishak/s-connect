@@ -22,20 +22,40 @@ class VisitorController extends Controller
         return Inertia::render('Security/Visitor/VisitorDashboard');
     }
 
-    public function refreshVisitorTablePage(Request $request)
+    public function getVisitorTableData(Request $request)
     {
         $limit = $request->input('limit', 10);
+        $keyword = $request->input('keyword');
 
+        $query = Visitor::with('gatePass:id,pass_number')
+            ->whereDate('date', now()->toDateString());
+
+        if ($keyword) {
+            $query->where(function ($q) use ($keyword) {
+                $q->where('visitor_name', 'LIKE', "%{$keyword}%")
+                    ->orWhereHas('gatePass', function ($sub) use ($keyword) {
+                        $sub->where('pass_number', 'LIKE', "%{$keyword}%");
+                    })
+                    ->orWhere('date', 'LIKE', "%{$keyword}%") // Database format: 2025-08-15
+                    ->orWhereRaw("DATE_FORMAT(date, '%d/%m/%Y') LIKE ?", ["%{$keyword}%"]) // Display format: 15/08/2025
+                    ->orWhere('vehicle_number', 'LIKE', "%{$keyword}%")
+                    ->orWhere('visitor_company', "LIKE", "%{$keyword}%")
+                    ->orWhere('purpose', "LIKE", "%{$keyword}%");
+            });
+        }
+
+        $visitors = $query->latest()->take($limit)->get();
+
+        return response()->json([
+            'visitor' => $visitors,
+        ]);
+    }
+
+    public function refreshVisitorTablePage()
+    {
         $date = Carbon::now()->format('Y-m-d');
         $startOfDay = Carbon::today();
         $endOfDay = Carbon::now();
-
-        // Get all visitors
-        $visitor = Visitor::with('gatePass:id,pass_number')
-            ->whereDate('date', $date)
-            ->latest()
-            ->take($limit)
-            ->get();
 
         // Currently inside
         $visitor_inside = Visitor::whereNotNull('time_in')
@@ -80,7 +100,6 @@ class VisitorController extends Controller
         return response()->json([
             'visitor_inside' => $visitor_inside,
             'visitor_today' => $visitor_today,
-            'visitor' => $visitor,
             'visitor_in_by_hour' => $visitor_in_by_hour,
             'visitor_out_by_hour' => $visitor_out_by_hour,
             'total_visitor_today' => $total_visitor_today,
@@ -150,8 +169,19 @@ class VisitorController extends Controller
             $vehicle_number = $validated['vehicle_number'] ?: "N/A";
 
             $createdVisitors = [];
+            $failedCreatedVisitors = [];
 
             foreach ($validated['visitors'] as $visitor) {
+
+                // Check if foreigner is doing sorting/rework → reject
+                if ($visitor['id_type'] === 'Passport' && $validated['purpose'] === 'Sorting/Rework') {
+                    $failedCreatedVisitors[] = [
+                        'visitor' => $visitor,
+                        'reason' => 'Foreign visitors are not allowed for Sorting/Rework.'
+                    ];
+                    continue; // Skip creation for this visitor
+                }
+
                 // Clean IC number (digits only)
                 $ic = $visitor['id_type'] === 'IC'
                     ? preg_replace('/\D/', '', $visitor['id_number'])
@@ -159,19 +189,25 @@ class VisitorController extends Controller
 
                 $passport = $visitor['id_type'] === 'Passport' ? $visitor['id_number'] : "N/A";
 
-                $rawPhone = isset($visitor['phone_number']) ? $visitor['phone_number'] : null;
-
+                $rawPhone = $visitor['phone_number'] ?? null;
                 if ($rawPhone) {
-                    // Remove all non-digit characters (e.g., spaces, dashes)
                     $digitsOnly = preg_replace('/\D/', '', $rawPhone);
-
-                    // If it's the bypass code, return 'N/A'
                     $phone = ($digitsOnly === '0000000000') ? 'N/A' : $digitsOnly;
                 } else {
                     $phone = null;
                 }
 
-                $pass_id = $this->getPassNumber($validated['visitor_type']);
+                // Get pass number - handle failure gracefully
+                try {
+                    $pass_id = $this->getPassNumber($validated['visitor_type']);
+                } catch (Exception $e) {
+                    // Add to failed and continue instead of returning
+                    $failedCreatedVisitors[] = [
+                        'visitor' => $visitor,
+                        'reason' => $e->getMessage()
+                    ];
+                    continue; // Skip this visitor and process the next one
+                }
 
                 $new_visitor = Visitor::create([
                     'visitor_name' => $visitor['visitor_name'],
@@ -192,10 +228,9 @@ class VisitorController extends Controller
                     'is_acknowledge' => $validated['video_watched'] && $validated['security_guidelines_confirmed'],
                 ]);
 
-                //Broadcast event
+                // Broadcast event
                 event(new VisitorRegistered($new_visitor));
 
-                //Only store/update acknowledgement record if they really watched & confirmed
                 if ($validated['video_watched'] && $validated['security_guidelines_confirmed']) {
                     VisitorAcknowledgement::updateOrCreate(
                         [
@@ -215,15 +250,15 @@ class VisitorController extends Controller
             }
 
             return response()->json([
-                'message' => 'Visitor registered successfully.',
-                'data' => $createdVisitors,
+                'created' => $createdVisitors,
+                'failed' => $failedCreatedVisitors,
             ]);
+
         });
     }
 
     public function getPassNumber($visitor_type)
     {
-        // ✅ Normalize visitor type
         if (
             str_starts_with($visitor_type, 'inbound-') ||
             str_starts_with($visitor_type, 'outbound-')
@@ -234,11 +269,11 @@ class VisitorController extends Controller
         return DB::transaction(function () use ($visitor_type) {
             $gate_pass = GatePass::where('pass_type', $visitor_type)
                 ->where('state', 'free')
-                ->lockForUpdate() // Prevents race condition
+                ->lockForUpdate()
                 ->first();
 
             if (!$gate_pass) {
-                throw new Exception('There are no available passes');
+                throw new Exception('No available gate passes for this visitor type.');
             }
 
             $gate_pass->state = 'occupied';

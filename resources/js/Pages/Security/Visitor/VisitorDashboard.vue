@@ -110,31 +110,11 @@ const formattedTime = computed(() =>
     currentTime.value.toLocaleTimeString("en-GB")
 );
 
-const filteredVisitors = computed(() => {
-    const items = visitorForms.value;
-    if (!searchQuery.value) return items;
-
-    const query = searchQuery.value.toLowerCase();
-
-    return items.filter((visitor) => {
-        const passnumber = visitor.gate_pass?.pass_number;
-
-        return (
-            Object.values(visitor).some(
-                (value) =>
-                    value && value.toString().toLowerCase().includes(query)
-            ) ||
-            (passnumber && passnumber.toString().toLowerCase().includes(query))
-        );
-    });
-});
-
 async function fetchVisitors(limit = limitTable.value) {
     try {
         const res = await axios.get<VisitorResponse>(
-            `api/visitors?limit=${limit}`
+            `api/visitors`
         );
-        visitorForms.value = res.data.visitor;
         visitorOut.value = res.data.visitor_today;
         visitorIn.value = res.data.visitor_inside;
         visitorInByHour.value = res.data.visitor_in_by_hour;
@@ -143,6 +123,28 @@ async function fetchVisitors(limit = limitTable.value) {
         console.log("Fetched:", res.data);
     } catch (e) {
         console.error("Failed to fetch visitors", e);
+    }
+}
+
+async function fetchVisitorTableData(limit = limitTable.value, keyword = searchQuery.value){
+
+    console.log(limit,keyword)
+    try{
+        const res = await axios.get(
+            'visitor/table-data',
+      {
+        params: {
+          limit,
+          keyword
+        }
+      }
+        )      
+        console.log("inside fetch table data", res.data.visitor);
+
+        visitorForms.value = res.data.visitor;
+
+    } catch (e){
+        console.log("Failed to fetch visitors table data", e)
     }
 }
 
@@ -217,6 +219,7 @@ onMounted(() => {
     fetchGatePassList();
     fetchVisitorInside();
     fetchTotalAvailableGatePass();
+    fetchVisitorTableData();
 
     intervalId = setInterval(() => {
         currentTime.value = new Date();
@@ -228,6 +231,7 @@ onMounted(() => {
             .listen(".visitor.registered", (e) => {
                 console.log("New VisitorRegistered event received:", e);
                 fetchVisitors();
+                fetchVisitorTableData();
                 fetchTotalAvailableGatePass();
                 fetchGatePassList();
             })
@@ -262,11 +266,12 @@ onMounted(() => {
 
 watch(limitTable, (newVal) => {
     console.log("Limit changed to:", newVal);
-    fetchVisitors(newVal);
+    fetchVisitorTableData();
 });
 
 watch(searchQuery, (newVal) => {
     console.log("Search query changed to:", newVal);
+    fetchVisitorTableData();
 });
 
 watch(isGatePassModalOpen, (newValue, oldValue) => {
@@ -341,7 +346,7 @@ onUnmounted(() => {
         />
 
         <VisitorTable
-            :visitors="filteredVisitors"
+            :visitors="visitorForms"
             :limit="limitTable"
             :count="totalAvailableGatePass"
             :total-visitor-today="totalVisitorToday"
@@ -380,6 +385,7 @@ onUnmounted(() => {
                     fetchGatePassList();
                     fetchTotalAvailableGatePass();
                     fetchVisitorInside();
+                    fetchVisitorTableData();
                 }
             "
             @close="showCheckoutModal = false"

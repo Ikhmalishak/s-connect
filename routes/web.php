@@ -35,7 +35,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     //security form
-    Route::get('/dashboard', action: [VisitorController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard',[VisitorController::class, 'index'])->name('dashboard');
     Route::get('/api/visitors', [VisitorController::class, 'refreshVisitorTablePage']);
     Route::get('/visitor/visitor-inside', [VisitorController::class, 'getVisitorInside']);
     Route::post('/visitor/scan-by-pass', [VisitorController::class, 'scanByPass']);
@@ -43,6 +43,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/visitor/form/', [VisitorController::class, 'getVisitorForm']);
     Route::post('/visitor/submit',[VisitorController::class, 'store']);
     Route::post('/visitors/{visitorId}/remarks', [VisitorController::class, 'editRemarks'])->name('visitors.editRemarks');
+    Route::get('visitor/table-data',[VisitorController::class, 'getVisitorTableData']);
 
     //route for purpose and site and gate pass
     Route::apiResource('sites', SiteController::class);

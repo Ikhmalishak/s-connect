@@ -52,27 +52,30 @@ const colors = computed(() =>
 );
 
 const legendItems = computed(() =>
-  props.data.map((item, i) => {
-    let rawName = item[props.index];
+    props.data.map((item, i) => {
+        let rawName = item[props.index];
 
-    // Sanitize name
-    if (rawName === 'inbound-shipment/transfer') {
-      rawName = 'Driver Inbound-Ship/Transfer';
-    }
-    if (rawName === 'outbound-shipment/transfer') {
-      rawName = 'Driver Outbound-Ship/Transfer';
-    }
+        // Sanitize name
+        if (rawName === "inbound-shipment/transfer") {
+            rawName = "Driver Inbound-Ship/Transfer";
+        }
+        if (rawName === "outbound-shipment/transfer") {
+            rawName = "Driver Outbound-Ship/Transfer";
+        }
 
-    return {
-      name: rawName,
-      color: colors.value[i],
-      value: item[props.category],
-      percentage: ((item[props.category] / totalValue.value) * 100).toFixed(1),
-      inactive:
-        activeSegmentKey.value !== undefined &&
-        activeSegmentKey.value !== item[props.index],
-    };
-  })
+        return {
+            name: rawName,
+            color: colors.value[i],
+            value: item[props.category],
+            percentage: (
+                (item[props.category] / totalValue.value) *
+                100
+            ).toFixed(1),
+            inactive:
+                activeSegmentKey.value !== undefined &&
+                activeSegmentKey.value !== item[props.index],
+        };
+    })
 );
 
 const totalValue = computed(() =>
@@ -190,7 +193,14 @@ function handleCentralSubClick() {
 
             <!-- Center clickable label overlay -->
             <div
-                v-if="type === 'donut'"
+                v-if="type === 'donut' && props.centralSubLabel === 'In'"
+                class="absolute top-0 right-5 pointer-events-auto cursor-pointer text-lg text-black font-black transition"
+            >
+                {{ props.centralSubLabel ?? "" }}
+            </div>
+
+            <div
+                v-else
                 class="absolute top-0 right-0 pointer-events-auto cursor-pointer text-lg text-black font-black transition"
             >
                 {{ props.centralSubLabel ?? "" }}
@@ -201,7 +211,11 @@ function handleCentralSubClick() {
                 class="absolute top-0 left-0 pointer-events-auto cursor-pointer text-lg text-black font-black transition mt-1"
                 @click="handleCentralSubClick"
             >
-                <CustomTooltip text="Click to see more details" position="bottom"><List class="w-6 h-6" /></CustomTooltip>
+                <CustomTooltip
+                    text="Click to see more details"
+                    position="bottom"
+                    ><List class="w-6 h-6"
+                /></CustomTooltip>
             </div>
 
             <slot />
