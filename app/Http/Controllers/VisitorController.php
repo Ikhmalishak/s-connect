@@ -14,12 +14,62 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Events\VisitorRegistered;
 use Illuminate\Validation\ValidationException;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Http;
+
 class VisitorController extends Controller
 {
-    public function index()
+    public function getVisitorDashboard()
     {
 
         return Inertia::render('Security/Visitor/VisitorDashboard');
+    }
+
+    public function getAdminVisitorDashboard(Request $request)
+    {
+        return Inertia::render('Security/Visitor/AdminVisitorDashboard');
+    }
+    public function getAdminVisitorReportingDashboard(Request $request)
+    {
+        return Inertia::render('Security/Visitor/AdminVisitorReportingDashboard');
+    }
+    public function getAdminVisitorTableData(Request $request)
+    {
+        $limit = $request->input('limit', 25);
+        $keyword = $request->input('keyword');
+        $site = $request->input('site');
+
+        $query = Visitor::with(['gatePass:id,pass_number', 'site:id,site_code']);
+
+        if ($site) {
+            $query->whereHas('site', function ($q) use ($site) {
+                $q->where('site_code', $site);
+            });
+        }
+
+        if ($keyword) {
+            $query->where(function ($q) use ($keyword, $site) {
+                $q->where('visitor_name', 'LIKE', "%{$keyword}%")
+                    ->orWhereHas('gatePass', function ($sub) use ($keyword) {
+                        $sub->where('pass_number', 'LIKE', "%{$keyword}%");
+                    })
+                    ->orWhere('date', 'LIKE', "%{$keyword}%") // Database format: 2025-08-15
+                    ->orWhereRaw("DATE_FORMAT(date, '%d/%m/%Y') LIKE ?", ["%{$keyword}%"]) // Display format: 15/08/2025
+                    ->orWhere('vehicle_number', 'LIKE', "%{$keyword}%")
+                    ->orWhere('visitor_company', "LIKE", "%{$keyword}%")
+                    ->orWhere('purpose', "LIKE", "%{$keyword}%");
+            });
+        }
+
+        // Apply limit only if no search keyword
+        if (!$keyword) {
+            $query->take($limit);
+        }
+
+        $visitors = $query->latest()->get();
+        return response()->json([
+            'visitor' => $visitors,
+        ]);
     }
 
     public function getVisitorTableData(Request $request)
@@ -44,28 +94,40 @@ class VisitorController extends Controller
             });
         }
 
-    // Apply limit only if no search keyword
-    if (!$keyword) {
-        $query->take($limit);
-    }
+        // Apply limit only if no search keyword
+        if (!$keyword) {
+            $query->take($limit);
+        }
 
-    $visitors = $query->latest()->get();
+        $visitors = $query->latest()->get();
 
         return response()->json([
             'visitor' => $visitors,
         ]);
     }
 
-    public function refreshVisitorTablePage()
+    public function refreshVisitorTablePage(Request $request)
     {
         $date = Carbon::now()->format('Y-m-d');
         $startOfDay = Carbon::today();
         $endOfDay = Carbon::now();
 
+        $site = $request->input('site'); // site_code
+
+        // Base query builder with optional site filter
+        $siteFilter = function ($query) use ($site) {
+            if ($site) {
+                $query->whereHas('site', function ($q) use ($site) {
+                    $q->where('site_code', $site);
+                });
+            }
+        };
+
         // Currently inside
         $visitor_inside = Visitor::whereNotNull('time_in')
             ->whereNull('time_out')
             ->whereDate('date', $date)
+            ->where($siteFilter)
             ->selectRaw('visitor_type, COUNT(*) as total')
             ->groupBy('visitor_type')
             ->get();
@@ -73,10 +135,10 @@ class VisitorController extends Controller
         // Visitors out
         $visitor_today = Visitor::whereDate('date', $date)
             ->whereNotNull('time_out')
+            ->where($siteFilter)
             ->selectRaw('visitor_type, COUNT(*) as total')
             ->groupBy('visitor_type')
             ->get();
-
 
         // Get time_in count grouped by hour
         $visitor_in_by_hour = Visitor::select([
@@ -85,22 +147,26 @@ class VisitorController extends Controller
         ])
             ->whereBetween('time_in', [$startOfDay, $endOfDay])
             ->whereDate('date', $date)
+            ->where($siteFilter)
             ->groupBy(DB::raw("HOUR(time_in)"))
             ->orderBy("hour")
             ->get();
 
-        // Get time_in count grouped by hour
+        // Get time_out count grouped by hour
         $visitor_out_by_hour = Visitor::select([
             DB::raw("HOUR(time_out) as hour"),
             DB::raw("COUNT(*) as total_out")
         ])
             ->whereBetween('time_out', [$startOfDay, $endOfDay])
             ->whereDate('date', $date)
+            ->where($siteFilter)
             ->groupBy(DB::raw("HOUR(time_out)"))
             ->orderBy("hour")
             ->get();
 
-        $total_visitor_today = Visitor::whereDate('date', $date)->count();
+        $total_visitor_today = Visitor::whereDate('date', $date)
+            ->where($siteFilter)
+            ->count();
 
         return response()->json([
             'visitor_inside' => $visitor_inside,
@@ -422,5 +488,82 @@ class VisitorController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    public function generateReport(Request $request)
+    {
+        $query = Visitor::query();
+
+        if ($request->dateRange) {
+            $start = $request->dateRange['start'];
+            $end = $request->dateRange['end'];
+
+            if ($start && $end) {
+                // build date strings in Y-m-d format
+                $startDate = sprintf('%04d-%02d-%02d', $start['year'], $start['month'], $start['day']);
+                $endDate = sprintf('%04d-%02d-%02d', $end['year'], $end['month'], $end['day']);
+
+                $query->whereBetween('date', [$startDate, $endDate]);
+            }
+        }
+
+        // Filter visitor type
+        if ($request->visitor_type && $request->visitor_type !== "all") {
+            $query->where('visitor_type', $request->visitor_type);
+        }
+
+        // Filter company
+        if ($request->visitor_company && $request->visitor_company !== "all") {
+            $query->where('visitor_company', $request->visitor_company);
+        }
+
+        $visitors = $query->get();
+
+        $total_visitors = Visitor::all();
+
+        $visitor_counts = $total_visitors->groupBy('visitor_type')->map->count();
+
+        $chartData = [
+            'type' => 'pie',
+            'data' => [
+                'labels' => $visitor_counts->keys(),
+                'datasets' => [
+                    [
+                        'data' => $visitor_counts->values(),
+                        'backgroundColor' => ['#36A2EB', '#FF6384', '#FFCE56', '#4BC0C0'],
+                    ]
+                ],
+            ],
+        ];
+
+        $chartDataDonut = [
+            'type' => 'doughnut',
+            'data' => [
+                'labels' => $visitor_counts->keys(),
+                'datasets' => [
+                    [
+                        'data' => $visitor_counts->values(),
+                        'backgroundColor' => ['#36A2EB', '#FF6384', '#FFCE56', '#4BC0C0'],
+                        'label'=> 'Dataset 1',
+                    ]
+                ],
+            ],
+        ];
+
+        // Get chart image from QuickChart
+        $chartUrl = "https://quickchart.io/chart?c=" . urlencode(json_encode($chartData));
+        $donutChartUrl = "https://quickchart.io/chart?c=" . urlencode(json_encode($chartDataDonut));
+
+        // Get image as base64
+        $imageData = base64_encode(file_get_contents($chartUrl));
+        $imageSrc = 'data:image/png;base64,' . $imageData;
+
+        $imageData2 = base64_encode(file_get_contents($donutChartUrl));
+        $imageSrc2 = 'data:image/png;base64,' . $imageData2;
+
+
+        $pdf = PDF::loadView('report.advanced-reports', compact('visitors', 'imageSrc','imageSrc2'));
+
+        return $pdf->download('visitors-reports.pdf');
     }
 }

@@ -1,12 +1,8 @@
 <?php
 
 use App\Http\Controllers\GatePassController;
-use App\Http\Controllers\HomeController;
-use App\Http\Controllers\ItRequestController;
-use App\Http\Controllers\VisitorCompanyController;
 use App\Http\Controllers\VisitorController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\PurposeController;
 use App\Http\Controllers\SiteController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -21,9 +17,9 @@ use Inertia\Inertia;
 //     ]);
 // });
 
-// Route::get('/', function () {
-//     return Inertia::render('Auth/Login');
-// })->name('login');
+Route::get('/', function () {
+    return Inertia::render('Auth/Login');
+})->name('login');
 
 // Route::get('/dashboard', function () {
 //     return Inertia::render('Dashboard');
@@ -35,7 +31,9 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     //security form
-    Route::get('/dashboard',[VisitorController::class, 'index'])->name('dashboard');
+    Route::get('/visitor/dashboard',[VisitorController::class, 'getVisitorDashboard'])->name('security.visitordashboard');
+    Route::get('/admin/visitor/dashboard',[VisitorController::class, 'getAdminVisitorDashboard'])->name('admin.visitordashboard');
+    Route::get('/admin/visitor/report-dashboard',[VisitorController::class, 'getAdminVisitorReportingDashboard']);
     Route::get('/api/visitors', [VisitorController::class, 'refreshVisitorTablePage']);
     Route::get('/visitor/visitor-inside', [VisitorController::class, 'getVisitorInside']);
     Route::post('/visitor/scan-by-pass', [VisitorController::class, 'scanByPass']);
@@ -44,6 +42,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/visitor/submit',[VisitorController::class, 'store']);
     Route::post('/visitors/{visitorId}/remarks', [VisitorController::class, 'editRemarks'])->name('visitors.editRemarks');
     Route::get('visitor/table-data',[VisitorController::class, 'getVisitorTableData']);
+    Route::get('/admin/visitor/table-data',[VisitorController::class, 'getAdminVisitorTableData']);
+    Route::post('/admin/visitor/generate-report', [VisitorController::class, 'generateReport'])->name("admin.generateReport");
 
     //route for purpose and site and gate pass
     Route::apiResource('sites', SiteController::class);

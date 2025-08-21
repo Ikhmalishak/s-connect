@@ -34,7 +34,7 @@ class Visitor extends Model
         return $this->belongsTo(GatePass::class);
     }
 
-    public function sites()
+    public function site()
     {
         return $this->belongsTo(Site::class);
     }

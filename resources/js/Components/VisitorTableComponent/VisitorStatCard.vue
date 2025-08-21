@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { DonutChart } from "@/components/ui/chart-bar/chart-donut";
+import { CustomDonutChart } from "@/components/ui/chart-bar/chart-donut";
 import { AreaChart } from "@/components/ui/chart-area";
 import { Card } from "@/components/ui/card";
 import { computed } from "vue";
@@ -88,7 +88,7 @@ function handleDonutClick(chartType: string) {
                     <!-- Donut Chart In -->
                     <div class="flex-1 h-full flex justify-center">
                         <div class="w-full max-w-[250px] h-[185px]">
-                            <DonutChart
+                            <CustomDonutChart
                                 index="name"
                                 :category="'total'"
                                 :data="visitorInsidePieChart"
@@ -112,7 +112,7 @@ function handleDonutClick(chartType: string) {
                     <!-- Donut Chart Out -->
                     <div class="flex-1 h-full flex justify-center">
                         <div class="w-full max-w-[250px] h-[185px]">
-                            <DonutChart
+                            <CustomDonutChart
                                 index="name"
                                 :category="'total'"
                                 :data="visitorOutsidePieChart"

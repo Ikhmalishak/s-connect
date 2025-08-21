@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { usePage } from "@inertiajs/vue3";
-import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
+import AdminAuthenticatedLayout from "@/Layouts/AdminAuthenticatedLayout.vue";
 import { Card } from "@/components/ui/card";
 import axios from "axios";
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
@@ -13,12 +13,21 @@ import {
     BreadcrumbLink,
 } from "@/components/ui/breadcrumb";
 import VisitorStatsCards from "@/Components/VisitorTableComponent/VisitorStatCard.vue";
-import VisitorTable from "@/Components/VisitorTableComponent/VisitorTable.vue";
+import VisitorTable from "@/Components/VisitorTableComponent/AdminVisitorTable.vue";
 import VisitorModal from "@/Components/VisitorTableComponent/VisitorModal.vue";
 import GatePassModal from "@/Components/VisitorTableComponent/GatePassModal.vue";
 import CheckoutModal from "@/Components/VisitorTableComponent/CheckoutModal.vue";
 import NotifyGuardModal from "@/Components/VisitorTableComponent/NotifyGuardModal.vue";
 import DetailsModal from "@/Components/VisitorTableComponent/DetailsModal.vue";
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectLabel,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 interface GatePass {
     id: number;
@@ -46,7 +55,7 @@ interface VisitorForm {
     gate_pass_id?: number;
     gate_pass: GatePass;
     other_reasons: string;
-    person_to_meet:string;
+    person_to_meet: string;
 }
 
 interface VisitorForm2 {
@@ -70,7 +79,6 @@ interface VisitorResponse {
     visitor_inside: VisitorForm2[];
     visitor_in_by_hour: VisitorInByHour[];
     visitor_out_by_hour: VisitorOutByHour[];
-    total_visitor_today: number;
 }
 
 const { props: pageProps } = usePage();
@@ -82,7 +90,6 @@ const visitorIn = ref<VisitorForm2[]>([]);
 const visitorInByHour = ref<VisitorInByHour[]>([]);
 const visitorOutByHour = ref<VisitorOutByHour[]>([]);
 const notifyVisitors = ref<VisitorForm[]>([]);
-const totalVisitorToday = ref(0);
 const limitTable = ref("25");
 const searchQuery = ref("");
 const currentTime = ref(new Date());
@@ -95,6 +102,7 @@ const showCheckoutModal = ref(false);
 const showNotifyModal = ref(false);
 const selectedVisitor = ref(null);
 const showDetailsModal = ref(false);
+const selectedSite = ref("S2");
 let intervalId;
 
 const formattedDate = computed(() =>
@@ -110,41 +118,42 @@ const formattedTime = computed(() =>
     currentTime.value.toLocaleTimeString("en-GB")
 );
 
-async function fetchVisitors(limit = limitTable.value) {
+async function fetchVisitors(site = selectedSite.value) {
     try {
-        const res = await axios.get<VisitorResponse>(
-            `/api/visitors`
-        );
+        const res = await axios.get<VisitorResponse>(`/api/visitors`, {
+            params: {
+                site,
+            },
+        });
         visitorOut.value = res.data.visitor_today;
         visitorIn.value = res.data.visitor_inside;
         visitorInByHour.value = res.data.visitor_in_by_hour;
         visitorOutByHour.value = res.data.visitor_out_by_hour;
-        totalVisitorToday.value = res.data.total_visitor_today;
         console.log("Fetched:", res.data);
     } catch (e) {
         console.error("Failed to fetch visitors", e);
     }
 }
 
-async function fetchVisitorTableData(limit = limitTable.value, keyword = searchQuery.value){
-
-    console.log(limit,keyword)
-    try{
-        const res = await axios.get(
-            '/visitor/table-data',
-      {
-        params: {
-          limit,
-          keyword
-        }
-      }
-        )      
+async function fetchAdminVisitorTableData(
+    limit = limitTable.value,
+    keyword = searchQuery.value,
+    site = selectedSite.value
+) {
+    console.log(limit, keyword);
+    try {
+        const res = await axios.get("/admin/visitor/table-data", {
+            params: {
+                limit,
+                keyword,
+                site,
+            },
+        });
         console.log("inside fetch table data", res.data.visitor);
 
         visitorForms.value = res.data.visitor;
-
-    } catch (e){
-        console.log("Failed to fetch visitors table data", e)
+    } catch (e) {
+        console.log("Failed to fetch visitors table data", e);
     }
 }
 
@@ -215,11 +224,11 @@ function openDetailsModal(visitorId) {
 
 onMounted(() => {
     console.log("Mounted VisitorTable.vue");
-    fetchVisitors();
     fetchGatePassList();
     fetchVisitorInside();
     fetchTotalAvailableGatePass();
-    fetchVisitorTableData();
+    fetchAdminVisitorTableData();
+    fetchVisitors();
 
     intervalId = setInterval(() => {
         currentTime.value = new Date();
@@ -230,8 +239,7 @@ onMounted(() => {
         window.Echo.channel("visitors")
             .listen(".visitor.registered", (e) => {
                 console.log("New VisitorRegistered event received:", e);
-                fetchVisitors();
-                fetchVisitorTableData();
+                fetchAdminVisitorTableData();
                 fetchTotalAvailableGatePass();
                 fetchGatePassList();
             })
@@ -266,14 +274,19 @@ onMounted(() => {
 
 watch(limitTable, (newVal) => {
     console.log("Limit changed to:", newVal);
-    fetchVisitorTableData();
+    fetchAdminVisitorTableData();
 });
 
 watch(searchQuery, (newVal) => {
     console.log("Search query changed to:", newVal);
-    fetchVisitorTableData();
+    fetchAdminVisitorTableData();
 });
 
+watch(selectedSite, (newVal) => {
+    console.log("Site changed", newVal);
+    fetchAdminVisitorTableData();
+    fetchVisitors();
+});
 watch(isGatePassModalOpen, (newValue, oldValue) => {
     console.log(`Modal changed: ${oldValue} -> ${newValue}`);
     if (newValue) {
@@ -298,7 +311,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <AuthenticatedLayout>
+    <AdminAuthenticatedLayout>
         <template #breadcrumb>
             <Breadcrumb>
                 <BreadcrumbList>
@@ -323,6 +336,23 @@ onUnmounted(() => {
                 <div>Visitor Management System</div>
             </div>
 
+            <div class="flex items-center gap-2">
+                <label class="text-sm whitespace-nowrap">Select Site :</label>
+                <Select v-model="selectedSite">
+                    <SelectTrigger class="w-[180px]">
+                        <SelectValue placeholder="Select Site" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectGroup>
+                            <SelectLabel>Site</SelectLabel>
+                            <SelectItem value="S1">Site 1</SelectItem>
+                            <SelectItem value="S2">Site 2</SelectItem>
+                            <SelectItem value="S3">Site 3</SelectItem>
+                            <SelectItem value="S4">Site 4</SelectItem>
+                        </SelectGroup>
+                    </SelectContent>
+                </Select>
+            </div>
             <div
                 class="flex flex-row space-x-4 text-base font-normal text-gray-600 text-right"
             >
@@ -349,7 +379,6 @@ onUnmounted(() => {
             :visitors="visitorForms"
             :limit="limitTable"
             :count="totalAvailableGatePass"
-            :total-visitor-today="totalVisitorToday"
             @update:limit="limitTable = $event"
             @search="searchQuery = $event"
             @open-gate-pass-modal="isGatePassModalOpen = true"
@@ -381,14 +410,13 @@ onUnmounted(() => {
             :show="showCheckoutModal"
             @refresh="
                 () => {
-                    fetchVisitors();
                     fetchGatePassList();
                     fetchTotalAvailableGatePass();
                     fetchVisitorInside();
-                    fetchVisitorTableData();
+                    fetchAdminVisitorTableData();
                 }
             "
             @close="showCheckoutModal = false"
         />
-    </AuthenticatedLayout>
+    </AdminAuthenticatedLayout>
 </template>
