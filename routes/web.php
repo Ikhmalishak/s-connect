@@ -44,6 +44,8 @@ Route::middleware('auth')->group(function () {
     Route::get('visitor/table-data',[VisitorController::class, 'getVisitorTableData']);
     Route::get('/admin/visitor/table-data',[VisitorController::class, 'getAdminVisitorTableData']);
     Route::post('/admin/visitor/generate-report', [VisitorController::class, 'generateReport'])->name("admin.generateReport");
+    Route::get('/admin/visitor/get-statistic-all-sites', [VisitorController::class,'getStatisticAllSites']);
+    Route::get('/admin/visitor/get-statistic-by-sites', [VisitorController::class,'getStatisticBySites']);
 
     //route for purpose and site and gate pass
     Route::apiResource('sites', SiteController::class);

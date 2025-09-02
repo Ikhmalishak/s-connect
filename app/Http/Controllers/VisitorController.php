@@ -16,6 +16,9 @@ use App\Events\VisitorRegistered;
 use Illuminate\Validation\ValidationException;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Http;
+use Symfony\Component\Process\Process;
+use Symfony\Component\Process\Exception\ProcessFailedException;
+
 
 class VisitorController extends Controller
 {
@@ -318,6 +321,25 @@ class VisitorController extends Controller
                     ...$new_visitor->toArray(),
                     'pass_number' => $pass_id->pass_number
                 ];
+
+                // Prepare label text
+                $labelText = "Pass ID: {$pass_id->pass_number}\nVisitor: {$visitor['visitor_name']}\nDate: {$date}";
+
+                // Save to a temporary file
+                $tmpFile = tempnam(sys_get_temp_dir(), 'label_') . '.txt';
+                file_put_contents($tmpFile, $labelText);
+
+                // Print using CUPS (BrotherTest is the printer name you added earlier)
+                $process = new Process(['lp', '-d', 'Brother_QL_820NWB', $tmpFile]);
+                $process->run();
+
+                if (!$process->isSuccessful()) {
+                    throw new ProcessFailedException($process);
+                }
+
+                // Cleanup
+                unlink($tmpFile);
+
             }
 
             return response()->json([
@@ -544,7 +566,7 @@ class VisitorController extends Controller
                     [
                         'data' => $visitor_counts->values(),
                         'backgroundColor' => ['#36A2EB', '#FF6384', '#FFCE56', '#4BC0C0'],
-                        'label'=> 'Dataset 1',
+                        'label' => 'Dataset 1',
                     ]
                 ],
             ],
@@ -562,8 +584,84 @@ class VisitorController extends Controller
         $imageSrc2 = 'data:image/png;base64,' . $imageData2;
 
 
-        $pdf = PDF::loadView('report.advanced-reports', compact('visitors', 'imageSrc','imageSrc2'));
+        $pdf = PDF::loadView('report.advanced-reports', compact('visitors', 'imageSrc', 'imageSrc2'));
 
         return $pdf->download('visitors-reports.pdf');
+    }
+
+    public function getStatisticAllSites(Request $request)
+    {
+        $date = $request->date ?? now()->toDateString();
+
+        // total visitor
+        $total_visitor = Visitor::where('visitor_type', 'visitor')
+            ->whereDate('date', $date)
+            ->count();
+
+        // total driver (inbound-xxx OR outbound-xxx)
+        $total_driver = Visitor::where(function ($query) {
+            $query->where('visitor_type', 'like', 'inbound-%')
+                ->orWhere('visitor_type', 'like', 'outbound-%');
+        })
+            ->whereDate('date', $date)
+            ->count();
+
+        // total contractor
+        $total_contractor = Visitor::where('visitor_type', 'contractor')
+            ->whereDate('date', $date)
+            ->count();
+
+        // total all
+        $total_all = $total_visitor + $total_driver + $total_contractor;
+
+        return response()->json([
+            'date' => $date,
+            'total_visitor' => $total_visitor,
+            'total_driver' => $total_driver,
+            'total_contractor' => $total_contractor,
+            'total_all' => $total_all,
+        ]);
+    }
+
+
+    public function getStatisticBySites(Request $request)
+    {
+        $date = $request->date ?? now()->toDateString();
+
+        $site_1 = Visitor::where('site_id', '1')
+            ->whereDate('date',$date)
+            ->whereNotNull('time_out')
+            ->groupBy('visitor_type')
+            ->selectRaw('visitor_type, COUNT(*) as total')
+            ->get();
+
+        $site_2 = Visitor::where('site_id', '2')
+            ->whereDate('date',$date)
+            ->whereNotNull('time_out')
+            ->groupBy('visitor_type')
+            ->selectRaw('visitor_type, COUNT(*) as total')
+            ->get();
+
+        $site_3 = Visitor::where('site_id', '3')
+            ->whereDate('date',$date)
+            ->whereNotNull('time_out')
+            ->groupBy('visitor_type')
+            ->selectRaw('visitor_type, COUNT(*) as total')
+            ->get();
+
+        $site_4 = Visitor::where('site_id', '4')
+            ->whereDate('date',$date)
+            ->whereNotNull('time_out')
+            ->groupBy('visitor_type')
+            ->selectRaw('visitor_type, COUNT(*) as total')
+            ->get();
+
+        return response()->json([
+            'message' => "success",
+            'site1' => $site_1,
+            'site2' => $site_2,
+            'site3' => $site_3,
+            'site4' => $site_4,
+        ]);
     }
 }

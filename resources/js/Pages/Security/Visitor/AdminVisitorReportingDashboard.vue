@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AdminAuthenticatedLayout from "@/Layouts/AdminAuthenticatedLayout.vue";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import {
     Breadcrumb,
@@ -39,12 +39,14 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import axios from "axios";
 
 const df = new DateFormatter("en-US", {
     dateStyle: "long",
 });
-import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { date } from "zod";
 
 const items = [
     { value: 0, label: "Today" },
@@ -53,8 +55,43 @@ const items = [
     { value: 7, label: "In a week" },
 ];
 
+// Statistics
+const totalVisitors = ref(0);
+const totalDriver = ref(0);
+const totalContractor = ref(0);
+const total = ref(0);
+
+// Mock data for different sites
+const site1Data = ref([
+    { name: "Visitor", total: 45 },
+    { name: "Driver Outbound", total: 55 },
+    { name: "Contractor", total: 55 },
+    { name: "Driver Inbound", total: 55 },
+]);
+
+const site2Data = ref([
+    { name: "Visitor", total: 45 },
+    { name: "Driver Outbound", total: 55 },
+    { name: "Contractor", total: 55 },
+    { name: "Driver Inbound", total: 55 },
+]);
+
+const site3Data = ref([
+    { name: "Visitor", total: 45 },
+    { name: "Driver Outbound", total: 55 },
+    { name: "Contractor", total: 55 },
+    { name: "Driver Inbound", total: 55 },
+]);
+
+const site4Data = ref([
+    { name: "Visitor", total: 45 },
+    { name: "Driver Outbound", total: 55 },
+    { name: "Contractor", total: 55 },
+    { name: "Driver Inbound", total: 55 },
+]);
+
 const currentTime = ref(new Date());
-const value = ref<DateValue>();
+const value = ref<any>(today(getLocalTimeZone())); // quick fix
 let intervalId;
 
 const formattedDate = computed(() =>
@@ -70,7 +107,81 @@ const formattedTime = computed(() =>
     currentTime.value.toLocaleTimeString("en-GB")
 );
 
+function formatDateLocal(dateValue: DateValue) {
+    const d = dateValue.toDate(getLocalTimeZone());
+    return d.toLocaleDateString("en-CA"); // gives YYYY-MM-DD in local timezone
+}
+
+async function fetchStatisticAllSites() {
+    try {
+        const res = await axios.get("/admin/visitor/get-statistic-all-sites", {
+            params: {
+                date: value.value ? formatDateLocal(value.value) : null,
+            },
+        });
+        console.log(res.data);
+        console.log("Success to fetch statistic all sites");
+
+        totalVisitors.value = res.data.total_visitor;
+        totalDriver.value = res.data.total_driver;
+        totalContractor.value = res.data.total_contractor;
+        total.value = res.data.total_all;
+    } catch (e) {
+        console.log("Failed to fetch statistic all sites", e);
+    }
+}
+
+function mapVisitorType(type: string): string {
+    if (type.startsWith("inbound")) return "Driver Inbound";
+    if (type.startsWith("outbound")) return "Driver Outbound";
+    if (type === "visitor") return "Visitor";
+    if (type === "contractor") return "Contractor";
+    return type; // fallback
+}
+
+async function fetchStatisticBySites() {
+    try {
+        const res = await axios.get("/admin/visitor/get-statistic-by-sites", {
+            params: {
+                date: value.value ? formatDateLocal(value.value) : null,
+            },
+        });
+
+        site1Data.value = res.data.site1.map((item: any) => ({
+            name: mapVisitorType(item.visitor_type),
+            total: item.total,
+        }));
+
+        site2Data.value = res.data.site2.map((item: any) => ({
+            name: mapVisitorType(item.visitor_type),
+            total: item.total,
+        }));
+
+        site3Data.value = res.data.site3.map((item: any) => ({
+            name: mapVisitorType(item.visitor_type),
+            total: item.total,
+        }));
+
+        site4Data.value = res.data.site4.map((item: any) => ({
+            name: mapVisitorType(item.visitor_type),
+            total: item.total,
+        }));
+
+        console.log("Mapped site2Data:", site2Data.value);
+    } catch (e) {
+        console.error("Failed to fetch statistic by sites", e);
+    }
+}
+
+watch(value, () => {
+    fetchStatisticAllSites();
+    fetchStatisticBySites();
+});
+
 onMounted(() => {
+    fetchStatisticAllSites();
+    fetchStatisticBySites();
+
     intervalId = setInterval(() => {
         currentTime.value = new Date();
     }, 1000);
@@ -120,54 +231,20 @@ onUnmounted(() => {
         );
     }
 });
-// Mock data for different sites
-const site1Data = ref([
-    { name: "Visitor", total: 45 },
-    { name: "Driver Outbound", total: 55 },
-    { name: "Contractor", total: 55 },
-    { name: "Driver Inbound", total: 55 },
-]);
-
-const site2Data = ref([
-    { name: "Visitor", total: 45 },
-    { name: "Driver Outbound", total: 55 },
-    { name: "Contractor", total: 55 },
-    { name: "Driver Inbound", total: 55 },
-]);
-
-const site3Data = ref([
-    { name: "Visitor", total: 45 },
-    { name: "Driver Outbound", total: 55 },
-    { name: "Contractor", total: 55 },
-    { name: "Driver Inbound", total: 55 },
-]);
-
-const site4Data = ref([
-    { name: "Visitor", total: 45 },
-    { name: "Driver Outbound", total: 55 },
-    { name: "Contractor", total: 55 },
-    { name: "Driver Inbound", total: 55 },
-]);
 
 function getRandom(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+    return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 const analyticsData = ref(
-  Array.from({ length: 52 }, (_, i) => ({
-    name: `Week ${i + 1}`,
-    site1: getRandom(20, 70),
-    site2: getRandom(10, 50),
-    site3: getRandom(10, 40),
-    site4: getRandom(5, 30),
-  }))
+    Array.from({ length: 52 }, (_, i) => ({
+        name: `Week ${i + 1}`,
+        site1: getRandom(20, 70),
+        site2: getRandom(10, 50),
+        site3: getRandom(10, 40),
+        site4: getRandom(5, 30),
+    }))
 );
-
-// Statistics
-const totalVisitors = ref(245);
-const totalDriver = ref(200);
-const totalContractor = ref(100);
-const total = ref(545);
 </script>
 
 <template>
@@ -206,7 +283,7 @@ const total = ref(545);
         <!-- Statistics Overview - Fixed Width/Height -->
         <div class="mt-4">
             <Card class="p-4">
-                <div class="flex flex-row justify-between items-center">
+                <div class="flex flex-row justify-between items-center mb-4">
                     <div class="text-center mb-4">
                         <label class="text-lg font-semibold"
                             >Statistics Overview</label
@@ -324,10 +401,9 @@ const total = ref(545);
                     class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 mt-4"
                 >
                     <Card class="p-4 text-center">
-                        <div class="text-lg font-semibold mb-2">
-                            Visit By Purpose
-                        </div>
+                        <div class="text-lg font-semibold mb-2">Site 1</div>
                         <DonutChart
+                            v-if="site1Data.length > 0"
                             index="name"
                             :category="'total'"
                             :data="site1Data"
@@ -339,10 +415,15 @@ const total = ref(545);
                                 'hsl(120, 50%, 20%)',
                             ]"
                         />
+                        <div v-else class="text-center text-gray-500 p-4">
+                            No data available
+                        </div>
                     </Card>
+
                     <Card class="p-4 text-center">
                         <div class="text-lg font-semibold mb-2">Site 2</div>
                         <DonutChart
+                            v-if="site2Data.length > 0"
                             index="name"
                             :category="'total'"
                             :data="site2Data"
@@ -354,10 +435,14 @@ const total = ref(545);
                                 'hsl(120, 50%, 20%)',
                             ]"
                         />
+                        <div v-else class="text-center text-gray-500 p-4">
+                            No data available
+                        </div>
                     </Card>
                     <Card class="p-4 text-center">
                         <div class="text-lg font-semibold mb-2">Site 3</div>
                         <DonutChart
+                            v-if="site3Data.length > 0"
                             index="name"
                             :category="'total'"
                             :data="site3Data"
@@ -369,10 +454,15 @@ const total = ref(545);
                                 'hsl(120, 50%, 20%)',
                             ]"
                         />
+
+                        <div v-else class="text-center text-gray-500 p-4">
+                            No data available
+                        </div>
                     </Card>
                     <Card class="p-4 text-center">
                         <div class="text-lg font-semibold mb-2">Site 4</div>
                         <DonutChart
+                            v-if="site4Data.length > 0"
                             index="name"
                             :category="'total'"
                             :data="site4Data"
@@ -384,6 +474,10 @@ const total = ref(545);
                                 'hsl(120, 50%, 20%)',
                             ]"
                         />
+
+                        <div v-else class="text-center text-gray-500 p-4">
+                            No data available
+                        </div>
                     </Card>
                 </div>
             </Card>
