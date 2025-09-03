@@ -6,6 +6,7 @@ use App\Models\GatePass;
 use App\Models\Site;
 use App\Models\Visitor;
 use App\Models\VisitorAcknowledgement;
+use App\Models\VisitorStaffAcknowledgement;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
@@ -15,10 +16,10 @@ use Illuminate\Support\Facades\DB;
 use App\Events\VisitorRegistered;
 use Illuminate\Validation\ValidationException;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\Http;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Process\Exception\ProcessFailedException;
-
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Mpdf\Mpdf;
 
 class VisitorController extends Controller
 {
@@ -322,29 +323,21 @@ class VisitorController extends Controller
                     'pass_number' => $pass_id->pass_number
                 ];
 
-                // Prepare label text
-                $labelText = "Pass ID: {$pass_id->pass_number}\nVisitor: {$visitor['visitor_name']}\nDate: {$date}";
+            }
 
-                // Save to a temporary file
-                $tmpFile = tempnam(sys_get_temp_dir(), 'label_') . '.txt';
-                file_put_contents($tmpFile, $labelText);
+            // Create acknowledgement record with created visitor details (only if there are successful creations)
+            $ackRow = null;
 
-                // Print using CUPS (BrotherTest is the printer name you added earlier)
-                $process = new Process(['lp', '-d', 'Brother_QL_820NWB', $tmpFile]);
-                $process->run();
-
-                if (!$process->isSuccessful()) {
-                    throw new ProcessFailedException($process);
-                }
-
-                // Cleanup
-                unlink($tmpFile);
-
+            if (!empty($createdVisitors)) {
+                $ackRow = VisitorStaffAcknowledgement::create([
+                    'visitors' => $createdVisitors, // Pass the full visitor details including IDs and pass numbers
+                ]);
             }
 
             return response()->json([
                 'created' => $createdVisitors,
                 'failed' => $failedCreatedVisitors,
+                'acknowledgement_id' => $ackRow->id,
             ]);
 
         });
@@ -374,6 +367,80 @@ class VisitorController extends Controller
 
             return $gate_pass;
         });
+    }
+
+    public function generateSticker($acknowledgementId)
+    {
+        $ackRow = VisitorStaffAcknowledgement::findOrFail($acknowledgementId);
+
+        // Generate QR code
+        $qrCode = base64_encode(
+            QrCode::format('png')->size(360)->margin(0)->generate($ackRow->id)
+        );
+
+        $logo = base64_encode(file_get_contents(public_path('assets/ss1.png')));
+
+        $mpdf = new Mpdf([
+            'mode' => 'utf-8',
+            'format' => [40, 60],
+            'margin_left' => 0,
+            'margin_right' => 0,
+            'margin_top' => 0,
+            'margin_bottom' => 0,
+        ]);
+
+        $html = view('sticker', [
+            'qr' => $qrCode,
+            'logo' => $logo,
+            'visitor_id' => $ackRow->id,
+            'total_pax' => count($ackRow->visitors)
+        ])->render();
+
+        $mpdf->WriteHTML($html);
+
+        // For auto-display in browser
+        return response($mpdf->Output('visitor_sticker.pdf', 'I'))
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="visitor_sticker.pdf"');
+    }
+    protected function registerVisitorStaffAcknowledgement(array $visitors)
+    {
+        // Create a new acknowledgment row
+        $ackRow = VisitorStaffAcknowledgement::create([
+            'visitors' => $visitors, // store as array, model will cast to JSON
+        ]);
+
+        // Generate QR code based on the row ID
+        $qrCode = base64_encode(
+            QrCode::format('png')->size(360)->margin(0)->generate($ackRow->id)
+        );
+
+        $logo = base64_encode(file_get_contents(public_path('assets/ss1.png')));
+
+        // Exact custom size: 40mm (width) x 60mm (height)
+        $mpdf = new Mpdf([
+            'mode' => 'utf-8',
+            'format' => [40, 60], // width=40mm, height=60mm
+            'margin_left' => 0,
+            'margin_right' => 0,
+            'margin_top' => 0,
+            'margin_bottom' => 0,
+        ]);
+
+        // Load your blade view into HTML
+        $html = view('sticker', [
+            'qr' => $qrCode,
+            'logo' => $logo,
+            'visitor_id' => $ackRow->id,
+            'total_pax' => count($visitors)
+        ])->render();
+
+        $mpdf->WriteHTML($html);
+
+        // Output directly for printing
+        return response($mpdf->Output('sticker.pdf', 'S'))
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="sticker.pdf"');
     }
 
     public function scanByPass(Request $request)
@@ -629,28 +696,28 @@ class VisitorController extends Controller
         $date = $request->date ?? now()->toDateString();
 
         $site_1 = Visitor::where('site_id', '1')
-            ->whereDate('date',$date)
+            ->whereDate('date', $date)
             ->whereNotNull('time_out')
             ->groupBy('visitor_type')
             ->selectRaw('visitor_type, COUNT(*) as total')
             ->get();
 
         $site_2 = Visitor::where('site_id', '2')
-            ->whereDate('date',$date)
+            ->whereDate('date', $date)
             ->whereNotNull('time_out')
             ->groupBy('visitor_type')
             ->selectRaw('visitor_type, COUNT(*) as total')
             ->get();
 
         $site_3 = Visitor::where('site_id', '3')
-            ->whereDate('date',$date)
+            ->whereDate('date', $date)
             ->whereNotNull('time_out')
             ->groupBy('visitor_type')
             ->selectRaw('visitor_type, COUNT(*) as total')
             ->get();
 
         $site_4 = Visitor::where('site_id', '4')
-            ->whereDate('date',$date)
+            ->whereDate('date', $date)
             ->whereNotNull('time_out')
             ->groupBy('visitor_type')
             ->selectRaw('visitor_type, COUNT(*) as total')
@@ -662,6 +729,69 @@ class VisitorController extends Controller
             'site2' => $site_2,
             'site3' => $site_3,
             'site4' => $site_4,
+        ]);
+    }
+
+    public function viewPdf()
+    {
+        $data = [
+            'foo' => 'bar'
+        ];
+
+        $pdf = PDF::loadView('pdf.document', $data);
+
+        return $pdf->stream('document.pdf');
+    }
+
+
+    public function printSticker()
+    {
+        $visitor_id = "V123";
+        $total_pax = 5;
+        $payload = "Visitor: {$visitor_id}, Pax: {$total_pax}";
+
+        // Generate QR as PNG file
+        $qrPath = storage_path("app/public/qr_{$visitor_id}.png");
+        \QrCode::format('png')->size(360)->margin(0)->generate($payload, $qrPath);
+
+        // Create temporary HTML for printing
+        $html = view('sticker', [
+            'qr' => base64_encode(file_get_contents($qrPath)),
+            'logo' => base64_encode(file_get_contents(public_path('assets/ss1.png'))),
+            'visitor_id' => $visitor_id,
+            'total_pax' => $total_pax
+        ])->render();
+
+        // Save HTML into a temp PDF
+        $pdfPath = storage_path("app/public/sticker_{$visitor_id}.pdf");
+        $mpdf = new Mpdf([
+            'mode' => 'utf-8',
+            'format' => [62, 30], // width x height in mm
+            'margin_left' => 0,
+            'margin_right' => 0,
+            'margin_top' => 0,
+            'margin_bottom' => 0,
+        ]);
+        $mpdf->WriteHTML($html);
+        $mpdf->Output($pdfPath, 'F'); // Save file
+
+        // Directly send to Brother printer via lp
+        $printerName = "Brother_QL_820NWB"; // change if needed
+        $cmd = "lp -d {$printerName} -o PageSize=Custom.62x30mm -o print-scaling=none " . escapeshellarg($pdfPath);
+        exec($cmd, $output, $returnVar);
+
+        if ($returnVar !== 0) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Print failed',
+                'output' => $output,
+            ], 500);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Sticker sent to printer',
+            'output' => $output,
         ]);
     }
 }

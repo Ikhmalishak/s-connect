@@ -298,6 +298,25 @@ const onSubmit = handleSubmit(async (formValues) => {
         console.log("Form submitted successfully:", response.data);
         registrationResult.value = response.data;
         resultModalOpen.value = true;
+        
+        // Auto-print the PDF after successful submission
+        if (response.data.acknowledgement_id) {
+            // Wait a bit for the modal to show, then open and print PDF
+            setTimeout(() => {
+                const printWindow = window.open(`/visitors/sticker/${response.data.acknowledgement_id}`, '_blank');
+                
+                // Try to print after the PDF loads
+                if (printWindow) {
+                    printWindow.onload = function() {
+                        setTimeout(() => {
+                            printWindow.print();
+                            // Optional: close the window after printing
+                            // setTimeout(() => printWindow.close(), 500);
+                        }, 2000);
+                    };
+                }
+            }, 1000);
+        }
     } catch (error) {
         console.error("Submission error:", error);
         alert("An error occurred while submitting the form.");
