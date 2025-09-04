@@ -38,6 +38,7 @@ const resultAction = ref(null);
 const resultStatus = ref("success"); // success or error
 
 const drawerOpen = ref(false); // ✅ Controls drawer visibility
+let drawerTimeout: ReturnType<typeof setTimeout> | null = null;
 
 const focusInput = async () => {
     await nextTick();
@@ -73,6 +74,20 @@ watch(
         }
     }
 );
+
+watch(drawerOpen, (isOpen) => {
+    if (drawerTimeout) {
+        clearTimeout(drawerTimeout);
+        drawerTimeout = null;
+    }
+
+    if (isOpen) {
+        drawerTimeout = setTimeout(() => {
+            drawerOpen.value = false;
+            drawerTimeout = null;
+        }, 5000);
+    }
+});
 
 const handleScanCheckout = async () => {
     if (!scannedPass.value) return;

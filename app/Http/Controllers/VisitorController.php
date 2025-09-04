@@ -37,6 +37,12 @@ class VisitorController extends Controller
     {
         return Inertia::render('Security/Visitor/AdminVisitorReportingDashboard');
     }
+
+    public function getStaffVerification(Request $request)
+    {
+        return Inertia::render('Security/Visitor/StaffVerification');
+    }
+
     public function getAdminVisitorTableData(Request $request)
     {
         $limit = $request->input('limit', 25);

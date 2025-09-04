@@ -4,6 +4,7 @@ use App\Http\Controllers\GatePassController;
 use App\Http\Controllers\VisitorController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SiteController;
+use App\Http\Controllers\VisitorStaffAcknowledgementController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -34,6 +35,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/visitor/dashboard', [VisitorController::class, 'getVisitorDashboard'])->name('security.visitordashboard');
     Route::get('/admin/visitor/dashboard', [VisitorController::class, 'getAdminVisitorDashboard'])->name('admin.visitordashboard');
     Route::get('/admin/visitor/report-dashboard', [VisitorController::class, 'getAdminVisitorReportingDashboard']);
+    Route::get('/admin/visitor/staff-verification', [VisitorController::class, 'getStaffVerification']);
     Route::get('/api/visitors', [VisitorController::class, 'refreshVisitorTablePage']);
     Route::get('/visitor/visitor-inside', [VisitorController::class, 'getVisitorInside']);
     Route::post('/visitor/scan-by-pass', [VisitorController::class, 'scanByPass']);
@@ -49,6 +51,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/print-sticker/{ackId}/{totalPax}', [VisitorController::class, 'printSticker']);
     Route::get('/visitors/sticker/{id}', [VisitorController::class, 'generateSticker'])
         ->name('visitors.sticker');
+
     //route for purpose and site and gate pass
     Route::apiResource('sites', SiteController::class);
     Route::apiResource('gate-passes', GatePassController::class);
@@ -56,6 +59,8 @@ Route::middleware('auth')->group(function () {
     //route for get total available gate pass
     Route::get('/gate-pass/total', [GatePassController::class, 'getGatePassData']);
 
+    //route to get the visitor details for staff verification
+    Route::get('/visitor-staff-acknowledgement-details', [VisitorStaffAcknowledgementController::class, 'getVisitorStaffAcknowledgementDetails']);
 });
 
 Route::get('/visitor/form/{site}', [VisitorController::class, 'getVisitorForm']);

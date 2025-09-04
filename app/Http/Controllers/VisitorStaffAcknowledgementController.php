@@ -3,63 +3,27 @@
 namespace App\Http\Controllers;
 
 use App\Models\VisitorStaffAcknowledgement;
+use DB;
 use Illuminate\Http\Request;
 
 class VisitorStaffAcknowledgementController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function getVisitorStaffAcknowledgementDetails(Request $request)
     {
-        //
+        $id = $request->id;
+
+        // Fetch the visitor staff acknowledgement along with its visitors
+        $visitor_staff_acknowledgement = VisitorStaffAcknowledgement::with('visitors')->find($id);
+
+        if (!$visitor_staff_acknowledgement) {
+            return response()->json([
+                'message' => 'Visitor Staff Acknowledgement not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'visitor_staff_acknowledgement' => $visitor_staff_acknowledgement,
+        ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(VisitorStaffAcknowledgement $visitorStaffAcknowledgement)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(VisitorStaffAcknowledgement $visitorStaffAcknowledgement)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, VisitorStaffAcknowledgement $visitorStaffAcknowledgement)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(VisitorStaffAcknowledgement $visitorStaffAcknowledgement)
-    {
-        //
-    }
 }
