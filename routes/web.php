@@ -46,7 +46,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/admin/visitor/generate-report', [VisitorController::class, 'generateReport'])->name("admin.generateReport");
     Route::get('/admin/visitor/get-statistic-all-sites', [VisitorController::class, 'getStatisticAllSites']);
     Route::get('/admin/visitor/get-statistic-by-sites', [VisitorController::class, 'getStatisticBySites']);
-    Route::get('/print-sticker', [VisitorController::class, 'printSticker']);
+    Route::get('/print-sticker/{ackId}/{totalPax}', [VisitorController::class, 'printSticker']);
     Route::get('/visitors/sticker/{id}', [VisitorController::class, 'generateSticker'])
         ->name('visitors.sticker');
     //route for purpose and site and gate pass

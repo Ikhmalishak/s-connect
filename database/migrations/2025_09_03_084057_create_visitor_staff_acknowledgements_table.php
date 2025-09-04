@@ -11,16 +11,20 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('visitor_staff_acknowledgements', function (Blueprint $table) {
-            $table->id(); // This ID will be used for QR
-            $table->json('visitors'); // store visitor info array
-            $table->string('acknowledged_by')->nullable();
-            $table->string('staff_id')->nullable();
-            // $table->foreignId('acknowledged_by')->nullable()->constrained('users');
-            // $table->timestamp('acknowledged_at')->nullable();
+            $table->id();
+
+            // staff who acknowledged the group (nullable until staff picks up)
+            $table->string('acknowledged_by')->nullable(); // staff name
+            $table->string('staff_id')->nullable();        // staff employee ID / badge no
+            $table->timestamp('acknowledged_at')->nullable();
+
             $table->timestamps();
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
         Schema::dropIfExists('visitor_staff_acknowledgements');

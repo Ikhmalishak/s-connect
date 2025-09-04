@@ -12,76 +12,109 @@
 
         table {
             width: 100%;
+            height: 30mm;
+            /* full sticker height */
             border-collapse: collapse;
             border-spacing: 0;
-            /* no gaps between rows */
         }
 
         td {
             vertical-align: middle;
             text-align: center;
-            padding: 1mm 2mm;
-            /* less vertical padding */
+            padding: 0;
+            margin: 0;
         }
 
-        .qr {
-            width: 13mm;
-            height: 13mm;
-        }
-
-        .datetime {
-            font-size: 6pt;
-            transform: rotate(90deg);
-            transform-origin: center;
-        }
-
-        .header {
-            font-size: 6pt;
-            margin: 1mm 0;
-        }
-
-        .text {
-            font-size: 5.5pt;
-            margin: 1mm 0;
-        }
-
-        .pax-number {
-            font-size: 20pt;
-            /* bigger */
+        /* --- ROW 1: DATETIME --- */
+        tr.datetime-row td {
+            height: 5mm;
+            font-size: 5pt;
             font-weight: bold;
+            vertical-align: bottom;
+            /* stick to bottom of the cell */
+            padding-bottom: 0.3mm;
+            /* adjust so it doesn’t touch the edge */
         }
 
-        .pax-word {
-            font-size: 4pt;
-            /* smaller */
-            margin-left: 2px;
+        /* --- ROW 2: MAIN CONTENT --- */
+        tr.main-row td {
+            height: 17mm;
+            /* reduced from 15mm */
+        }
+
+        /* --- ROW 3: NOTICE --- */
+        /* --- ROW 3: NOTICE --- */
+        tr.notice-row td {
+            height: 8mm;
+            padding: 0 2mm;
+            vertical-align: top;
+            /* stick to the top of the row */
         }
 
         .logo {
-            width: 15mm;
-            height: 15mm;
+            width: 11.5mm;
+            height: auto;
+            /* keeps proportions */
+        }
+
+        .pax-number {
+            font-size: 35pt;
+            font-weight: bold;
+            line-height: 1;
+            display: block;
+        }
+
+        .pax-word {
+            font-size: 8pt;
+            display: block;
+        }
+
+        .qr {
+            width: 14.5mm;
+            height: 14.5mm;
+        }
+
+        .notice-title {
+            font-size: 4.5pt;
+            font-weight: bold;
+            margin: 0;
+            text-align: center;
+        }
+
+        .notice {
+            font-size: 3.7pt;
+            line-height: 0.5;
+            margin: 1mm 0 0 0;
+            text-align: justify;
+            padding: 0 2mm;
         }
     </style>
 </head>
 
 <body>
     <table>
-        <tr>
+        <!-- ROW 1: DATE & TIME -->
+        <tr class="datetime-row">
+            <td colspan="3">{{ date('H:i d M Y') }}</td>
+        </tr>
+
+        <!-- ROW 2: MAIN CONTENT -->
+        <tr class="main-row">
             <td><img src="data:image/png;base64,{{ $logo }}" class="logo" /></td>
-            <td class="datetime">
-                {{ date('d/m/Y H:i') }} <br>
+            <td>
                 <span class="pax-number">{{ $total_pax }}</span>
-                <span class="pax-word">Pax</span>
+                <span class="pax-word">PAX</span>
             </td>
             <td><img src="data:image/png;base64,{{ $qr }}" class="qr" /></td>
         </tr>
-        <tr>
+
+        <!-- ROW 3: NOTICE -->
+        <tr class="notice-row">
             <td colspan="3">
-                <h1 class="header">Visitor Notice</h1>
-                <p class="text">
-                    This QR Tag is part of your visitor pass. Your host will scan it to confirm the visit is
-                    completed. Please return the pass with the QR Tag to Security for exit clearance before leaving
-                    the premises.
+                <h1 class="notice-title">⚠ Visitor Notice</h1>
+                <p class="notice">
+                    This QR Tag is part of your visitor pass. Your host will scan it to confirm the visit is completed.
+                    Please return the pass with the QR Tag to Security for exit clearance before leaving the premises.
                 </p>
             </td>
         </tr>
