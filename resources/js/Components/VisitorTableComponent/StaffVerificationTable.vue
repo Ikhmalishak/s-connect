@@ -14,43 +14,17 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Link } from "@inertiajs/vue3";
-import NotificationBadge from "@/Components/NotificationBadge.vue";
-import {
-    IdCardLanyard,
-    UserRoundPlus,
-    Eye,
-    EyeClosed,
-} from "lucide-vue-next";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuLabel,
-    DropdownMenuRadioGroup,
-    DropdownMenuRadioItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ref, watch } from "vue";
+import { ref } from "vue";
 import { Card } from "@/components/ui/card";
-import CustomTooltip from "../CustomTooltip.vue";
-import { EyeOff } from "lucide-vue-next";
-import { ArrowRightFromLine } from "lucide-vue-next";
-import ExportReportModal from "./ExportReportModal.vue";
+import { ScanQrCode } from "lucide-vue-next";
 
 const searchQuery = ref("");
-const showExportReportModal = ref(false);
 
-// Track which visitors have unmasked values
-const unmasked = ref<Record<number, boolean>>({});
+const emit = defineEmits(["update:limit", "search", "openCheckoutModal"]);
 
-
-function maskValue(value: string) {
-    if (!value) return "";
-    const visiblePart = value.slice(-4);
-    const maskedPart = "*".repeat(Math.max(0, value.length - 4));
-    return `${maskedPart}${visiblePart}`;
-}
+const props = defineProps<{
+    visitors: any;
+}>();
 
 function trimToHourMinute(timeString: string) {
     if (!timeString) return "-";
@@ -67,9 +41,6 @@ function trimVisitorType(visitorType: string) {
     }
 }
 
-function setRowMask(visitorId: number, state: boolean) {
-    unmasked.value[visitorId] = state;
-}
 </script>
 
 <template>
@@ -94,23 +65,37 @@ function setRowMask(visitorId: number, state: boolean) {
                         />
                     </div>
                 </div>
-
-                <div class="flex items-center gap-4">
+                <div class="flex flex-row gap-2">
+                    <div class="flex items-center gap-4">
+                        <div>
+                            <Select>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select limit" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        <SelectItem value="25">25</SelectItem>
+                                        <SelectItem value="50">50</SelectItem>
+                                        <SelectItem value="100">100</SelectItem>
+                                        <SelectItem value="200">200</SelectItem>
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
                     <div>
-                        <Select
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select limit" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectGroup>
-                                    <SelectItem value="25">25</SelectItem>
-                                    <SelectItem value="50">50</SelectItem>
-                                    <SelectItem value="100">100</SelectItem>
-                                    <SelectItem value="200">200</SelectItem>
-                                </SelectGroup>
-                            </SelectContent>
-                        </Select>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger>
+                                    <button @click="emit('openCheckoutModal')">
+                                        <ScanQrCode class="w-9 h-9" />
+                                    </button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Checkout By Scanner</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
                     </div>
                 </div>
             </div>
@@ -143,27 +128,7 @@ function setRowMask(visitorId: number, state: boolean) {
                             <th
                                 class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
                             >
-                                Vehicle #
-                            </th>
-                            <th
-                                class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
-                            >
                                 Date
-                            </th>
-                            <th
-                                class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
-                            >
-                                Time Reg
-                            </th>
-                            <th
-                                class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
-                            >
-                                Time In
-                            </th>
-                            <th
-                                class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
-                            >
-                                Time Out
                             </th>
                             <th
                                 class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
@@ -173,81 +138,87 @@ function setRowMask(visitorId: number, state: boolean) {
                             <th
                                 class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
                             >
+                                Acknowledge By
+                            </th>
+                            <th
+                                class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
+                            >
+                                Acknowledge At
+                            </th>
+                            <th
+                                class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
+                            >
                                 Purposes
-                            </th>
-                            <th
-                                class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
-                            >
-                                IC #
-                            </th>
-                            <th
-                                class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
-                            >
-                                Passport #
-                            </th>
-                            <th
-                                class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
-                            >
-                                Phone #
                             </th>
                             <th
                                 class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
                             >
                                 VCode
                             </th>
-                            <th
-                                class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
-                            >
-                                DU
-                            </th>
                         </tr>
                     </thead>
                     <tbody
                         class="border border-gray-300 divide-x divide-gray-300"
                     >
-                        <tr
+                        <template
+                            v-for="(ack, ackIndex) in visitors"
+                            :key="ack.id"
                         >
-                            <td class="text-center p-2">
-                            </td>
-                            <td class="text-center p-2">
-                            </td>
-                            <td
-                                class="text-center p-2 cursor-pointer hover:underline"
+                            <tr
+                                v-for="(v, index) in ack.visitors"
+                                :key="v.id"
+                                class="odd:bg-white even:bg-gray-50 hover:bg-gray-100"
                             >
-                            </td>
-                            <td class="text-center p-2">
-                            </td>
-                            <td class="text-center p-2">
-                            </td>
-                            <td class="text-center p-2">
-                            </td>
-                            <td class="text-center p-2">
-                            </td>
-                            <td class="text-center p-2">
-                            </td>
-                            <td class="text-center p-2">
-                            </td>
-                            <td class="text-center p-2">
-                            </td>
-                            <td
-                            >
-                            </td>
-                            <td>
-                            </td>
-                            <td>
-                            </td>
-                            <td class="text-center p-2">
-                            </td>
-                            <td class="text-center p-2">
-                            </td>
-                        </tr>
+                                <td
+                                    class="border border-gray-300 text-center p-2"
+                                >
+                                    {{ ackIndex + 1 }}
+                                </td>
+                                <td
+                                    class="border border-gray-300 text-center p-2"
+                                >
+                                    {{ v.gate_pass.pass_number }}
+                                </td>
+                                <td
+                                    class="border border-gray-300 text-center p-2"
+                                >
+                                    {{ v.visitor_name }}
+                                </td>
+                                <td
+                                    class="border border-gray-300 text-center p-2"
+                                >
+                                    {{ v.date }}
+                                </td>
+                                <td
+                                    class="border border-gray-300 text-center p-2"
+                                >
+                                    {{ v.visitor_company }}
+                                </td>
+                                <td
+                                    class="border border-gray-300 text-center p-2"
+                                >
+                                    {{ ack.acknowledged_by }}
+                                </td>
+                                <td
+                                    class="border border-gray-300 text-center p-2"
+                                >
+                                    {{ ack.acknowledged_at }}
+                                </td>
+                                <td
+                                    class="border border-gray-300 text-center p-2"
+                                >
+                                    {{ v.purpose }}
+                                </td>
+                                <td
+                                    class="border border-gray-300 text-center p-2"
+                                >
+                                    {{ trimVisitorType(v.visitor_type) }}
+                                </td>
+                            </tr>
+                        </template>
                     </tbody>
                 </table>
             </div>
         </Card>
     </div>
-    <ExportReportModal
-        :show="showExportReportModal"
-        @close="showExportReportModal = false"
-    ></ExportReportModal>
 </template>

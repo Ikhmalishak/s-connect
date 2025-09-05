@@ -17,7 +17,7 @@ return new class extends Migration {
             $table->string('acknowledged_by')->nullable(); // staff name
             $table->string('staff_id')->nullable();        // staff employee ID / badge no
             $table->timestamp('acknowledged_at')->nullable();
-
+            $table->string('ack_number')->unique();
             $table->timestamps();
         });
     }

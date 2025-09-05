@@ -61,6 +61,8 @@ Route::middleware('auth')->group(function () {
 
     //route to get the visitor details for staff verification
     Route::get('/visitor-staff-acknowledgement-details', [VisitorStaffAcknowledgementController::class, 'getVisitorStaffAcknowledgementDetails']);
+    Route::get('/get-verified-visitors', [VisitorStaffAcknowledgementController::class, 'getAllVerifiedVisitor']);
+    Route::post('/verify-visitor', [VisitorStaffAcknowledgementController::class, 'verifyVisitorAcknowledgement']);
 });
 
 Route::get('/visitor/form/{site}', [VisitorController::class, 'getVisitorForm']);
