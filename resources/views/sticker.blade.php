@@ -95,7 +95,9 @@
     <table>
         <!-- ROW 1: DATE & TIME -->
         <tr class="datetime-row">
-            <td colspan="3">{{ date('H:i d M Y') }}</td>
+            <td>Visitor Gate Pass</td>
+            <td>{{ date('H:i d M Y') }}</td>
+            <td>{{ $ack_number }}</td>
         </tr>
 
         <!-- ROW 2: MAIN CONTENT -->

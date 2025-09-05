@@ -31,7 +31,7 @@ const showVisitorVerification = ref(false);
 const showQrCodeModal = ref(false);
 
 //visitor_acknowledge_id
-const visitorAcknowledgeId = ref(""); // bind input for visitor ID
+const ackNumber = ref(""); // bind input for visitor ID
 
 // Visitor data fetched from API
 const visitor = ref<any>(null);
@@ -60,7 +60,7 @@ const formattedTime = computed(() =>
 async function openVisitorVerificationModal() {
     try {
         const res = await axios.get(
-            `/visitor-staff-acknowledgement-details?id=${visitorAcknowledgeId.value}`
+            `/visitor-staff-acknowledgement-details?ack_number=${ackNumber.value}`
         );
 
         visitor.value = {
@@ -106,7 +106,7 @@ const resetAndClose = () => {
     staffName.value = "";
     staffId.value = "";
     visitor.value = null;
-    visitorAcknowledgeId.value = "";
+    ackNumber.value = "";
 
     // Close modal
     showVisitorVerification.value = false;
@@ -125,7 +125,7 @@ const submitVerification = async () => {
 
     try {
         await axios.post("/verify-visitor", {
-            visitor_ack_id: visitorAcknowledgeId.value,
+            ack_number: ackNumber.value,
             staff_name: trimmedStaffName,
             staff_id: trimmedStaffId,
         });
@@ -297,8 +297,8 @@ const handleModalClose = () => {
                 <div class="space-y-4 mt-4">
                     <div>
                         <Input
-                            id="visitorAcknowledgeId"
-                            v-model="visitorAcknowledgeId"
+                            id="ackNumber"
+                            v-model="ackNumber"
                             placeholder="Scan QR Code"
                             class="placeholder:text-center h-16 text-xl placeholder:text-xl"
                             @keyup.enter="openVisitorVerificationModal"

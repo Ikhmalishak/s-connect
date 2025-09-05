@@ -341,7 +341,7 @@ class VisitorController extends Controller
                 $ackRow = $this->createAcknowledgementWithVisitors($visitorIds);
 
                 //print sticker
-                $this->printSticker($ackRow->id, count($visitorIds));
+                $this->printSticker($ackRow->id, count($visitorIds), $ackRow->ack_number);
             }
 
             return response()->json([
@@ -683,16 +683,17 @@ class VisitorController extends Controller
         ]);
     }
 
-    public function printSticker($ackId, $totalPax)
+    public function printSticker($ackId, $totalPax, $ackNumber)
     {
         $qrPath = storage_path("app/public/qr_ack_{$ackId}.png");
-        QrCode::format('png')->size(360)->margin(0)->generate($ackId, $qrPath);
+        QrCode::format('png')->size(360)->margin(0)->generate($ackNumber, $qrPath);
 
         $html = view('sticker', [
             'qr' => base64_encode(file_get_contents($qrPath)),
             'logo' => base64_encode(file_get_contents(public_path('assets/ss3.png'))),
             'ack_id' => $ackId,
             'total_pax' => $totalPax,
+            'ack_number' => $ackNumber,
         ])->render();
 
         $pdfPath = storage_path("app/public/sticker_ack_{$ackId}.pdf");

@@ -11,9 +11,9 @@ class VisitorStaffAcknowledgement extends Model
         'visitors',
     ];
 
-    protected $casts = [
-        'visitors' => 'array', // auto cast to array/json
-    ];
+    // protected $casts = [
+    //     'visitors' => 'array', // auto cast to array/json
+    // ];
 
     public function visitors()
     {

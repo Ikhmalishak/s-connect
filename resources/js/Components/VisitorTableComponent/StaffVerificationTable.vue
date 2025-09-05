@@ -172,7 +172,7 @@ function trimVisitorType(visitorType: string) {
                                 <td
                                     class="border border-gray-300 text-center p-2"
                                 >
-                                    {{ ackIndex + 1 }}
+                                    {{ ack.ack_number }}
                                 </td>
                                 <td
                                     class="border border-gray-300 text-center p-2"
