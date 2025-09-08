@@ -374,10 +374,10 @@ const stepTitles = {
         "
     />
 
-    <ResultModal 
-    :open="resultModalOpen" 
-    @update:open="handleModalClose" 
-    :result="registrationResult"
+    <ResultModal
+        :open="resultModalOpen"
+        @update:open="handleModalClose"
+        :result="registrationResult"
     />
 
     <div class="relative container mx-auto px-4 py-8 max-w-6xl">

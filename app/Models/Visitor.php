@@ -8,7 +8,7 @@ class Visitor extends Model
 {
     //fillable
     protected $fillable = [
-        'gate_pass_id',        
+        'gate_pass_id',
         'site_id',
         'visitor_name',
         'vehicle_number',
@@ -39,5 +39,14 @@ class Visitor extends Model
         return $this->belongsTo(Site::class);
     }
 
+    public function acknowledgements()
+    {
+        return $this->belongsToMany(
+            VisitorStaffAcknowledgement::class,
+            'visitor_ack_pivot',
+            'visitor_id',
+            'visitor_staff_acknowledgement_id'
+        )->withTimestamps();
+    }
 }
 

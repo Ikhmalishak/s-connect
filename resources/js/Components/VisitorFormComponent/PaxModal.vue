@@ -26,7 +26,7 @@ function confirm() {
 <template>
     <div
         v-if="open"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-md bg-opacity-50"
     >
         <div class="max-w-md w-full bg-white p-6 rounded-xl shadow-xl">
 

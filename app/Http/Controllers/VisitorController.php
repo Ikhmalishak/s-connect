@@ -6,6 +6,7 @@ use App\Models\GatePass;
 use App\Models\Site;
 use App\Models\Visitor;
 use App\Models\VisitorAcknowledgement;
+use App\Models\VisitorStaffAcknowledgement;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
@@ -15,10 +16,10 @@ use Illuminate\Support\Facades\DB;
 use App\Events\VisitorRegistered;
 use Illuminate\Validation\ValidationException;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\Http;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Process\Exception\ProcessFailedException;
-
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Mpdf\Mpdf;
 
 class VisitorController extends Controller
 {
@@ -36,6 +37,12 @@ class VisitorController extends Controller
     {
         return Inertia::render('Security/Visitor/AdminVisitorReportingDashboard');
     }
+
+    public function getStaffVerification(Request $request)
+    {
+        return Inertia::render('Security/Visitor/StaffVerification');
+    }
+
     public function getAdminVisitorTableData(Request $request)
     {
         $limit = $request->input('limit', 25);
@@ -322,29 +329,25 @@ class VisitorController extends Controller
                     'pass_number' => $pass_id->pass_number
                 ];
 
-                // Prepare label text
-                $labelText = "Pass ID: {$pass_id->pass_number}\nVisitor: {$visitor['visitor_name']}\nDate: {$date}";
+            }
 
-                // Save to a temporary file
-                $tmpFile = tempnam(sys_get_temp_dir(), 'label_') . '.txt';
-                file_put_contents($tmpFile, $labelText);
+            // After foreach loop, still inside the transaction
+            $ackRow = null;
 
-                // Print using CUPS (BrotherTest is the printer name you added earlier)
-                $process = new Process(['lp', '-d', 'Brother_QL_820NWB', $tmpFile]);
-                $process->run();
+            if (!empty($createdVisitors)) {
+                $visitorIds = array_column($createdVisitors, 'id');
 
-                if (!$process->isSuccessful()) {
-                    throw new ProcessFailedException($process);
-                }
+                //create acknowledgement
+                $ackRow = $this->createAcknowledgementWithVisitors($visitorIds);
 
-                // Cleanup
-                unlink($tmpFile);
-
+                //print sticker
+                $this->printSticker($ackRow->id, count($visitorIds), $ackRow->ack_number);
             }
 
             return response()->json([
                 'created' => $createdVisitors,
                 'failed' => $failedCreatedVisitors,
+                'acknowledgement_id' => $ackRow?->id,
             ]);
 
         });
@@ -374,6 +377,21 @@ class VisitorController extends Controller
 
             return $gate_pass;
         });
+    }
+
+    protected function createAcknowledgementWithVisitors(array $visitorIds): VisitorStaffAcknowledgement
+    {
+        // Step 1: Create empty acknowledgement row
+        $ackRow = VisitorStaffAcknowledgement::create([
+            'acknowledged_by' => null,
+            'staff_id' => null,
+            'acknowledged_at' => null,
+        ]);
+
+        // Step 2: Attach visitors into pivot
+        $ackRow->visitors()->attach($visitorIds);
+
+        return $ackRow;
     }
 
     public function scanByPass(Request $request)
@@ -629,28 +647,28 @@ class VisitorController extends Controller
         $date = $request->date ?? now()->toDateString();
 
         $site_1 = Visitor::where('site_id', '1')
-            ->whereDate('date',$date)
+            ->whereDate('date', $date)
             ->whereNotNull('time_out')
             ->groupBy('visitor_type')
             ->selectRaw('visitor_type, COUNT(*) as total')
             ->get();
 
         $site_2 = Visitor::where('site_id', '2')
-            ->whereDate('date',$date)
+            ->whereDate('date', $date)
             ->whereNotNull('time_out')
             ->groupBy('visitor_type')
             ->selectRaw('visitor_type, COUNT(*) as total')
             ->get();
 
         $site_3 = Visitor::where('site_id', '3')
-            ->whereDate('date',$date)
+            ->whereDate('date', $date)
             ->whereNotNull('time_out')
             ->groupBy('visitor_type')
             ->selectRaw('visitor_type, COUNT(*) as total')
             ->get();
 
         $site_4 = Visitor::where('site_id', '4')
-            ->whereDate('date',$date)
+            ->whereDate('date', $date)
             ->whereNotNull('time_out')
             ->groupBy('visitor_type')
             ->selectRaw('visitor_type, COUNT(*) as total')
@@ -663,5 +681,41 @@ class VisitorController extends Controller
             'site3' => $site_3,
             'site4' => $site_4,
         ]);
+    }
+
+    public function printSticker($ackId, $totalPax, $ackNumber)
+    {
+        $qrPath = storage_path("app/public/qr_ack_{$ackId}.png");
+        QrCode::format('png')->size(360)->margin(0)->generate($ackNumber, $qrPath);
+
+        $html = view('sticker', [
+            'qr' => base64_encode(file_get_contents($qrPath)),
+            'logo' => base64_encode(file_get_contents(public_path('assets/ss3.png'))),
+            'ack_id' => $ackId,
+            'total_pax' => $totalPax,
+            'ack_number' => $ackNumber,
+        ])->render();
+
+        $pdfPath = storage_path("app/public/sticker_ack_{$ackId}.pdf");
+        $mpdf = new Mpdf([
+            'mode' => 'utf-8',
+            'format' => [62, 30], // mm
+            'margin_left' => 0,
+            'margin_right' => 0,
+            'margin_top' => 0,
+            'margin_bottom' => 0,
+        ]);
+        $mpdf->WriteHTML($html);
+        $mpdf->Output($pdfPath, 'F');
+
+        $printerName = "Brother_QL_820NWB";
+        $cmd = "lp -d {$printerName} -o PageSize=Custom.62x30mm -o print-scaling=none -o CutMedia=Auto " . escapeshellarg($pdfPath);
+        exec($cmd, $output, $returnVar);
+
+        if ($returnVar !== 0) {
+            return response()->json(['status' => 'error', 'output' => $output], 500);
+        }
+
+        return response()->json(['status' => 'success', 'output' => $output]);
     }
 }
