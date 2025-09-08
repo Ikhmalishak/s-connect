@@ -41,6 +41,8 @@ class AuthenticatedSessionController extends Controller
                 return redirect()->route('admin.visitordashboard');
             case 'guard':
                 return redirect()->route('security.visitordashboard');
+            case 'receptionist':
+                return redirect()->route('receptionist.visitordashboard');
             default:
                 return redirect()->route('login');
         }

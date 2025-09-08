@@ -41,6 +41,18 @@ function trimVisitorType(visitorType: string) {
     }
 }
 
+function getAckRowClass(ack: any) {
+    // both staff + security acknowledged → green
+    if (ack.acknowledged_by && ack.acknowledged_by_security) {
+        return "bg-green-100 hover:bg-green-200";
+    }
+    // staff acknowledged but security not yet → red
+    if (ack.acknowledged_by && !ack.acknowledged_by_security) {
+        return "bg-red-400 hover:bg-red-300";
+    }
+    // default
+    return "bg-white hover:bg-gray-100";
+}
 </script>
 
 <template>
@@ -148,6 +160,16 @@ function trimVisitorType(visitorType: string) {
                             <th
                                 class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
                             >
+                                Acknowledge By Security
+                            </th>
+                            <th
+                                class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
+                            >
+                                Acknowledge At Security
+                            </th>
+                            <th
+                                class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
+                            >
                                 Purposes
                             </th>
                             <th
@@ -167,7 +189,7 @@ function trimVisitorType(visitorType: string) {
                             <tr
                                 v-for="(v, index) in ack.visitors"
                                 :key="v.id"
-                                class="odd:bg-white even:bg-gray-50 hover:bg-gray-100"
+                                :class="getAckRowClass(ack)"
                             >
                                 <td
                                     class="border border-gray-300 text-center p-2"
@@ -203,6 +225,16 @@ function trimVisitorType(visitorType: string) {
                                     class="border border-gray-300 text-center p-2"
                                 >
                                     {{ ack.acknowledged_at }}
+                                </td>
+                                <td
+                                    class="border border-gray-300 text-center p-2"
+                                >
+                                    {{ ack.acknowledged_by_security }}
+                                </td>
+                                <td
+                                    class="border border-gray-300 text-center p-2"
+                                >
+                                    {{ ack.acknowledged_at_security }}
                                 </td>
                                 <td
                                     class="border border-gray-300 text-center p-2"

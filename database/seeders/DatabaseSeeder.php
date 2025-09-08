@@ -30,6 +30,14 @@ class DatabaseSeeder extends Seeder
             'site' => 'Site 2'
 
         ]);
+        User::create([
+            'name' => 'Receptionist',
+            'email' => 'receptionist@example.com',
+            'password' => '12345678',
+            'role' => 'receptionist',
+            'site' => 'Site 2'
+
+        ]);
 
         $this->call([
             DepartmentSeeder::class,

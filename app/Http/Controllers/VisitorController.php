@@ -386,6 +386,8 @@ class VisitorController extends Controller
             'acknowledged_by' => null,
             'staff_id' => null,
             'acknowledged_at' => null,
+            'acknowledged_by_security' => null,
+            'acknowledged_at_security' => null,
         ]);
 
         // Step 2: Attach visitors into pivot

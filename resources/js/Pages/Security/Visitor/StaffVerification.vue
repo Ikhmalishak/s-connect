@@ -24,6 +24,8 @@ import { ref, computed, nextTick, onMounted } from "vue";
 import axios from "axios";
 import StaffVerificationTable from "@/Components/VisitorTableComponent/StaffVerificationTable.vue";
 
+const errors = ref<{ staffName?: string; staffId?: string }>({});
+
 // Modal state
 const showVisitorVerification = ref(false);
 
@@ -114,12 +116,21 @@ const resetAndClose = () => {
 
 // Submit staff verification
 const submitVerification = async () => {
-    // Trim whitespace and check if fields are actually filled
+    errors.value = {}; // reset errors
+
     const trimmedStaffName = staffName.value.trim();
     const trimmedStaffId = staffId.value.trim();
 
-    if (!trimmedStaffName || !trimmedStaffId) {
-        alert("Please fill in staff details");
+    // Validation
+    if (!trimmedStaffName) {
+        errors.value.staffName = "Staff name is required";
+    }
+    if (!trimmedStaffId) {
+        errors.value.staffId = "Staff ID is required";
+    }
+
+    // Stop if there are errors
+    if (errors.value.staffName || errors.value.staffId) {
         return;
     }
 
@@ -130,13 +141,8 @@ const submitVerification = async () => {
             staff_id: trimmedStaffId,
         });
 
-        // Show success message
         alert("Visitor verified!");
-
-        // Use nextTick to ensure DOM updates are processed
         await nextTick();
-
-        // Reset and close
         resetAndClose();
     } catch (error) {
         console.error(error);
@@ -213,62 +219,83 @@ const handleModalClose = () => {
                 </DialogHeader>
 
                 <div v-if="visitor">
-                    <!-- First visitor -->
-                    <p>
-                        <strong>Visitor Name:</strong>
-                        {{ visitor.details?.visitor_name }}
-                    </p>
-                    <p>
-                        <strong>Visitor Type:</strong>
-                        {{ visitor.details?.visitor_type }}
-                    </p>
-                    <p>
-                        <strong>Company:</strong>
-                        {{ visitor.details?.visitor_company }}
-                    </p>
-                    <p>
-                        <strong>Purpose:</strong> {{ visitor.details?.purpose }}
-                    </p>
-
-                    <!-- List all visitors in this acknowledgement -->
-                    <div
-                        v-if="
-                            visitor.list_visitors &&
-                            visitor.list_visitors.length > 1
-                        "
+                    <!-- Visitors Table -->
+                    <table
+                        class="table-auto border-collapse border border-gray-400 w-full text-sm"
                     >
-                        <p class="font-bold mt-2">Other Visitors:</p>
-                        <ul class="list-disc pl-5">
-                            <li
-                                v-for="v in visitor.list_visitors.slice(1)"
-                                :key="v.id"
-                            >
-                                {{ v.visitor_name }} ({{ v.visitor_type }}) -
-                                {{ v.visitor_company }}
-                            </li>
-                        </ul>
-                    </div>
+                        <thead>
+                            <tr class="bg-gray-100">
+                                <th
+                                    class="border border-gray-400 px-2 py-1 text-left"
+                                >
+                                    Name
+                                </th>
+                                <th
+                                    class="border border-gray-400 px-2 py-1 text-left"
+                                >
+                                    Type
+                                </th>
+                                <th
+                                    class="border border-gray-400 px-2 py-1 text-left"
+                                >
+                                    Company
+                                </th>
+                                <th
+                                    class="border border-gray-400 px-2 py-1 text-left"
+                                >
+                                    Purpose
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="v in visitor.list_visitors" :key="v.id">
+                                <td class="border border-gray-400 px-2 py-1">
+                                    {{ v.visitor_name }}
+                                </td>
+                                <td class="border border-gray-400 px-2 py-1">
+                                    {{ v.visitor_type }}
+                                </td>
+                                <td class="border border-gray-400 px-2 py-1">
+                                    {{ v.visitor_company }}
+                                </td>
+                                <td class="border border-gray-400 px-2 py-1">
+                                    {{ v.purpose }}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
 
                     <!-- Staff Form -->
-                    <div class="space-y-4 mt-4">
-                        <div>
-                            <Label for="staffName">Staff Name</Label>
-                            <Input
-                                id="staffName"
-                                v-model="staffName"
-                                placeholder="Enter your name"
-                                @keyup.enter="submitVerification"
-                            />
-                        </div>
-                        <div>
-                            <Label for="staffId">Staff ID</Label>
-                            <Input
-                                id="staffId"
-                                v-model="staffId"
-                                placeholder="Enter your staff ID"
-                                @keyup.enter="submitVerification"
-                            />
-                        </div>
+                    <div>
+                        <Label for="staffName">Staff Name</Label>
+                        <Input
+                            id="staffName"
+                            v-model="staffName"
+                            placeholder="Enter your name"
+                            @keyup.enter="submitVerification"
+                        />
+                        <p
+                            v-if="errors.staffName"
+                            class="text-red-500 text-sm mt-1"
+                        >
+                            {{ errors.staffName }}
+                        </p>
+                    </div>
+
+                    <div>
+                        <Label for="staffId">Staff ID</Label>
+                        <Input
+                            id="staffId"
+                            v-model="staffId"
+                            placeholder="Enter your staff ID"
+                            @keyup.enter="submitVerification"
+                        />
+                        <p
+                            v-if="errors.staffId"
+                            class="text-red-500 text-sm mt-1"
+                        >
+                            {{ errors.staffId }}
+                        </p>
                     </div>
                 </div>
 

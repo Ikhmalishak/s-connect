@@ -37,7 +37,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/visitor/dashboard', [VisitorController::class, 'getVisitorDashboard'])->name('security.visitordashboard');
     Route::get('/admin/visitor/dashboard', [VisitorController::class, 'getAdminVisitorDashboard'])->name('admin.visitordashboard');
     Route::get('/admin/visitor/report-dashboard', [VisitorController::class, 'getAdminVisitorReportingDashboard']);
-    Route::get('/admin/visitor/staff-verification', [VisitorController::class, 'getStaffVerification']);
+    Route::get('/admin/visitor/staff-verification', [VisitorController::class, 'getStaffVerification'])->name('receptionist.visitordashboard');
     Route::get('/api/visitors', [VisitorController::class, 'refreshVisitorTablePage']);
     Route::get('/visitor/visitor-inside', [VisitorController::class, 'getVisitorInside']);
     Route::post('/visitor/scan-by-pass', [VisitorController::class, 'scanByPass']);
