@@ -195,7 +195,7 @@ const handleScanCheckout = async () => {
                 :class="{
                     'bg-green-400':
                         resultStatus === 'success' &&
-                        resultAction == 'check-out',
+                        resultAction == 'check-out' || 'acknowledge-guard',
                     'bg-yellow-400':
                         resultStatus === 'success' &&
                         resultAction === 'check-in',

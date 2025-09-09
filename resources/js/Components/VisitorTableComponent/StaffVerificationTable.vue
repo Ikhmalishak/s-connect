@@ -14,7 +14,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { Card } from "@/components/ui/card";
 import { ScanQrCode } from "lucide-vue-next";
 
@@ -22,14 +22,14 @@ const searchQuery = ref("");
 
 const emit = defineEmits(["update:limit", "search", "openCheckoutModal"]);
 
+watch(searchQuery, (newVal) => {
+    emit("search", newVal);
+});
+
 const props = defineProps<{
     visitors: any;
+    limit: string;
 }>();
-
-function trimToHourMinute(timeString: string) {
-    if (!timeString) return "-";
-    return timeString.slice(0, 5);
-}
 
 function trimVisitorType(visitorType: string) {
     if (visitorType === "visitor") {
@@ -80,7 +80,12 @@ function getAckRowClass(ack: any) {
                 <div class="flex flex-row gap-2">
                     <div class="flex items-center gap-4">
                         <div>
-                            <Select>
+                            <Select
+                                :model-value="limit"
+                                @update:model-value="
+                                    emit('update:limit', $event)
+                                "
+                            >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select limit" />
                                 </SelectTrigger>
@@ -229,12 +234,12 @@ function getAckRowClass(ack: any) {
                                 <td
                                     class="border border-gray-300 text-center p-2"
                                 >
-                                    {{ ack.acknowledged_by_security }}
+                                    {{ ack.acknowledged_by_security ?? "N/A" }}
                                 </td>
                                 <td
                                     class="border border-gray-300 text-center p-2"
                                 >
-                                    {{ ack.acknowledged_at_security }}
+                                    {{ ack.acknowledged_at_security ?? "N/A" }}
                                 </td>
                                 <td
                                     class="border border-gray-300 text-center p-2"

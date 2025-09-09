@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ref, computed, nextTick, onMounted } from "vue";
+import { ref, computed, nextTick, onMounted, watch } from "vue";
 import axios from "axios";
 import StaffVerificationTable from "@/Components/VisitorTableComponent/StaffVerificationTable.vue";
 
@@ -42,6 +42,10 @@ const verifiedVisitors = ref<any[]>([]); // reactive array
 // Staff verification form
 const staffName = ref("");
 const staffId = ref("");
+
+//Limit table
+const limitTable = ref("25");
+const searchQuery = ref("");
 
 // Date/Time
 const currentTime = ref(new Date());
@@ -87,9 +91,17 @@ async function openVisitorVerificationModal() {
 
 //function to retrive all verified visitor
 
-async function getAllVerifiedVisitor() {
+async function getAllVerifiedVisitor(
+    limit = limitTable.value,
+    keyword = searchQuery.value
+) {
     try {
-        const res = await axios.get("/get-verified-visitors");
+        const res = await axios.get("/get-verified-visitors", {
+            params: {
+                limit,
+                keyword,
+            },
+        });
         console.log(res.data);
         verifiedVisitors.value = res.data.visitors; // assign API result
     } catch (error) {
@@ -154,6 +166,16 @@ const submitVerification = async () => {
 const handleModalClose = () => {
     resetAndClose();
 };
+
+watch(limitTable, (newVal) => {
+    console.log("Limit changed to:", newVal);
+    getAllVerifiedVisitor();
+});
+
+watch(searchQuery, (newVal) => {
+    console.log("Search query changed to:", newVal);
+    getAllVerifiedVisitor();
+});
 </script>
 
 <template>
@@ -204,7 +226,10 @@ const handleModalClose = () => {
         <Card class="p-3 shadow-2xl max-h-[700px] shadow-opacity-60 space-y-3">
             <StaffVerificationTable
                 :visitors="verifiedVisitors"
+                :limit="limitTable"
                 @open-checkout-modal="showQrCodeModal = true"
+                @update:limit="limitTable = $event"
+                @search="searchQuery = $event"
             />
         </Card>
 

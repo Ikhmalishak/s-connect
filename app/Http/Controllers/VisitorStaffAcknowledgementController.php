@@ -12,13 +12,47 @@ class VisitorStaffAcknowledgementController extends Controller
 {
 
     //function to call list of visitor that have been verified
-    public function getAllVerifiedVisitor()
+    public function getAllVerifiedVisitor(Request $request)
     {
+        $limit = $request->input('limit', 25);
+        $keyword = $request->input('keyword');
         $date = Carbon::now();
 
-        $verified = VisitorStaffAcknowledgement::with(['visitors.gatePass'])
+        $verified = VisitorStaffAcknowledgement::with([
+            'visitors' => function ($query) use ($keyword) {
+                // Filter the eager-loaded visitors to match the search criteria
+                if ($keyword) {
+                    $query->where(function ($q) use ($keyword) {
+                        $q->where('visitor_name', 'LIKE', "%{$keyword}%")
+                            ->orWhere('visitor_company', 'LIKE', "%{$keyword}%")
+                            ->orWhere('purpose', 'LIKE', "%{$keyword}%")
+                            ->orWhereHas('gatePass', function ($gp) use ($keyword) {
+                                $gp->where('pass_number', 'LIKE', "%{$keyword}%");
+                            });
+                    });
+                }
+            },
+            'visitors.gatePass'
+        ])
             ->whereNotNull('acknowledged_at')
             ->whereDate('created_at', $date)
+            ->when($keyword, function ($query, $keyword) {
+                $query->where(function ($q) use ($keyword) {
+                    $q->where('acknowledged_by', 'LIKE', "%{$keyword}%")
+                        ->orWhere('staff_id', 'LIKE', "%{$keyword}%")
+                        ->orWhere('acknowledged_by_security', 'LIKE', "%{$keyword}%")
+                        ->orWhere('ack_number', 'LIKE', "%{$keyword}%")
+                        ->orWhereHas('visitors', function ($sub) use ($keyword) {
+                            $sub->where('visitor_name', 'LIKE', "%{$keyword}%")
+                                ->orWhere('visitor_company', 'LIKE', "%{$keyword}%")
+                                ->orWhere('purpose', 'LIKE', "%{$keyword}%")
+                                ->orWhereHas('gatePass', function ($gp) use ($keyword) {
+                                    $gp->where('pass_number', 'LIKE', "%{$keyword}%");
+                                });
+                        });
+                });
+            })
+            ->limit($limit)
             ->get();
 
         return response()->json([
@@ -26,6 +60,7 @@ class VisitorStaffAcknowledgementController extends Controller
             'visitors' => $verified,
         ]);
     }
+
     public function getVisitorStaffAcknowledgementDetails(Request $request)
     {
         $ack_number = $request->ack_number;
@@ -51,13 +86,23 @@ class VisitorStaffAcknowledgementController extends Controller
         $staff_name = $request->staff_name;
         $staff_id = $request->staff_id;
 
-        $ack = VisitorStaffAcknowledgement::where('ack_number', $ack_number)->first();
+        $ack = VisitorStaffAcknowledgement::where('ack_number', $ack_number)->with('visitors')->first();
 
         if (!$ack) {
             return response()->json([
                 'success' => false,
                 'message' => 'Visitor acknowledgement not found',
             ], 404);
+        }
+
+        // Ensure visitor has checked in first
+        foreach ($ack->visitors as $visitor) {
+            if (is_null($visitor->time_in)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Visitor {$visitor->visitor_name} has not checked in yet.",
+                ], 400);
+            }
         }
 
         // Update acknowledgement record

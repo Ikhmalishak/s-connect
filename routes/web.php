@@ -20,7 +20,7 @@ Route::get('/', function () {
             case 'guard':
                 return redirect()->route('security.visitordashboard');
             default:
-                return redirect()->route('security.visitordashboard');
+                return redirect()->route('receptionist.visitordashboard');
         }
     }
 
@@ -40,7 +40,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/visitor/staff-verification', [VisitorController::class, 'getStaffVerification'])->name('receptionist.visitordashboard');
     Route::get('/api/visitors', [VisitorController::class, 'refreshVisitorTablePage']);
     Route::get('/visitor/visitor-inside', [VisitorController::class, 'getVisitorInside']);
-    Route::post('/visitor/scan-by-pass', [VisitorController::class, 'scanByPass']);
+    // Route::post('/visitor/scan-by-pass', [VisitorController::class, 'scanByPass']);
+    Route::post('/visitor/scan-by-pass', [VisitorController::class, 'scan']);
     Route::post('/visitor/check-acknowledgement', [VisitorController::class, 'checkAcknowledgement']);
     Route::get('/visitor/form/', [VisitorController::class, 'getVisitorForm']);
     Route::post('/visitor/submit', [VisitorController::class, 'store']);

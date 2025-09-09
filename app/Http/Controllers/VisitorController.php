@@ -20,6 +20,7 @@ use Symfony\Component\Process\Process;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Mpdf\Mpdf;
+use Illuminate\Support\Str;
 
 class VisitorController extends Controller
 {
@@ -87,7 +88,7 @@ class VisitorController extends Controller
         $limit = $request->input('limit', 25);
         $keyword = $request->input('keyword');
 
-        $query = Visitor::with('gatePass:id,pass_number')
+        $query = Visitor::with(['gatePass:id,pass_number', 'acknowledgements'])
             ->whereDate('date', now()->toDateString());
 
         if ($keyword) {
@@ -396,75 +397,198 @@ class VisitorController extends Controller
         return $ackRow;
     }
 
-    public function scanByPass(Request $request)
+    public function scan(Request $request)
     {
-        $pass_number = $request->input('pass_number');
+        $code = $request->input('pass_number');
 
-        return DB::transaction(function () use ($pass_number) {
-            // Find visitor by pass
-            $visitor = Visitor::whereHas('gatePass', function ($q) use ($pass_number) {
-                $q->where('pass_number', $pass_number);
-            })
-                ->where(function ($query) {
-                    $query->whereNull('time_out') // still in premises
-                        ->orWhereNull('time_in'); // not yet checked in
-                })
-                ->with('gatePass')
-                ->first();
+        if (Str::startsWith($code, 'SKP')) {
+            return $this->scanAcknowledgement($code);
+        }
 
-            if (!$visitor) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'No active visitor found for this gate pass.'
-                ], 404);
-            }
+        if (Str::startsWith($code, 'V') || Str::startsWith($code, 'C') || Str::startsWith($code, 'V')) {
+            return $this->scanGatePass($code);
+        }
 
-            // Case 1: Check-in
-            if (is_null($visitor->time_in)) {
-                $visitor->time_in = now();
-                $visitor->save();
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Invalid QR code format.'
+        ], 400);
+    }
 
-                // Mark gate pass as occupied
-                if ($visitor->gatePass) {
-                    $visitor->gatePass->state = 'occupied';
-                    $visitor->gatePass->save();
-                }
+    private function scanAcknowledgement(string $ackNumber)
+    {
+        $ack = VisitorStaffAcknowledgement::where('ack_number', $ackNumber)->first();
 
-                return response()->json([
-                    'status' => 'success',
-                    'action' => 'check-in',
-                    'message' => 'Visitor successfully checked in.',
-                    'visitor' => $visitor
-                ]);
-            }
-
-            // Case 2: Check-out
-            if (is_null($visitor->time_out)) {
-                $visitor->time_out = now();
-                $visitor->duration = Carbon::parse($visitor->time_in)->diffInMinutes(now());
-                $visitor->save();
-
-                // Release the gate pass
-                if ($visitor->gatePass) {
-                    $visitor->gatePass->state = 'free';
-                    $visitor->gatePass->save();
-                }
-
-                return response()->json([
-                    'status' => 'success',
-                    'action' => 'check-out',
-                    'message' => 'Visitor successfully checked out.',
-                    'visitor' => $visitor
-                ]);
-            }
-
-            // Case 3: Already checked in and out
+        if (!$ack) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'This visitor has already completed their visit.'
-            ], 400);
-        });
+                'message' => 'Acknowledgement not found.'
+            ], 404);
+        }
+
+        // Guard acknowledgement (only if staff already did)
+        if (is_null($ack->acknowledged_at_security)) {
+            if (is_null($ack->acknowledged_at)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Staff must acknowledge first before guard.'
+                ], 400);
+            }
+
+            $ack->acknowledged_at_security = now();
+            $ack->acknowledged_by_security = auth()->user()->name ?? 'Guard';
+            $ack->save();
+
+            return response()->json([
+                'status' => 'success',
+                'action' => 'acknowledge-guard',
+                'message' => 'Visitor acknowledged by security.',
+                'acknowledgement' => $ack
+            ]);
+        }
+
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Both staff and guard have already acknowledged.'
+        ], 400);
     }
+
+    private function scanGatePass(string $passNumber)
+    {
+        $visitor = Visitor::whereHas('gatePass', function ($q) use ($passNumber) {
+            $q->where('pass_number', $passNumber);
+        })
+            ->with(['gatePass', 'acknowledgements'])
+            ->first();
+
+        if (!$visitor) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No visitor found for this gate pass.'
+            ], 404);
+        }
+
+        // Check-in
+        if (is_null($visitor->time_in)) {
+            $visitor->time_in = now();
+            $visitor->save();
+
+            if ($visitor->gatePass) {
+                $visitor->gatePass->state = 'occupied';
+                $visitor->gatePass->save();
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'action' => 'check-in',
+                'message' => 'Visitor successfully checked in.',
+                'visitor' => $visitor
+            ]);
+        }
+
+        // Check-out (with restriction: staff + guard must acknowledge first)
+        if (is_null($visitor->time_out)) {
+            $ack = $visitor->acknowledgements->first();
+
+            if (!$ack || is_null($ack->acknowledged_at) || is_null($ack->acknowledged_at_security)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Visitor cannot check out until both staff and guard acknowledgements are completed.'
+                ], 400);
+            }
+
+            $visitor->time_out = now();
+            $visitor->duration = Carbon::parse($visitor->time_in)->diffInMinutes(now());
+            $visitor->save();
+
+            if ($visitor->gatePass) {
+                $visitor->gatePass->state = 'free';
+                $visitor->gatePass->save();
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'action' => 'check-out',
+                'message' => 'Visitor successfully checked out.',
+                'visitor' => $visitor
+            ]);
+        }
+
+        return response()->json([
+            'status' => 'error',
+            'message' => 'This visitor has already completed their visit.'
+        ], 400);
+    }
+
+    // public function scanByPass(Request $request)
+    // {
+    //     $pass_number = $request->input('pass_number');
+
+    //     return DB::transaction(function () use ($pass_number) {
+    //         // Find visitor by pass
+    //         $visitor = Visitor::whereHas('gatePass', function ($q) use ($pass_number) {
+    //             $q->where('pass_number', $pass_number);
+    //         })
+    //             ->where(function ($query) {
+    //                 $query->whereNull('time_out') // still in premises
+    //                     ->orWhereNull('time_in'); // not yet checked in
+    //             })
+    //             ->with('gatePass')
+    //             ->first();
+
+    //         if (!$visitor) {
+    //             return response()->json([
+    //                 'status' => 'error',
+    //                 'message' => 'No active visitor found for this gate pass.'
+    //             ], 404);
+    //         }
+
+    //         // Case 1: Check-in
+    //         if (is_null($visitor->time_in)) {
+    //             $visitor->time_in = now();
+    //             $visitor->save();
+
+    //             // Mark gate pass as occupied
+    //             if ($visitor->gatePass) {
+    //                 $visitor->gatePass->state = 'occupied';
+    //                 $visitor->gatePass->save();
+    //             }
+
+    //             return response()->json([
+    //                 'status' => 'success',
+    //                 'action' => 'check-in',
+    //                 'message' => 'Visitor successfully checked in.',
+    //                 'visitor' => $visitor
+    //             ]);
+    //         }
+
+    //         // Case 2: Check-out
+    //         if (is_null($visitor->time_out)) {
+    //             $visitor->time_out = now();
+    //             $visitor->duration = Carbon::parse($visitor->time_in)->diffInMinutes(now());
+    //             $visitor->save();
+
+    //             // Release the gate pass
+    //             if ($visitor->gatePass) {
+    //                 $visitor->gatePass->state = 'free';
+    //                 $visitor->gatePass->save();
+    //             }
+
+    //             return response()->json([
+    //                 'status' => 'success',
+    //                 'action' => 'check-out',
+    //                 'message' => 'Visitor successfully checked out.',
+    //                 'visitor' => $visitor
+    //             ]);
+    //         }
+
+    //         // Case 3: Already checked in and out
+    //         return response()->json([
+    //             'status' => 'error',
+    //             'message' => 'This visitor has already completed their visit.'
+    //         ], 400);
+    //     });
+    // }
 
     //function to update the acknowledge
     public function checkAcknowledgement(Request $request)
