@@ -458,6 +458,10 @@ class VisitorController extends Controller
         $visitor = Visitor::whereHas('gatePass', function ($q) use ($passNumber) {
             $q->where('pass_number', $passNumber);
         })
+            ->where(function ($query) {
+                $query->whereNull('time_out') // still in premises
+                    ->orWhereNull('time_in'); // not yet checked in
+            })
             ->with(['gatePass', 'acknowledgements'])
             ->first();
 

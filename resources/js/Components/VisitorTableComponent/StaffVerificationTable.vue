@@ -162,11 +162,11 @@ function getAckRowClass(ack: any) {
                             >
                                 Acknowledge At
                             </th>
-                            <th
+                            <!-- <th
                                 class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
                             >
                                 Acknowledge By Security
-                            </th>
+                            </th> -->
                             <th
                                 class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
                             >
@@ -231,11 +231,11 @@ function getAckRowClass(ack: any) {
                                 >
                                     {{ ack.acknowledged_at }}
                                 </td>
-                                <td
+                                <!-- <td
                                     class="border border-gray-300 text-center p-2"
                                 >
                                     {{ ack.acknowledged_by_security ?? "N/A" }}
-                                </td>
+                                </td> -->
                                 <td
                                     class="border border-gray-300 text-center p-2"
                                 >

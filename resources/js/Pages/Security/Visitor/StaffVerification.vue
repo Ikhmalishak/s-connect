@@ -23,6 +23,7 @@ import { Label } from "@/components/ui/label";
 import { ref, computed, nextTick, onMounted, watch } from "vue";
 import axios from "axios";
 import StaffVerificationTable from "@/Components/VisitorTableComponent/StaffVerificationTable.vue";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const errors = ref<{ staffName?: string; staffId?: string }>({});
 
@@ -47,6 +48,13 @@ const staffId = ref("");
 const limitTable = ref("25");
 const searchQuery = ref("");
 
+//Alert Messages
+const alertMessage = ref("");
+const alertType = ref(""); // "success" | "error" | ""
+const notCheckIn = ref([]);
+const showSuccessModal = ref(false);
+const successMessage = ref("");
+
 // Date/Time
 const currentTime = ref(new Date());
 const formattedDate = computed(() =>
@@ -69,6 +77,19 @@ async function openVisitorVerificationModal() {
             `/visitor-staff-acknowledgement-details?ack_number=${ackNumber.value}`
         );
 
+        if (res.data.success === false) {
+            // Backend returned error
+            alertType.value = "error";
+            alertMessage.value = res.data.message;
+            ackNumber.value = "";
+            notCheckIn.value = res.data.not_checked_in || [];
+            return;
+        }
+
+        // Success: clear any previous alerts
+        alertType.value = "";
+        alertMessage.value = "";
+
         visitor.value = {
             id: res.data.visitor_staff_acknowledgement.id,
             acknowledged_by:
@@ -76,16 +97,18 @@ async function openVisitorVerificationModal() {
             staff_id: res.data.visitor_staff_acknowledgement.staff_id,
             created_at: res.data.visitor_staff_acknowledgement.created_at,
             updated_at: res.data.visitor_staff_acknowledgement.updated_at,
-            details: res.data.visitor_staff_acknowledgement.visitors[0] || null, // first visitor
+            details: res.data.visitor_staff_acknowledgement.visitors[0] || null,
             list_visitors:
-                res.data.visitor_staff_acknowledgement.visitors || [], // full list
+                res.data.visitor_staff_acknowledgement.visitors || [],
         };
 
         showQrCodeModal.value = false;
         showVisitorVerification.value = true;
     } catch (error) {
         console.error(error);
-        alert("Visitor not found!");
+        alertType.value = "error";
+        alertMessage.value =
+            "Something went wrong while fetching visitor details.";
     }
 }
 
@@ -133,7 +156,6 @@ const submitVerification = async () => {
     const trimmedStaffName = staffName.value.trim();
     const trimmedStaffId = staffId.value.trim();
 
-    // Validation
     if (!trimmedStaffName) {
         errors.value.staffName = "Staff name is required";
     }
@@ -141,24 +163,33 @@ const submitVerification = async () => {
         errors.value.staffId = "Staff ID is required";
     }
 
-    // Stop if there are errors
     if (errors.value.staffName || errors.value.staffId) {
         return;
     }
 
     try {
-        await axios.post("/verify-visitor", {
+        const res = await axios.post("/verify-visitor", {
             ack_number: ackNumber.value,
             staff_name: trimmedStaffName,
             staff_id: trimmedStaffId,
         });
 
-        alert("Visitor verified!");
-        await nextTick();
-        resetAndClose();
+        if (res.data.success) {
+            successMessage.value = res.data.message;
+            showSuccessModal.value = true; // open success modal
+
+            // ✅ refresh verified visitor list
+            await getAllVerifiedVisitor();
+
+            resetAndClose();
+        } else {
+            alertType.value = "error";
+            alertMessage.value = res.data.message; // show inline error
+        }
     } catch (error) {
         console.error(error);
-        alert("Verification failed!");
+        alertType.value = "error";
+        alertMessage.value = "Something went wrong while verifying.";
     }
 };
 
@@ -347,28 +378,70 @@ watch(searchQuery, (newVal) => {
 
                 <!-- QR Code Input -->
                 <div class="space-y-4 mt-4">
-                    <div>
-                        <Input
-                            id="ackNumber"
-                            v-model="ackNumber"
-                            placeholder="Scan QR Code"
-                            class="placeholder:text-center h-16 text-xl placeholder:text-xl"
-                            @keyup.enter="openVisitorVerificationModal"
-                        />
-                    </div>
+                    <Input
+                        id="ackNumber"
+                        v-model="ackNumber"
+                        placeholder="Scan QR Code"
+                        class="placeholder:text-center h-16 text-xl placeholder:text-xl"
+                        @keyup.enter="openVisitorVerificationModal"
+                    />
                 </div>
 
+                <!-- Show Alert only if message exists -->
+                <Alert
+                    v-if="alertMessage"
+                    :variant="alertType === 'error' ? 'destructive' : 'default'"
+                    class="mt-4"
+                >
+                    <AlertTitle>
+                        {{ alertType === "error" ? "Error!" : "Success!" }}
+                    </AlertTitle>
+                    <AlertDescription>
+                        {{ alertMessage }}
+                        <ul
+                            v-if="notCheckIn.length"
+                            class="list-disc list-inside"
+                        >
+                            <li
+                                v-for="(name, index) in notCheckIn"
+                                :key="index"
+                            >
+                                {{ name }}
+                            </li>
+                        </ul>
+                    </AlertDescription>
+                </Alert>
+
                 <DialogFooter class="mt-4 text-xs">
-                    <label
-                        >This feature allows visitors to quickly check in or
+                    <label>
+                        This feature allows visitors to quickly check in or
                         check out by scanning their pass ID at designated
                         points. The system automatically updates their status in
                         real time, ensuring accurate logs and smooth security
-                        compliance for both arrival and departure.</label
-                    >
+                        compliance for both arrival and departure.
+                    </label>
                     <Button @click="openVisitorVerificationModal"
                         >Submit Scan</Button
                     >
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
+        <!-- Success Modal -->
+        <Dialog v-model:open="showSuccessModal">
+            <DialogContent class="max-w-md">
+                <DialogHeader>
+                    <DialogTitle>Verification Successful</DialogTitle>
+                </DialogHeader>
+
+                <div class="text-center py-4">
+                    <p class="text-green-600 font-semibold">
+                        {{ successMessage }}
+                    </p>
+                </div>
+
+                <DialogFooter>
+                    <Button @click="showSuccessModal = false">Close</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

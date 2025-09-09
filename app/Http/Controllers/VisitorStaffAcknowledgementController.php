@@ -52,6 +52,7 @@ class VisitorStaffAcknowledgementController extends Controller
                         });
                 });
             })
+            ->orderByDesc('acknowledged_at') // ✅ latest at top
             ->limit($limit)
             ->get();
 
@@ -65,18 +66,31 @@ class VisitorStaffAcknowledgementController extends Controller
     {
         $ack_number = $request->ack_number;
 
-        // Fetch the visitor staff acknowledgement along with its visitors
-        $visitor_staff_acknowledgement = VisitorStaffAcknowledgement::with('visitors')->where('ack_number', $ack_number)->first();
+        $visitor_staff_acknowledgement = VisitorStaffAcknowledgement::with('visitors')
+            ->where('ack_number', $ack_number)
+            ->first();
 
         if (!$visitor_staff_acknowledgement) {
             return response()->json([
+                'success' => false,
                 'message' => 'Visitor Staff Acknowledgement not found'
-            ], 404);
+            ], 200); // <-- still 200
+        }
+
+        $notCheckedIn = $visitor_staff_acknowledgement->visitors->whereNull('time_in');
+
+        if ($notCheckedIn->isNotEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'All visitors must check in first before acknowledgement.',
+                'not_checked_in' => $notCheckedIn->pluck('visitor_name')
+            ], 200); // <-- still 200
         }
 
         return response()->json([
+            'success' => true,
             'visitor_staff_acknowledgement' => $visitor_staff_acknowledgement,
-        ]);
+        ], 200);
     }
 
     //function for staff verify the visitor acknowledgement
@@ -92,17 +106,7 @@ class VisitorStaffAcknowledgementController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Visitor acknowledgement not found',
-            ], 404);
-        }
-
-        // Ensure visitor has checked in first
-        foreach ($ack->visitors as $visitor) {
-            if (is_null($visitor->time_in)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => "Visitor {$visitor->visitor_name} has not checked in yet.",
-                ], 400);
-            }
+            ], 200); // Always 200
         }
 
         // Update acknowledgement record
@@ -111,12 +115,11 @@ class VisitorStaffAcknowledgementController extends Controller
         $ack->acknowledged_at = now();
         $ack->save();
 
-
         return response()->json([
             'success' => true,
             'message' => 'Visitor verified successfully!',
             'data' => $ack,
-        ]);
+        ], 200);
     }
 
     //function to reprint the sticker if missing
@@ -144,7 +147,6 @@ class VisitorStaffAcknowledgementController extends Controller
             'print_result' => $printResult, // to debug the lp command output
         ]);
     }
-
 
     public function printSticker($ackId, $totalPax, $ackNumber)
     {
