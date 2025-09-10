@@ -41,7 +41,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 
     //api to generate report
     Route::post('/admin/visitor/generate-report', [VisitorController::class, 'generateReport'])->name("admin.generateReport");
-    
+
     //api for admin reporting
     Route::get('/admin/visitor/get-statistic-all-sites', [VisitorController::class, 'getStatisticAllSites']);
     Route::get('/admin/visitor/get-statistic-by-sites', [VisitorController::class, 'getStatisticBySites']);
@@ -74,19 +74,16 @@ Route::middleware('auth')->group(function () {
 
     //api to fetch list visitor inside
     Route::get('/visitor/visitor-inside', [VisitorController::class, 'getVisitorInside']);
-    
+
     //api to scan qr code at guard house
     Route::post('/visitor/scan-by-pass', [VisitorController::class, 'scan']);
-
-    //api to check acknowledgement whether visitor come for first time or not
-    Route::post('/visitor/check-acknowledgement', [VisitorController::class, 'checkAcknowledgement']);
 
     //api to edit remarks(edit remark driver lorry)
     Route::post('/visitors/{visitorId}/remarks', [VisitorController::class, 'editRemarks'])->name('visitors.editRemarks');
 
     //api to get visitor table data
     Route::get('visitor/table-data', [VisitorController::class, 'getVisitorTableData']);
-    
+
     //api to print sticker testing
     Route::get('/print-sticker/{ackId}/{totalPax}/{ackNumber}', action: [VisitorController::class, 'printSticker']);
 
@@ -99,13 +96,13 @@ Route::middleware('auth')->group(function () {
 
     //route to get the visitor details for staff verification
     Route::get('/visitor-staff-acknowledgement-details', [VisitorStaffAcknowledgementController::class, 'getVisitorStaffAcknowledgementDetails']);
-   
+
     //route to get all the verified visitor
     Route::get('/get-verified-visitors', [VisitorStaffAcknowledgementController::class, 'getAllVerifiedVisitor']);
 
     //route for staff to verify visitor
     Route::post('/verify-visitor', [VisitorStaffAcknowledgementController::class, 'verifyVisitorAcknowledgement']);
-    
+
     // Route::post('/visitor/scan-by-pass', [VisitorController::class, 'scanByPass']);
 });
 
@@ -114,5 +111,8 @@ Route::get('/visitor/form/{site}', [VisitorController::class, 'getVisitorForm'])
 
 //api to submit visitor form
 Route::post('/visitor/submit', [VisitorController::class, 'store']);
+
+//api to check acknowledgement whether visitor come for first time or not
+Route::post('/visitor/check-acknowledgement', [VisitorController::class, 'checkAcknowledgement']);
 
 require __DIR__ . '/auth.php';
