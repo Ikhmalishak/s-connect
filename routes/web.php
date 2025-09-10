@@ -69,12 +69,25 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    //api to refresh visitor list
     Route::get('/api/visitors', [VisitorController::class, 'refreshVisitorTablePage']);
+
+    //api to fetch list visitor inside
     Route::get('/visitor/visitor-inside', [VisitorController::class, 'getVisitorInside']);
+    
+    //api to scan qr code at guard house
     Route::post('/visitor/scan-by-pass', [VisitorController::class, 'scan']);
+
+    //api to check acknowledgement whether visitor come for first time or not
     Route::post('/visitor/check-acknowledgement', [VisitorController::class, 'checkAcknowledgement']);
+
+    //api to edit remarks(edit remark driver lorry)
     Route::post('/visitors/{visitorId}/remarks', [VisitorController::class, 'editRemarks'])->name('visitors.editRemarks');
+
+    //api to get visitor table data
     Route::get('visitor/table-data', [VisitorController::class, 'getVisitorTableData']);
+    
+    //api to print sticker testing
     Route::get('/print-sticker/{ackId}/{totalPax}/{ackNumber}', action: [VisitorController::class, 'printSticker']);
 
     //route for purpose and site and gate pass
@@ -92,8 +105,8 @@ Route::middleware('auth')->group(function () {
 
     //route for staff to verify visitor
     Route::post('/verify-visitor', [VisitorStaffAcknowledgementController::class, 'verifyVisitorAcknowledgement']);
-        // Route::post('/visitor/scan-by-pass', [VisitorController::class, 'scanByPass']);
-
+    
+    // Route::post('/visitor/scan-by-pass', [VisitorController::class, 'scanByPass']);
 });
 
 //api to fetch form by site
