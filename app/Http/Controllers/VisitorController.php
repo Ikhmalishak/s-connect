@@ -340,11 +340,21 @@ class VisitorController extends Controller
             if (!empty($createdVisitors)) {
                 $visitorIds = array_column($createdVisitors, 'id');
 
-                //create acknowledgement
-                $ackRow = $this->createAcknowledgementWithVisitors($visitorIds);
+                // Drivers = inbound/outbound shipment transfer → skip acknowledgement + sticker
+                if (
+                    !in_array($validated['visitor_type'], [
+                        'inbound-shipment/transfer',
+                        'outbound-shipment/transfer'
+                    ])
+                ) {
+                    $ackRow = $this->createAcknowledgementWithVisitors($visitorIds);
 
-                //print sticker
-                $this->printSticker($ackRow->id, count($visitorIds), $ackRow->ack_number);
+                    $this->printSticker(
+                        $ackRow->id,
+                        count($visitorIds),
+                        $ackRow->ack_number
+                    );
+                }
             }
 
             return response()->json([
@@ -407,7 +417,7 @@ class VisitorController extends Controller
             return $this->scanAcknowledgement($code);
         }
 
-        if (Str::startsWith($code, 'V') || Str::startsWith($code, 'C') || Str::startsWith($code, 'V')) {
+        if (Str::startsWith($code, 'V') || Str::startsWith($code, 'C') || Str::startsWith($code, 'D')) {
             return $this->scanGatePass($code);
         }
 
