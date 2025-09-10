@@ -52,6 +52,7 @@ class NotifyGuard implements ShouldBroadcast
                     'id' => $visitor->id,
                     'visitor_name' => $visitor->visitor_name,
                     'gate_pass' => $visitor->gatePass ? $visitor->gatePass->toArray() : null,
+                    'purpose' => $visitor->purpose
                     // add other visitor fields you want to send
                 ];
             })->toArray(),

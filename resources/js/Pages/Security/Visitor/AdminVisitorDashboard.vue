@@ -262,8 +262,18 @@ onMounted(() => {
                 console.error("WebSocket error on guard channel:", error);
             });
 
+        // New NotifyGuard listener
+        window.Echo.channel("guard")
+            .listen(".guard.scan", (e) => {
+                console.log("GuardScanInAndOut event received:", e);
+                fetchAdminVisitorTableData();
+            })
+            .error((error) => {
+                console.error("WebSocket error on guard channel:", error);
+            });
+
         console.log(
-            "Listening for VisitorRegistered and NotifyGuard events via Reverb."
+            "Listening for VisitorRegistered and NotifyGuard and GuardScanInAndOut events via Reverb."
         );
     } else {
         console.error(

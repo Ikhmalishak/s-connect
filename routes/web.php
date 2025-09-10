@@ -28,32 +28,54 @@ Route::get('/', function () {
     return Inertia::render('Auth/Login');
 })->name('login');
 
+// Admin-only routes
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/admin/visitor/dashboard', [VisitorController::class, 'getAdminVisitorDashboard'])
+        ->name('admin.visitordashboard');
+
+    //api for admin reporting dashboard
+    Route::get('/admin/visitor/report-dashboard', [VisitorController::class, 'getAdminVisitorReportingDashboard']);
+
+    //api to fetch admin table data (table data can load every data inside table)
+    Route::get('/admin/visitor/table-data', [VisitorController::class, 'getAdminVisitorTableData']);
+
+    //api to generate report
+    Route::post('/admin/visitor/generate-report', [VisitorController::class, 'generateReport'])->name("admin.generateReport");
+    
+    //api for admin reporting
+    Route::get('/admin/visitor/get-statistic-all-sites', [VisitorController::class, 'getStatisticAllSites']);
+    Route::get('/admin/visitor/get-statistic-by-sites', [VisitorController::class, 'getStatisticBySites']);
+
+    //route to reprint sticker if sticker missing
+    Route::get('/reprint/{ack_number}', [VisitorStaffAcknowledgementController::class, 'reprintVisitorSticker']);
+});
+
+// Guard-only routes
+Route::middleware(['auth', 'role:guard'])->group(function () {
+    //route to get visitor dashboard
+    Route::get('/visitor/dashboard', [VisitorController::class, 'getVisitorDashboard'])
+        ->name('security.visitordashboard');
+});
+
+// Receptionist-only routes
+Route::middleware(['auth', 'role:receptionist'])->group(function () {
+    Route::get('/admin/visitor/staff-verification', [VisitorController::class, 'getStaffVerification'])
+        ->name('receptionist.visitordashboard');
+});
+
 Route::middleware('auth')->group(function () {
+    //profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    //security form
-    Route::get('/visitor/dashboard', [VisitorController::class, 'getVisitorDashboard'])->name('security.visitordashboard');
-    Route::get('/admin/visitor/dashboard', [VisitorController::class, 'getAdminVisitorDashboard'])->name('admin.visitordashboard');
-    Route::get('/admin/visitor/report-dashboard', [VisitorController::class, 'getAdminVisitorReportingDashboard']);
-    Route::get('/admin/visitor/staff-verification', [VisitorController::class, 'getStaffVerification'])->name('receptionist.visitordashboard');
     Route::get('/api/visitors', [VisitorController::class, 'refreshVisitorTablePage']);
     Route::get('/visitor/visitor-inside', [VisitorController::class, 'getVisitorInside']);
-    // Route::post('/visitor/scan-by-pass', [VisitorController::class, 'scanByPass']);
     Route::post('/visitor/scan-by-pass', [VisitorController::class, 'scan']);
     Route::post('/visitor/check-acknowledgement', [VisitorController::class, 'checkAcknowledgement']);
-    Route::get('/visitor/form/', [VisitorController::class, 'getVisitorForm']);
-    Route::post('/visitor/submit', [VisitorController::class, 'store']);
     Route::post('/visitors/{visitorId}/remarks', [VisitorController::class, 'editRemarks'])->name('visitors.editRemarks');
     Route::get('visitor/table-data', [VisitorController::class, 'getVisitorTableData']);
-    Route::get('/admin/visitor/table-data', [VisitorController::class, 'getAdminVisitorTableData']);
-    Route::post('/admin/visitor/generate-report', [VisitorController::class, 'generateReport'])->name("admin.generateReport");
-    Route::get('/admin/visitor/get-statistic-all-sites', [VisitorController::class, 'getStatisticAllSites']);
-    Route::get('/admin/visitor/get-statistic-by-sites', [VisitorController::class, 'getStatisticBySites']);
-    Route::get('/print-sticker/{ackId}/{totalPax}/{ackNumber}', [VisitorController::class, 'printSticker']);
-    Route::get('/visitors/sticker/{id}', [VisitorController::class, 'generateSticker'])
-        ->name('visitors.sticker');
+    Route::get('/print-sticker/{ackId}/{totalPax}/{ackNumber}', action: [VisitorController::class, 'printSticker']);
 
     //route for purpose and site and gate pass
     Route::apiResource('sites', SiteController::class);
@@ -64,15 +86,20 @@ Route::middleware('auth')->group(function () {
 
     //route to get the visitor details for staff verification
     Route::get('/visitor-staff-acknowledgement-details', [VisitorStaffAcknowledgementController::class, 'getVisitorStaffAcknowledgementDetails']);
+   
     //route to get all the verified visitor
     Route::get('/get-verified-visitors', [VisitorStaffAcknowledgementController::class, 'getAllVerifiedVisitor']);
+
     //route for staff to verify visitor
     Route::post('/verify-visitor', [VisitorStaffAcknowledgementController::class, 'verifyVisitorAcknowledgement']);
-    //route to reprint sticker if sticker missing
-    Route::get('/reprint/{ack_number}', [VisitorStaffAcknowledgementController::class, 'reprintVisitorSticker']);
+        // Route::post('/visitor/scan-by-pass', [VisitorController::class, 'scanByPass']);
+
 });
 
+//api to fetch form by site
 Route::get('/visitor/form/{site}', [VisitorController::class, 'getVisitorForm']);
+
+//api to submit visitor form
 Route::post('/visitor/submit', [VisitorController::class, 'store']);
 
 require __DIR__ . '/auth.php';

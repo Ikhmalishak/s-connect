@@ -229,7 +229,14 @@ function getAckRowClass(ack: any) {
                                 <td
                                     class="border border-gray-300 text-center p-2"
                                 >
-                                    {{ ack.acknowledged_at }}
+                                    {{
+                                        new Date(
+                                            ack.acknowledged_at
+                                        ).toLocaleTimeString("en-GB", {
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                        })
+                                    }}
                                 </td>
                                 <!-- <td
                                     class="border border-gray-300 text-center p-2"
@@ -239,7 +246,19 @@ function getAckRowClass(ack: any) {
                                 <td
                                     class="border border-gray-300 text-center p-2"
                                 >
-                                    {{ ack.acknowledged_at_security ?? "N/A" }}
+                                    {{
+                                        ack.acknowledged_at
+                                            ? new Date(
+                                                  ack.acknowledged_at.replace(
+                                                      " ",
+                                                      "T"
+                                                  )
+                                              ).toLocaleTimeString("en-GB", {
+                                                  hour: "2-digit",
+                                                  minute: "2-digit",
+                                              })
+                                            : "N / A"
+                                    }}
                                 </td>
                                 <td
                                     class="border border-gray-300 text-center p-2"

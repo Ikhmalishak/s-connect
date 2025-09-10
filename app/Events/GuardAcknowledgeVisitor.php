@@ -9,17 +9,19 @@ use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
-use App\Models\Visitor;
 
-class VisitorRegistered implements ShouldBroadcast
+class GuardAcknowledgeVisitor implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-
+    /**
+     * Create a new event instance.
+     */
     public function __construct()
     {
-        Log::info('register visitor event');
+        Log::info('guard acknowledge visitor');
     }
 
     /**
@@ -30,13 +32,16 @@ class VisitorRegistered implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new Channel('visitors'),
+            new Channel('guard'),
         ];
     }
 
+    /**
+     * The event name for broadcasting.
+     */
     public function broadcastAs(): string
     {
-        return 'visitor.registered';
+        return 'guard.acknowledge';
     }
-
 }
+

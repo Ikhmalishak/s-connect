@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\GuardAcknowledgeVisitor;
+use App\Events\GuardScanInAndOut;
 use App\Models\GatePass;
 use App\Models\Site;
 use App\Models\Visitor;
@@ -311,7 +313,7 @@ class VisitorController extends Controller
                 ]);
 
                 // Broadcast event
-                event(new VisitorRegistered($new_visitor));
+                event(new VisitorRegistered());
 
                 if ($validated['video_watched'] && $validated['security_guidelines_confirmed']) {
                     VisitorAcknowledgement::updateOrCreate(
@@ -439,6 +441,8 @@ class VisitorController extends Controller
             $ack->acknowledged_by_security = auth()->user()->name ?? 'Guard';
             $ack->save();
 
+            event(new GuardAcknowledgeVisitor());
+
             return response()->json([
                 'status' => 'success',
                 'action' => 'acknowledge-guard',
@@ -482,6 +486,8 @@ class VisitorController extends Controller
                 $visitor->gatePass->save();
             }
 
+            event(new GuardScanInAndOut());
+
             return response()->json([
                 'status' => 'success',
                 'action' => 'check-in',
@@ -492,14 +498,14 @@ class VisitorController extends Controller
 
         // Check-out (with restriction: staff + guard must acknowledge first)
         if (is_null($visitor->time_out)) {
-            $ack = $visitor->acknowledgements->first();
+            //$ack = $visitor->acknowledgements->first();
 
-            if (!$ack || is_null($ack->acknowledged_at) || is_null($ack->acknowledged_at_security)) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Visitor cannot check out until both staff and guard acknowledgements are completed.'
-                ], 400);
-            }
+            // if (!$ack || is_null($ack->acknowledged_at) || is_null($ack->acknowledged_at_security)) {
+            //     return response()->json([
+            //         'status' => 'error',
+            //         'message' => 'Visitor cannot check out until both staff and guard acknowledgements are completed.'
+            //     ], 400);
+            // }
 
             $visitor->time_out = now();
             $visitor->duration = Carbon::parse($visitor->time_in)->diffInMinutes(now());
@@ -509,6 +515,8 @@ class VisitorController extends Controller
                 $visitor->gatePass->state = 'free';
                 $visitor->gatePass->save();
             }
+
+            event(new GuardScanInAndOut());
 
             return response()->json([
                 'status' => 'success',
@@ -660,82 +668,82 @@ class VisitorController extends Controller
         }
     }
 
-    public function generateReport(Request $request)
-    {
-        $query = Visitor::query();
+    // public function generateReport(Request $request)
+    // {
+    //     $query = Visitor::query();
 
-        if ($request->dateRange) {
-            $start = $request->dateRange['start'];
-            $end = $request->dateRange['end'];
+    //     if ($request->dateRange) {
+    //         $start = $request->dateRange['start'];
+    //         $end = $request->dateRange['end'];
 
-            if ($start && $end) {
-                // build date strings in Y-m-d format
-                $startDate = sprintf('%04d-%02d-%02d', $start['year'], $start['month'], $start['day']);
-                $endDate = sprintf('%04d-%02d-%02d', $end['year'], $end['month'], $end['day']);
+    //         if ($start && $end) {
+    //             // build date strings in Y-m-d format
+    //             $startDate = sprintf('%04d-%02d-%02d', $start['year'], $start['month'], $start['day']);
+    //             $endDate = sprintf('%04d-%02d-%02d', $end['year'], $end['month'], $end['day']);
 
-                $query->whereBetween('date', [$startDate, $endDate]);
-            }
-        }
+    //             $query->whereBetween('date', [$startDate, $endDate]);
+    //         }
+    //     }
 
-        // Filter visitor type
-        if ($request->visitor_type && $request->visitor_type !== "all") {
-            $query->where('visitor_type', $request->visitor_type);
-        }
+    //     // Filter visitor type
+    //     if ($request->visitor_type && $request->visitor_type !== "all") {
+    //         $query->where('visitor_type', $request->visitor_type);
+    //     }
 
-        // Filter company
-        if ($request->visitor_company && $request->visitor_company !== "all") {
-            $query->where('visitor_company', $request->visitor_company);
-        }
+    //     // Filter company
+    //     if ($request->visitor_company && $request->visitor_company !== "all") {
+    //         $query->where('visitor_company', $request->visitor_company);
+    //     }
 
-        $visitors = $query->get();
+    //     $visitors = $query->get();
 
-        $total_visitors = Visitor::all();
+    //     $total_visitors = Visitor::all();
 
-        $visitor_counts = $total_visitors->groupBy('visitor_type')->map->count();
+    //     $visitor_counts = $total_visitors->groupBy('visitor_type')->map->count();
 
-        $chartData = [
-            'type' => 'pie',
-            'data' => [
-                'labels' => $visitor_counts->keys(),
-                'datasets' => [
-                    [
-                        'data' => $visitor_counts->values(),
-                        'backgroundColor' => ['#36A2EB', '#FF6384', '#FFCE56', '#4BC0C0'],
-                    ]
-                ],
-            ],
-        ];
+    //     $chartData = [
+    //         'type' => 'pie',
+    //         'data' => [
+    //             'labels' => $visitor_counts->keys(),
+    //             'datasets' => [
+    //                 [
+    //                     'data' => $visitor_counts->values(),
+    //                     'backgroundColor' => ['#36A2EB', '#FF6384', '#FFCE56', '#4BC0C0'],
+    //                 ]
+    //             ],
+    //         ],
+    //     ];
 
-        $chartDataDonut = [
-            'type' => 'doughnut',
-            'data' => [
-                'labels' => $visitor_counts->keys(),
-                'datasets' => [
-                    [
-                        'data' => $visitor_counts->values(),
-                        'backgroundColor' => ['#36A2EB', '#FF6384', '#FFCE56', '#4BC0C0'],
-                        'label' => 'Dataset 1',
-                    ]
-                ],
-            ],
-        ];
+    //     $chartDataDonut = [
+    //         'type' => 'doughnut',
+    //         'data' => [
+    //             'labels' => $visitor_counts->keys(),
+    //             'datasets' => [
+    //                 [
+    //                     'data' => $visitor_counts->values(),
+    //                     'backgroundColor' => ['#36A2EB', '#FF6384', '#FFCE56', '#4BC0C0'],
+    //                     'label' => 'Dataset 1',
+    //                 ]
+    //             ],
+    //         ],
+    //     ];
 
-        // Get chart image from QuickChart
-        $chartUrl = "https://quickchart.io/chart?c=" . urlencode(json_encode($chartData));
-        $donutChartUrl = "https://quickchart.io/chart?c=" . urlencode(json_encode($chartDataDonut));
+    //     // Get chart image from QuickChart
+    //     $chartUrl = "https://quickchart.io/chart?c=" . urlencode(json_encode($chartData));
+    //     $donutChartUrl = "https://quickchart.io/chart?c=" . urlencode(json_encode($chartDataDonut));
 
-        // Get image as base64
-        $imageData = base64_encode(file_get_contents($chartUrl));
-        $imageSrc = 'data:image/png;base64,' . $imageData;
+    //     // Get image as base64
+    //     $imageData = base64_encode(file_get_contents($chartUrl));
+    //     $imageSrc = 'data:image/png;base64,' . $imageData;
 
-        $imageData2 = base64_encode(file_get_contents($donutChartUrl));
-        $imageSrc2 = 'data:image/png;base64,' . $imageData2;
+    //     $imageData2 = base64_encode(file_get_contents($donutChartUrl));
+    //     $imageSrc2 = 'data:image/png;base64,' . $imageData2;
 
 
-        $pdf = PDF::loadView('report.advanced-reports', compact('visitors', 'imageSrc', 'imageSrc2'));
+    //     $pdf = PDF::loadView('report.advanced-reports', compact('visitors', 'imageSrc', 'imageSrc2'));
 
-        return $pdf->download('visitors-reports.pdf');
-    }
+    //     return $pdf->download('visitors-reports.pdf');
+    // }
 
     public function getStatisticAllSites(Request $request)
     {

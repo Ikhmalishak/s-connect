@@ -26,6 +26,7 @@ import StaffVerificationTable from "@/Components/VisitorTableComponent/StaffVeri
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const errors = ref<{ staffName?: string; staffId?: string }>({});
+let intervalId;
 
 // Modal state
 const showVisitorVerification = ref(false);
@@ -134,6 +135,27 @@ async function getAllVerifiedVisitor(
 
 // fetch when component mounts
 onMounted(() => {
+    intervalId = setInterval(() => {
+        currentTime.value = new Date();
+    }, 1000);
+    if (window.Echo) {
+        // Existing listener
+        window.Echo.channel("guard")
+            .listen(".guard.acknowledge", (e) => {
+                console.log("New GuardAcknowledgeVisitor event received:", e);
+                getAllVerifiedVisitor();
+            })
+            .error((error) => {
+                console.error("WebSocket error on visitors channel:", error);
+            });
+
+        console.log("Listening for GuardAcknowledgeVisitor events via Reverb.");
+    } else {
+        console.error(
+            "Laravel Echo is not initialized. Please check resources/js/app.js."
+        );
+    }
+
     getAllVerifiedVisitor();
 });
 
@@ -222,7 +244,7 @@ watch(searchQuery, (newVal) => {
                     </BreadcrumbItem>
                     <BreadcrumbSeparator />
                     <BreadcrumbItem>
-                        <BreadcrumbPage>Staff Verification</BreadcrumbPage>
+                        <BreadcrumbPage>Host Verification</BreadcrumbPage>
                     </BreadcrumbItem>
                 </BreadcrumbList>
             </Breadcrumb>
@@ -249,7 +271,7 @@ watch(searchQuery, (newVal) => {
             class="shadow-lg shadow-opacity-30 p-4 mb-4 text-xl font-bold flex items-center justify-between bg-gray-100"
         >
             <div class="flex flex-row items-center space-x-3">
-                <div>Staff Verification</div>
+                <div>Host Verification</div>
             </div>
         </Card>
 

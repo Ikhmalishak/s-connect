@@ -70,6 +70,13 @@ class VisitorStaffAcknowledgementController extends Controller
             ->where('ack_number', $ack_number)
             ->first();
 
+        if (!is_null($visitor_staff_acknowledgement->acknowledged_at)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Visitor Staff Acknowledgement has already been acknowledged.'
+            ], 200);
+        }
+
         if (!$visitor_staff_acknowledgement) {
             return response()->json([
                 'success' => false,

@@ -364,7 +364,7 @@ function setRowMask(visitorId: number, state: boolean) {
                             ]"
                         >
                             <td class="text-center p-2">
-                                {{ index }}
+                                {{ index + 1}}
                             </td>
                             <td class="text-center p-2">
                                 {{ visitor.gate_pass?.pass_number || "-" }}
