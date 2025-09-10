@@ -13,36 +13,12 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-
-        User::create([
-            'name' => 'Admin',
-            'email' => 'admin@example.com',
-            'password' => '12345678',
-            'role' => 'admin',
-            'site' => 'Site 2'
-        ]);
-
-        User::create([
-            'name' => 'Guard',
-            'email' => 'guard@example.com',
-            'password' => '12345678',
-            'role' => 'guard',
-            'site' => 'Site 2'
-
-        ]);
-        User::create([
-            'name' => 'Receptionist',
-            'email' => 'receptionist@example.com',
-            'password' => '12345678',
-            'role' => 'receptionist',
-            'site' => 'Site 2'
-
-        ]);
-
         $this->call([
+            UserSeeder::class,
             DepartmentSeeder::class,
             GatePassSeeder::class,
             SiteSeeder::class,
         ]);
     }
+
 }
