@@ -166,6 +166,8 @@ const resetAndClose = () => {
     staffId.value = "";
     visitor.value = null;
     ackNumber.value = "";
+    alertMessage.value = "";
+    alertType.value = "";
 
     // Close modal
     showVisitorVerification.value = false;
@@ -387,7 +389,18 @@ watch(searchQuery, (newVal) => {
         </Dialog>
 
         <!-- QR Code Modal -->
-        <Dialog v-model:open="showQrCodeModal">
+        <Dialog
+            v-model:open="showQrCodeModal"
+            @update:open="
+                (open) => {
+                    if (!open) {
+                        alertMessage = '';
+                        alertType = '';
+                        notCheckIn = [];
+                    }
+                }
+            "
+        >
             <DialogContent class="max-w-2xl">
                 <DialogHeader>
                     <DialogTitle class="text-center"

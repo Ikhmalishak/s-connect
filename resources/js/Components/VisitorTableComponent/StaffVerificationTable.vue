@@ -118,7 +118,7 @@ function getAckRowClass(ack: any) {
             </div>
 
             <div
-                class="flex-1 overflow-y-auto max-h-[420px] border border-gray-300"
+                class="flex-1 overflow-y-auto max-h-[550px] border border-gray-300"
             >
                 <table class="min-w-full">
                     <thead
@@ -130,7 +130,7 @@ function getAckRowClass(ack: any) {
                             <th
                                 class="font-black text-black text-center bg-gray-100 p-3 sticky top-0 z-20 border-r border-gray-300 text-sm"
                             >
-                                No
+                                SV-ID
                             </th>
                             <th
                                 class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
@@ -155,12 +155,12 @@ function getAckRowClass(ack: any) {
                             <th
                                 class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
                             >
-                                Acknowledge By
+                                Host Acknowledgement
                             </th>
                             <th
                                 class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
                             >
-                                Acknowledge At
+                                Time Scan
                             </th>
                             <!-- <th
                                 class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
@@ -170,7 +170,7 @@ function getAckRowClass(ack: any) {
                             <th
                                 class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
                             >
-                                Acknowledge At Security
+                                Security Exit Clearance
                             </th>
                             <th
                                 class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
@@ -209,7 +209,7 @@ function getAckRowClass(ack: any) {
                                 <td
                                     class="border border-gray-300 text-center p-2"
                                 >
-                                    {{ v.visitor_name }}
+                                    {{ v.visitor_name.toUpperCase() }}
                                 </td>
                                 <td
                                     class="border border-gray-300 text-center p-2"
@@ -219,12 +219,12 @@ function getAckRowClass(ack: any) {
                                 <td
                                     class="border border-gray-300 text-center p-2"
                                 >
-                                    {{ v.visitor_company }}
+                                    {{ v.visitor_company.toUpperCase() }}
                                 </td>
                                 <td
                                     class="border border-gray-300 text-center p-2"
                                 >
-                                    {{ ack.acknowledged_by }}
+                                    {{ ack.acknowledged_by.toUpperCase() }}
                                 </td>
                                 <td
                                     class="border border-gray-300 text-center p-2"
@@ -247,9 +247,9 @@ function getAckRowClass(ack: any) {
                                     class="border border-gray-300 text-center p-2"
                                 >
                                     {{
-                                        ack.acknowledged_at
+                                        ack.acknowledged_at_security
                                             ? new Date(
-                                                  ack.acknowledged_at.replace(
+                                                  ack.acknowledged_at_security.replace(
                                                       " ",
                                                       "T"
                                                   )

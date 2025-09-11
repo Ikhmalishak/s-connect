@@ -52,7 +52,7 @@ class VisitorController extends Controller
         $keyword = $request->input('keyword');
         $site = $request->input('site');
 
-        $query = Visitor::with(['gatePass:id,pass_number', 'site:id,site_code']);
+        $query = Visitor::with(['gatePass:id,pass_number', 'site:id,site_code','acknowledgements']);
 
         if ($site) {
             $query->whereHas('site', function ($q) use ($site) {

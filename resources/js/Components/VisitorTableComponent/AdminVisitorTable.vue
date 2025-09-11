@@ -16,12 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Link } from "@inertiajs/vue3";
 import NotificationBadge from "@/Components/NotificationBadge.vue";
-import {
-    IdCardLanyard,
-    UserRoundPlus,
-    Eye,
-    EyeClosed,
-} from "lucide-vue-next";
+import { IdCardLanyard, UserRoundPlus, Eye, EyeClosed, ArrowRightFromLine, EyeOff, Printer } from "lucide-vue-next";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -34,8 +29,6 @@ import {
 import { ref, watch } from "vue";
 import { Card } from "@/components/ui/card";
 import CustomTooltip from "../CustomTooltip.vue";
-import { EyeOff } from "lucide-vue-next";
-import { ArrowRightFromLine } from "lucide-vue-next";
 import ExportReportModal from "./ExportReportModal.vue";
 
 interface VisitorForm {
@@ -58,6 +51,9 @@ interface VisitorForm {
     gate_pass?: {
         pass_number: string;
     };
+    acknowledgements?:{
+        ack_number: string;
+    }
 }
 
 const props = defineProps<{
@@ -70,8 +66,8 @@ const emit = defineEmits([
     "update:limit",
     "search",
     "openGatePassModal",
-    "openCheckoutModal",
     "openDetailsModal",
+    "openReprintModal"
 ]);
 
 const searchQuery = ref("");
@@ -168,6 +164,22 @@ function setRowMask(visitorId: number, state: boolean) {
                             <Tooltip>
                                 <TooltipTrigger>
                                     <button
+                                    @click="emit('openReprintModal')"
+                                    >
+                                        <Printer class="w-9 h-9" />
+                                    </button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Click to Print the Staff Verification Sticker</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    </div>
+                    <div>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger>
+                                    <button
                                         @click="showExportReportModal = true"
                                     >
                                         <ArrowRightFromLine class="w-9 h-9" />
@@ -179,21 +191,6 @@ function setRowMask(visitorId: number, state: boolean) {
                             </Tooltip>
                         </TooltipProvider>
                     </div>
-                    <!-- <div>
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger>
-                                    <button @click="emit('openCheckoutModal')">
-                                        <ScanQrCode class="w-9 h-9" />
-                                    </button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p>Checkout By Scanner</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                    </div> -->
-
                     <div>
                         <TooltipProvider>
                             <Tooltip>
@@ -210,7 +207,6 @@ function setRowMask(visitorId: number, state: boolean) {
                             </Tooltip>
                         </TooltipProvider>
                     </div>
-
                     <div>
                         <DropdownMenu>
                             <DropdownMenuTrigger as-child>
@@ -362,9 +358,11 @@ function setRowMask(visitorId: number, state: boolean) {
                                 getRowClass(visitor),
                                 'border border-gray-300 divide-x divide-gray-300',
                             ]"
+                            :title="visitor.acknowledgements?.[0]?.ack_number || 'No ack number'"
+
                         >
                             <td class="text-center p-2">
-                                {{ index + 1}}
+                                {{ index + 1 }}
                             </td>
                             <td class="text-center p-2">
                                 {{ visitor.gate_pass?.pass_number || "-" }}

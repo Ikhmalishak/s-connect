@@ -19,6 +19,7 @@ import GatePassModal from "@/Components/VisitorTableComponent/GatePassModal.vue"
 import CheckoutModal from "@/Components/VisitorTableComponent/CheckoutModal.vue";
 import NotifyGuardModal from "@/Components/VisitorTableComponent/NotifyGuardModal.vue";
 import DetailsModal from "@/Components/VisitorTableComponent/DetailsModal.vue";
+import ReprintModal from "@/Components/VisitorTableComponent/ReprintModal.vue";
 import {
     Select,
     SelectContent,
@@ -102,6 +103,7 @@ const showCheckoutModal = ref(false);
 const showNotifyModal = ref(false);
 const selectedVisitor = ref(null);
 const showDetailsModal = ref(false);
+const showReprintModal = ref(false);
 const selectedSite = ref("S2");
 let intervalId;
 
@@ -345,29 +347,32 @@ onUnmounted(() => {
                 <img src="/assets/ss1.png" class="h-12 w-12" alt="" />
                 <div>Visitor Management System</div>
             </div>
-
-            <div class="flex items-center gap-2">
-                <label class="text-sm whitespace-nowrap">Select Site :</label>
-                <Select v-model="selectedSite">
-                    <SelectTrigger class="w-[180px]">
-                        <SelectValue placeholder="Select Site" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectGroup>
-                            <SelectLabel>Site</SelectLabel>
-                            <SelectItem value="S1">Site 1</SelectItem>
-                            <SelectItem value="S2">Site 2</SelectItem>
-                            <SelectItem value="S3">Site 3</SelectItem>
-                            <SelectItem value="S4">Site 4</SelectItem>
-                        </SelectGroup>
-                    </SelectContent>
-                </Select>
-            </div>
-            <div
-                class="flex flex-row space-x-4 text-base font-normal text-gray-600 text-right"
-            >
-                <div>{{ formattedDate }}</div>
-                <div>{{ formattedTime }}</div>
+            <div class="flex flex-row items-center gap-10">
+                <div class="flex items-center gap-2">
+                    <label class="text-sm whitespace-nowrap"
+                        >Select Site :</label
+                    >
+                    <Select v-model="selectedSite">
+                        <SelectTrigger class="w-[180px]">
+                            <SelectValue placeholder="Select Site" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectGroup>
+                                <SelectLabel>Site</SelectLabel>
+                                <SelectItem value="S1">Site 1</SelectItem>
+                                <SelectItem value="S2">Site 2</SelectItem>
+                                <SelectItem value="S3">Site 3</SelectItem>
+                                <SelectItem value="S4">Site 4</SelectItem>
+                            </SelectGroup>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div
+                    class="flex flex-row space-x-4 text-base font-normal text-gray-600 text-right"
+                >
+                    <div>{{ formattedDate }}</div>
+                    <div>{{ formattedTime }}</div>
+                </div>
             </div>
         </Card>
 
@@ -392,8 +397,8 @@ onUnmounted(() => {
             @update:limit="limitTable = $event"
             @search="searchQuery = $event"
             @open-gate-pass-modal="isGatePassModalOpen = true"
-            @open-checkout-modal="showCheckoutModal = true"
             @open-details-modal="openDetailsModal"
+            @open-reprint-modal="showReprintModal = true"
         />
 
         <VisitorModal
@@ -409,6 +414,7 @@ onUnmounted(() => {
             @close="isGatePassModalOpen = false"
         />
 
+
         <DetailsModal
             :show="showDetailsModal"
             :visitors="selectedVisitor"
@@ -416,6 +422,10 @@ onUnmounted(() => {
             @updateRemarks="handleUpdateRemarks"
         />
 
+        <ReprintModal
+            :show="showReprintModal"
+            @close="showReprintModal = false"
+        />
         <CheckoutModal
             :show="showCheckoutModal"
             @refresh="
