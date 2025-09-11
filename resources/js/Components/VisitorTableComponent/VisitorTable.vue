@@ -57,6 +57,9 @@ interface VisitorForm {
     gate_pass?: {
         pass_number: string;
     };
+    acknowledgements?: {
+        ack_number:string;
+    }
 }
 
 const props = defineProps<{
@@ -346,6 +349,7 @@ function setRowMask(visitorId: number, state: boolean) {
                                 getRowClass(visitor),
                                 'border border-gray-300 divide-x divide-gray-300',
                             ]"
+                            :title="visitor.acknowledgements?.[0]?.ack_number || 'No ack number'"
                         >
                             <td class="text-center p-2">
                                 {{ totalVisitorToday - index }}
@@ -376,17 +380,13 @@ function setRowMask(visitorId: number, state: boolean) {
                                 <template v-if="visitor.time_in">
                                     {{ trimToHourMinute(visitor.time_in) }}
                                 </template>
-                                <template v-else>
-                                    -- : --
-                                </template>
+                                <template v-else> -- : -- </template>
                             </td>
                             <td class="text-center p-2">
                                 <template v-if="visitor.time_out">
                                     {{ trimToHourMinute(visitor.time_out) }}
                                 </template>
-                                <template v-else>
-                                    -- : --
-                                </template>
+                                <template v-else> -- : -- </template>
                             </td>
                             <td class="text-center p-2">
                                 {{ visitor.visitor_company.toUpperCase() }}
