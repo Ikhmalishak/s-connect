@@ -7,60 +7,82 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Mpdf\Mpdf;
+use Illuminate\Support\Str;
 
 class VisitorStaffAcknowledgementController extends Controller
 {
 
-    //function to call list of visitor that have been verified
-    public function getAllVerifiedVisitor(Request $request)
-    {
-        $limit = $request->input('limit', 25);
-        $keyword = $request->input('keyword');
-        $date = Carbon::now();
+public function getAllVerifiedVisitor(Request $request)
+{
+    $limit = $request->input('limit', 25);
+    $keyword = $request->input('keyword');
+    $date = Carbon::now()->toDateString(); // date only
 
-        $verified = VisitorStaffAcknowledgement::with([
-            'visitors' => function ($query) use ($keyword) {
-                // Filter the eager-loaded visitors to match the search criteria
-                if ($keyword) {
-                    $query->where(function ($q) use ($keyword) {
-                        $q->where('visitor_name', 'LIKE', "%{$keyword}%")
-                            ->orWhere('visitor_company', 'LIKE', "%{$keyword}%")
-                            ->orWhere('purpose', 'LIKE', "%{$keyword}%")
-                            ->orWhereHas('gatePass', function ($gp) use ($keyword) {
-                                $gp->where('pass_number', 'LIKE', "%{$keyword}%");
-                            });
-                    });
-                }
-            },
-            'visitors.gatePass'
-        ])
-            ->whereNotNull('acknowledged_at')
-            ->whereDate('created_at', $date)
-            ->when($keyword, function ($query, $keyword) {
-                $query->where(function ($q) use ($keyword) {
-                    $q->where('acknowledged_by', 'LIKE', "%{$keyword}%")
-                        ->orWhere('staff_id', 'LIKE', "%{$keyword}%")
-                        ->orWhere('acknowledged_by_security', 'LIKE', "%{$keyword}%")
-                        ->orWhere('ack_number', 'LIKE', "%{$keyword}%")
-                        ->orWhereHas('visitors', function ($sub) use ($keyword) {
-                            $sub->where('visitor_name', 'LIKE', "%{$keyword}%")
-                                ->orWhere('visitor_company', 'LIKE', "%{$keyword}%")
-                                ->orWhere('purpose', 'LIKE', "%{$keyword}%")
-                                ->orWhereHas('gatePass', function ($gp) use ($keyword) {
-                                    $gp->where('pass_number', 'LIKE', "%{$keyword}%");
-                                });
-                        });
-                });
-            })
-            ->orderByDesc('acknowledged_at') // ✅ latest at top
-            ->limit($limit)
-            ->get();
+    $query = VisitorStaffAcknowledgement::with(['visitors.gatePass'])
+        ->whereNotNull('acknowledged_at')
+        ->whereDate('created_at', $date);
 
-        return response()->json([
-            'message' => "success",
-            'visitors' => $verified,
-        ]);
+    if ($keyword) {
+        $query->where(function ($q) use ($keyword) {
+            $q->where('acknowledged_by', 'LIKE', "%{$keyword}%")
+              ->orWhere('staff_id', 'LIKE', "%{$keyword}%")
+              ->orWhere('acknowledged_by_security', 'LIKE', "%{$keyword}%")
+              ->orWhere('ack_number', 'LIKE', "%{$keyword}%")
+              ->orWhereHas('visitors', function ($sub) use ($keyword) {
+                  $sub->where('visitor_name', 'LIKE', "%{$keyword}%")
+                      ->orWhere('visitor_company', 'LIKE', "%{$keyword}%")
+                      ->orWhere('purpose', 'LIKE', "%{$keyword}%")
+                      ->orWhereHas('gatePass', function ($gp) use ($keyword) {
+                          $gp->where('pass_number', 'LIKE', "%{$keyword}%");
+                      });
+              });
+        });
     }
+
+    $verified = $query->orderByDesc('acknowledged_at')
+        ->limit($limit)
+        ->get();
+
+    // Post-process: when keyword present, filter children visitors
+    if ($keyword) {
+        $lower = Str::lower($keyword);
+
+        foreach ($verified as $ack) {
+            // Check if ack-level fields match the keyword
+            $ackLevelMatched = false;
+            foreach (['acknowledged_by', 'staff_id', 'acknowledged_by_security', 'ack_number'] as $field) {
+                if (Str::contains(Str::lower($ack->$field ?? ''), $lower)) {
+                    $ackLevelMatched = true;
+                    break;
+                }
+            }
+
+            if (! $ackLevelMatched) {
+                // Keep only visitors that match the keyword (by name/company/purpose/pass)
+                $filtered = $ack->visitors->filter(function ($v) use ($lower) {
+                    if (Str::contains(Str::lower($v->visitor_name ?? ''), $lower)) return true;
+                    if (Str::contains(Str::lower($v->visitor_company ?? ''), $lower)) return true;
+                    if (Str::contains(Str::lower($v->purpose ?? ''), $lower)) return true;
+                    if ($v->gatePass && Str::contains(Str::lower($v->gatePass->pass_number ?? ''), $lower)) return true;
+                    return false;
+                })->values();
+
+                // Replace the relation so the response only contains matching visitor rows
+                $ack->setRelation('visitors', $filtered);
+            }
+            // if ack-level matched, keep all visitors as-is
+        }
+    }
+
+    // recompute total after filtering
+    $totalVisitors = $verified->pluck('visitors')->flatten(1)->count();
+
+    return response()->json([
+        'message' => "success",
+        'visitors' => $verified,
+        'total_visitors' => $totalVisitors,
+    ]);
+}
 
     public function getVisitorStaffAcknowledgementDetails(Request $request)
     {

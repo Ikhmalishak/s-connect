@@ -32,8 +32,17 @@ class RegisteredUserController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'email' => 'required|string|lowercase|email|max:255|unique:' . User::class,
+            'password' => [
+                'required',
+                'confirmed',
+                Rules\Password::min(10)
+                    ->letters()   // must contain letters
+                    ->numbers()   // must contain numbers
+                    ->mixedCase() // require both upper & lower case (optional)
+                    ->symbols()   // require at least one symbol (optional)
+                // ->uncompromised() // check if password has appeared in data leaks (optional)
+            ],
         ]);
 
         $user = User::create([

@@ -14,7 +14,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
 import { Card } from "@/components/ui/card";
 import { ScanQrCode } from "lucide-vue-next";
 
@@ -29,6 +29,7 @@ watch(searchQuery, (newVal) => {
 const props = defineProps<{
     visitors: any;
     limit: string;
+    totalVisitors: number;
 }>();
 
 function trimVisitorType(visitorType: string) {
@@ -53,6 +54,99 @@ function getAckRowClass(ack: any) {
     // default
     return "bg-white hover:bg-gray-100";
 }
+
+function globalIndex(ackIndex: number, index: number) {
+    const offset = props.visitors
+        .slice(0, ackIndex)
+        .reduce((sum, a) => sum + a.visitors.length, 0);
+
+    // Ascending value
+    const current = offset + index + 1;
+
+    // Convert to descending
+    return props.totalVisitors - current + 1;
+}
+
+// Enhanced group detection and styling
+const groupInfo = computed(() => {
+    const ackCounts = {};
+    const colors = [
+        "border-l-blue-500 bg-blue-50",
+        "border-l-purple-500 bg-purple-50",
+        "border-l-orange-500 bg-orange-50",
+        "border-l-pink-500 bg-pink-50",
+        "border-l-indigo-500 bg-indigo-50",
+        "border-l-teal-500 bg-teal-50",
+        "border-l-yellow-500 bg-yellow-50",
+        "border-l-emerald-500 bg-emerald-50",
+    ];
+
+    // Count visitors per acknowledgment number
+    props.visitors.forEach((ack) => {
+        ackCounts[ack.ack_number] =
+            (ackCounts[ack.ack_number] || 0) + ack.visitors.length;
+    });
+
+    // Assign colors to groups with multiple visitors
+    const groupColors = {};
+    let colorIndex = 0;
+    Object.keys(ackCounts).forEach((ackNumber) => {
+        if (ackCounts[ackNumber] > 1) {
+            groupColors[ackNumber] = colors[colorIndex % colors.length];
+            colorIndex++;
+        }
+    });
+
+    return { ackCounts, groupColors };
+});
+
+// function getGroupHighlighting(ackNumber: string) {
+//     const { ackCounts, groupColors } = groupInfo.value;
+
+//     if (ackCounts[ackNumber] > 1) {
+//         return groupColors[ackNumber] || "border-l-gray-500 bg-gray-50";
+//     }
+//     return "";
+// }
+
+function isGroupMember(ackNumber: string) {
+    return groupInfo.value.ackCounts[ackNumber] > 1;
+}
+
+function getGroupSize(ackNumber: string) {
+    return groupInfo.value.ackCounts[ackNumber] || 1;
+}
+
+// ✅ compute completed vs pending counts
+const completedCount = computed(() =>
+    props.visitors.reduce(
+        (sum, ack) =>
+            sum +
+            ack.visitors.filter((v) => ack.acknowledged_by_security !== null)
+                .length,
+        0
+    )
+);
+
+const pendingCount = computed(() =>
+    props.visitors.reduce(
+        (sum, ack) =>
+            sum +
+            ack.visitors.filter((v) => ack.acknowledged_by_security === null)
+                .length,
+        0
+    )
+);
+
+const totalCount = computed(() => completedCount.value + pendingCount.value);
+
+// ✅ percentage widths
+const completedPct = computed(() =>
+    totalCount.value ? (completedCount.value / totalCount.value) * 100 : 0
+);
+const pendingPct = computed(() =>
+    totalCount.value ? (pendingCount.value / totalCount.value) * 100 : 0
+);
 </script>
 
 <template>
@@ -67,7 +161,7 @@ function getAckRowClass(ack: any) {
         </div>
 
         <Card class="p-3 shadow-2xl max-h-[700px] shadow-opacity-60">
-            <div class="flex space-x-4 justify-between mb-2">
+            <div class="flex space-x-4 justify-between mb-4">
                 <div class="flex items-center gap-4">
                     <div class="flex flex-row space-x-2">
                         <input
@@ -77,7 +171,42 @@ function getAckRowClass(ack: any) {
                         />
                     </div>
                 </div>
-                <div class="flex flex-row gap-2">
+                <div class="flex flex-row gap-6 max-w-lg w-full">
+                    <div class="max-w-md w-full">
+                        <div
+                            class="flex items-center justify-between mb-1 text-sm"
+                        >
+                            <span class="font-semibold text-green-600">
+                                Completed: {{ completedCount }}
+                                <!-- ({{
+                                    completedPct.toFixed(1)
+                                }}%) -->
+                            </span>
+                            <span class="font-semibold text-red-600">
+                                Pending: {{ pendingCount }}
+                                <!-- ({{
+                                    pendingPct.toFixed(1)
+                                }}%) -->
+                            </span>
+                            <!-- <span class="font-semibold"
+                                >Total: {{ totalCount }}</span
+                            > -->
+                        </div>
+
+                        <!-- stacked progress bar -->
+                        <div
+                            class="w-full h-4 rounded bg-gray-200 overflow-hidden flex"
+                        >
+                            <div
+                                class="bg-green-500 h-full"
+                                :style="{ width: completedPct + '%' }"
+                            ></div>
+                            <div
+                                class="bg-red-500 h-full"
+                                :style="{ width: pendingPct + '%' }"
+                            ></div>
+                        </div>
+                    </div>
                     <div class="flex items-center gap-4">
                         <div>
                             <Select
@@ -91,7 +220,6 @@ function getAckRowClass(ack: any) {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectGroup>
-                                        <SelectItem value="25">25</SelectItem>
                                         <SelectItem value="50">50</SelectItem>
                                         <SelectItem value="100">100</SelectItem>
                                         <SelectItem value="200">200</SelectItem>
@@ -130,6 +258,11 @@ function getAckRowClass(ack: any) {
                             <th
                                 class="font-black text-black text-center bg-gray-100 p-3 sticky top-0 z-20 border-r border-gray-300 text-sm"
                             >
+                                No
+                            </th>
+                            <th
+                                class="font-black text-black text-center bg-gray-100 p-3 sticky top-0 z-20 border-r border-gray-300 text-sm"
+                            >
                                 SV-ID
                             </th>
                             <th
@@ -162,11 +295,6 @@ function getAckRowClass(ack: any) {
                             >
                                 Time Scan
                             </th>
-                            <!-- <th
-                                class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
-                            >
-                                Acknowledge By Security
-                            </th> -->
                             <th
                                 class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
                             >
@@ -194,12 +322,29 @@ function getAckRowClass(ack: any) {
                             <tr
                                 v-for="(v, index) in ack.visitors"
                                 :key="v.id"
-                                :class="getAckRowClass(ack)"
+                                :class="[
+                                    getAckRowClass(ack),
+                                ]"
                             >
                                 <td
                                     class="border border-gray-300 text-center p-2"
                                 >
-                                    {{ ack.ack_number }}
+                                    {{ globalIndex(ackIndex, index) }}
+                                </td>
+                                <td
+                                    class="border border-gray-300 text-center p-2 relative"
+                                >
+                                    <div
+                                        class="flex items-center justify-center gap-1"
+                                    >
+                                        <span>{{ ack.ack_number }}</span>
+                                        <span
+                                            v-if="isGroupMember(ack.ack_number)"
+                                            class="inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-blue-600 rounded-full"
+                                        >
+                                            {{ getGroupSize(ack.ack_number) }}
+                                        </span>
+                                    </div>
                                 </td>
                                 <td
                                     class="border border-gray-300 text-center p-2"
@@ -238,11 +383,6 @@ function getAckRowClass(ack: any) {
                                         })
                                     }}
                                 </td>
-                                <!-- <td
-                                    class="border border-gray-300 text-center p-2"
-                                >
-                                    {{ ack.acknowledged_by_security ?? "N/A" }}
-                                </td> -->
                                 <td
                                     class="border border-gray-300 text-center p-2"
                                 >

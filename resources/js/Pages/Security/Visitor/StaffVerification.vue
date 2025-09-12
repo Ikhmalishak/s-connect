@@ -40,13 +40,14 @@ const ackNumber = ref(""); // bind input for visitor ID
 // Visitor data fetched from API
 const visitor = ref<any>(null);
 const verifiedVisitors = ref<any[]>([]); // reactive array
+const totalVisitors = ref(0)
 
 // Staff verification form
 const staffName = ref("");
 const staffId = ref("");
 
 //Limit table
-const limitTable = ref("25");
+const limitTable = ref("50");
 const searchQuery = ref("");
 
 //Alert Messages
@@ -128,6 +129,7 @@ async function getAllVerifiedVisitor(
         });
         console.log(res.data);
         verifiedVisitors.value = res.data.visitors; // assign API result
+        totalVisitors.value = res.data.total_visitors;
     } catch (error) {
         console.error("Error fetching verified visitors:", error);
     }
@@ -282,6 +284,7 @@ watch(searchQuery, (newVal) => {
             <StaffVerificationTable
                 :visitors="verifiedVisitors"
                 :limit="limitTable"
+                :total-visitors="totalVisitors"
                 @open-checkout-modal="showQrCodeModal = true"
                 @update:limit="limitTable = $event"
                 @search="searchQuery = $event"
