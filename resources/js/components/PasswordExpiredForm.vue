@@ -4,6 +4,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useForm } from "@inertiajs/vue3";
+import { computed
+
+ } from "vue";
+
+const props = defineProps({
+    reason: {
+        type: String,
+        required: false,
+    },
+});
 
 const form = useForm({
     current_password: "",
@@ -17,6 +27,17 @@ const submit = () => {
             form.reset("current_password", "password", "password_confirmation"),
     });
 };
+
+//function to return reasonMessage
+const reasonMessage = computed(() => {
+    if (props.reason === "first_time") {
+        return "You need to change the password since this is the first time you login.";
+    }
+    if (props.reason === "expired") {
+        return "You need to change the password because it has already been 180 days.";
+    }
+    return "";
+});
 </script>
 
 <template>
@@ -33,6 +54,7 @@ const submit = () => {
                             <p class="text-sm text-white">
                                 Please update your password to continue
                             </p>
+                            <p>{{ reasonMessage }}</p>
                         </div>
 
                         <div class="grid gap-2">
@@ -76,7 +98,10 @@ const submit = () => {
                         </div>
 
                         <div class="grid gap-2">
-                            <Label for="password_confirmation" class="text-white">
+                            <Label
+                                for="password_confirmation"
+                                class="text-white"
+                            >
                                 Confirm Password
                             </Label>
                             <Input

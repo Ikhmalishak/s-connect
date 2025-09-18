@@ -19,6 +19,8 @@ class UserSeeder extends Seeder
             'password' => Hash::make('12345678'),
             'role' => 'admin',
             'site' => 'Site 2',
+            'password_changed_at' => now(),
+            'is_first_time_login' => true,
         ]);
 
         User::create([
@@ -27,6 +29,8 @@ class UserSeeder extends Seeder
             'password' => Hash::make('12345678'),
             'role' => 'guard',
             'site' => 'Site 2',
+            'password_changed_at' => now(),
+            'is_first_time_login' => true,
         ]);
 
         User::create([
@@ -35,6 +39,8 @@ class UserSeeder extends Seeder
             'password' => Hash::make('12345678'),
             'role' => 'receptionist',
             'site' => 'Site 2',
+            'password_changed_at' => now(),
+            'is_first_time_login' => true,
         ]);
     }
 }

@@ -29,7 +29,7 @@ Route::get('/', function () {
 })->name('login');
 
 // Admin-only routes
-Route::middleware(['auth', 'role:admin'])->group(function () {
+Route::middleware(['auth','password.age', 'role:admin'])->group(function () {
     Route::get('/admin/visitor/dashboard', [VisitorController::class, 'getAdminVisitorDashboard'])
         ->name('admin.visitordashboard');
 
@@ -51,14 +51,14 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 });
 
 // Guard-only routes
-Route::middleware(['auth', 'role:guard'])->group(function () {
+Route::middleware(['auth','password.age', 'role:guard'])->group(function () {
     //route to get visitor dashboard
     Route::get('/visitor/dashboard', [VisitorController::class, 'getVisitorDashboard'])
         ->name('security.visitordashboard');
 });
 
 // Receptionist-only routes
-Route::middleware(['auth', 'role:receptionist'])->group(function () {
+Route::middleware(['auth','password.age','role:receptionist'])->group(function () {
     Route::get('/admin/visitor/staff-verification', [VisitorController::class, 'getStaffVerification'])
         ->name('receptionist.visitordashboard');
 });

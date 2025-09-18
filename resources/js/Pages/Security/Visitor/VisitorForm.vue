@@ -103,6 +103,7 @@ const acknowledgementModalOpen = ref(false);
 const acknowledgementMessage = ref("");
 const isAcknowledged = ref(false);
 const registrationResult = ref(null);
+const submitting = ref(false);
 
 const personalInfoStepRef = ref<{ isValid: () => boolean } | null>(null);
 const visitDetailsStepRef = ref<{ isValid: () => boolean } | null>(null);
@@ -285,22 +286,38 @@ const handleVisitUpdate = ({
     setFieldValue(field, value);
 };
 
-const onSubmit = handleSubmit(async (formValues) => {
-    console.log("Submitting:", formValues);
+// const onSubmit = handleSubmit(async (formValues) => {
+//     console.log("Submitting:", formValues);
 
-    if (!videoEnded.value || !securityGuidelinesConfirmed.value) {
-        alert("Please complete all security requirements before submitting.");
-        return;
-    }
+//     if (!videoEnded.value || !securityGuidelinesConfirmed.value) {
+//         alert("Please complete all security requirements before submitting.");
+//         return;
+//     }
+
+//     try {
+//         const response = await axios.post("/visitor/submit", formValues);
+//         console.log("Form submitted successfully:", response.data);
+//         registrationResult.value = response.data;
+//         resultModalOpen.value = true;
+//     } catch (error) {
+//         console.error("Submission error:", error);
+//         alert("An error occurred while submitting the form.");
+//     }
+// });
+
+const onSubmit = handleSubmit(async (formValues) => {
+    if (submitting.value) return; // block double click
+    submitting.value = true;
 
     try {
         const response = await axios.post("/visitor/submit", formValues);
-        console.log("Form submitted successfully:", response.data);
         registrationResult.value = response.data;
         resultModalOpen.value = true;
     } catch (error) {
         console.error("Submission error:", error);
         alert("An error occurred while submitting the form.");
+    } finally {
+        submitting.value = false;
     }
 });
 
@@ -435,7 +452,7 @@ const stepTitles = {
                 </div>
             </div>
 
-            <form @submit="onSubmit" class="px-6 py-2 mb-2 space-y-6">
+            <form @submit.prevent="onSubmit" class="px-6 py-2 mb-2 space-y-6">
                 <PersonalInfoStep
                     ref="personalInfoStepRef"
                     v-show="currentStep === 1"
@@ -561,10 +578,17 @@ const stepTitles = {
                             v-if="currentStep === 4"
                             type="submit"
                             :disabled="
-                                !videoEnded || !securityGuidelinesConfirmed
+                                !videoEnded ||
+                                !securityGuidelinesConfirmed ||
+                                checkingAcknowledgement ||
+                                submitting
                             "
                         >
-                            Submit Registration
+                            {{
+                                submitting
+                                    ? "Submitting..."
+                                    : "Submit Registration"
+                            }}
                         </Button>
                     </div>
                 </div>

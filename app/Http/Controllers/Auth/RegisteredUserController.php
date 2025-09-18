@@ -36,12 +36,11 @@ class RegisteredUserController extends Controller
             'password' => [
                 'required',
                 'confirmed',
-                Rules\Password::min(10)
+                Rules\Password::min(12)
                     ->letters()   // must contain letters
                     ->numbers()   // must contain numbers
                     ->mixedCase() // require both upper & lower case (optional)
                     ->symbols()   // require at least one symbol (optional)
-                // ->uncompromised() // check if password has appeared in data leaks (optional)
             ],
         ]);
 

@@ -24,7 +24,9 @@ class User extends Authenticatable
         'email',
         'password',
         'position',
-        'site'
+        'site',
+        'password_changed_at',
+        'is_first_time_login'
     ];
 
     /**

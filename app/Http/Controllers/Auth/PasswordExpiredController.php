@@ -14,15 +14,33 @@ class PasswordExpiredController extends Controller
     {
         $request->validate([
             'current_password' => ['required', 'current_password'],
-            'password' => ['required', 'confirmed', Password::min(10)->letters()->numbers()],
+            'password' => [
+                'required',
+                'confirmed',
+                Password::min(5)
+                    ->letters()   // must contain letters
+                    ->numbers()   // must contain numbers
+                    ->mixedCase() // require both upper & lower case (optional)
+                    ->symbols()
+            ],
         ]);
-
         $user = $request->user();
+
         $user->update([
             'password' => Hash::make($request->password),
             'password_changed_at' => now(),
+            'is_first_time_login' => 0,
         ]);
 
-        return redirect()->route('dashboard')->with('status', 'Password updated successfully!');
+        switch ($user->role) {
+            case 'admin':
+                return redirect()->route('admin.visitordashboard')->with('status', 'Password updated successfully!');
+            case 'guard':
+                return redirect()->route('security.visitordashboard')->with('status', 'Password updated successfully!');
+            case 'receptionist':
+                return redirect()->route('receptionist.visitordashboard')->with('status', 'Password updated successfully!');
+            default:
+                return redirect()->route('login');
+        }
     }
 }
