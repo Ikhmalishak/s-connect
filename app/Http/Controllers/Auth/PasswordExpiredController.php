@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\PasswordPolicy;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -12,16 +13,30 @@ class PasswordExpiredController extends Controller
 {
     public function update(Request $request)
     {
+        //call password policy
+        $policy = PasswordPolicy::first();
+
+        $passwordRule = Password::min($policy->min_length);
+
+        if ($policy->require_letters) {
+            $passwordRule->letters();
+        }
+        if ($policy->require_numbers) {
+            $passwordRule->numbers();
+        }
+        if ($policy->require_mixed_case) {
+            $passwordRule->mixedCase();
+        }
+        if ($policy->require_symbols) {
+            $passwordRule->symbols();
+        }
+
         $request->validate([
             'current_password' => ['required', 'current_password'],
             'password' => [
                 'required',
                 'confirmed',
-                Password::min(5)
-                    ->letters()   // must contain letters
-                    ->numbers()   // must contain numbers
-                    ->mixedCase() // require both upper & lower case (optional)
-                    ->symbols()
+                $passwordRule
             ],
         ]);
         $user = $request->user();

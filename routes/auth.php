@@ -42,6 +42,8 @@ Route::middleware('auth')->group(function () {
         ->middleware(['signed', 'throttle:6,1'])
         ->name('verification.verify');
 
+    Route::post('register', [RegisteredUserController::class, 'store']);
+
     // routes/web.php
     Route::get('/password/expired', function () {
         return inertia('Auth/PasswordExpired');

@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\GatePassController;
+use App\Http\Controllers\PasswordPolicyController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\VisitorController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SiteController;
@@ -36,6 +38,18 @@ Route::middleware(['auth','password.age', 'role:admin'])->group(function () {
     //api for admin reporting dashboard
     Route::get('/admin/visitor/report-dashboard', [VisitorController::class, 'getAdminVisitorReportingDashboard']);
 
+    //api for fetch all user
+    Route::get('/admin/visitor/user-list',[UserController::class, 'getAllUser']);
+
+    //api for update user
+    Route::put('/update-user/{user}', [UserController::class, 'update']);
+    
+    //api for delete user
+    Route::delete('/delete-user/{user}', [UserController::class, 'destroy']);
+
+    //api for admin manage user page
+    Route::get('/admin/visitor/manage-user',[UserController::class, 'getManageUserPage']);
+
     //api to fetch admin table data (table data can load every data inside table)
     Route::get('/admin/visitor/table-data', [VisitorController::class, 'getAdminVisitorTableData']);
 
@@ -48,6 +62,10 @@ Route::middleware(['auth','password.age', 'role:admin'])->group(function () {
 
     //route to reprint sticker if sticker missing
     Route::get('/reprint/{ack_number}', [VisitorStaffAcknowledgementController::class, 'reprintVisitorSticker']);
+
+    //route to control password policy
+    Route::get('/password-policy', [PasswordPolicyController::class, 'index'])->name('password-policy.edit');
+    Route::post('/password-policy', [PasswordPolicyController::class, 'update'])->name('password-policy.update');
 });
 
 // Guard-only routes

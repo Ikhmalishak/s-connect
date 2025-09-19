@@ -25,6 +25,7 @@ class User extends Authenticatable
         'password',
         'position',
         'site',
+        'role',
         'password_changed_at',
         'is_first_time_login'
     ];
@@ -65,11 +66,6 @@ class User extends Authenticatable
     public function subordinates()
     {
         return $this->hasMany(User::class, 'manager_id');
-    }
-
-    public function itRequests()
-    {
-        return $this->hasMany(ItRequest::class);
     }
 
     public function site()

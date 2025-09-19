@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\PasswordPolicy;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -12,7 +13,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Inertia\Response;
-
+use Illuminate\Validation\Rules\Password;
 class RegisteredUserController extends Controller
 {
     /**
@@ -28,32 +29,45 @@ class RegisteredUserController extends Controller
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request)
     {
+        $policy = PasswordPolicy::first();
+
+        $passwordRule = Password::min($policy->min_length);
+
+        if ($policy->require_letters)
+            $passwordRule->letters();
+        if ($policy->require_numbers)
+            $passwordRule->numbers();
+        if ($policy->require_mixed_case)
+            $passwordRule->mixedCase();
+        if ($policy->require_symbols)
+            $passwordRule->symbols();
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:' . User::class,
-            'password' => [
-                'required',
-                'confirmed',
-                Rules\Password::min(12)
-                    ->letters()   // must contain letters
-                    ->numbers()   // must contain numbers
-                    ->mixedCase() // require both upper & lower case (optional)
-                    ->symbols()   // require at least one symbol (optional)
-            ],
+            'password' => ['required', $passwordRule],
+            'role' => 'required|string',
+            'site' => 'required|string',
         ]);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'role' => $request->role,
+            'password_changed_at' => now(),
+            'is_first_time_login' => 1,
+            'site' => $request->site,
         ]);
 
         event(new Registered($user));
 
-        Auth::login($user);
-
-        return redirect(route('dashboard', absolute: false));
+        return response()->json([
+            'success' => true,
+            'message' => 'User registered successfully!',
+            'user' => $user,
+        ]);
     }
 }
