@@ -24,6 +24,35 @@ class UserController extends Controller
         ]);
     }
 
+    public function getUserTableData(Request $request)
+    {
+        $limit = $request->input('limit', 50);
+        $keyword = $request->input('keyword');
+
+        $query = User::query();
+
+        if ($keyword) {
+            $query->where(function ($q) use ($keyword) {
+                $q->where('name', 'LIKE', "%{$keyword}%")
+                    ->orWhere('site', 'LIKE', "%{$keyword}%")
+                    ->orWhere('email', "LIKE", "%{$keyword}%")
+                    ->orWhere('role', "LIKE", "%{$keyword}%");
+
+            });
+        }
+
+        // Apply limit only if no search keyword
+        if (!$keyword) {
+            $query->take($limit);
+        }
+
+        $users = $query->latest()->get();
+        return response()->json([
+            'data' => $users,
+            'message' => "Users successfully fetched"
+        ]);
+    }
+
     public function update(Request $request, User $user)
     {
         $request->validate([

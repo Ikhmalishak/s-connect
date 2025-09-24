@@ -4,6 +4,7 @@ import AdminAuthenticatedLayout from "@/Layouts/AdminAuthenticatedLayout.vue";
 import { Card } from "@/components/ui/card";
 import axios from "axios";
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
+import { Link } from "@inertiajs/vue3"; // Add this import
 import {
     Breadcrumb,
     BreadcrumbPage,
@@ -347,6 +348,31 @@ onUnmounted(() => {
                 <img src="/assets/ss1.png" class="h-12 w-12" alt="" />
                 <div>Visitor Management System</div>
             </div>
+            <div class="bg-white border rounded-md p-1 flex gap-1">
+                <Link
+                    href="/admin/visitor/dashboard"
+                    :class="[
+                        'px-3 py-1.5 text-sm rounded-md font-medium transition-all duration-200',
+                        $page.url.startsWith('/admin/visitor/dashboard')
+                            ? 'bg-blue-600 text-white shadow'
+                            : 'text-gray-600 hover:text-blue-600 hover:bg-white',
+                    ]"
+                >
+                    Visitor
+                </Link>
+                <Link
+                    href="/admin/visitor/report-dashboard"
+                    :class="[
+                        'px-3 py-1.5 text-sm rounded-md font-medium transition-all duration-200',
+                        $page.url.startsWith('/admin/visitor/report-dashboard')
+                            ? 'bg-blue-600 text-white shadow'
+                            : 'text-gray-600 hover:text-blue-600 hover:bg-white',
+                    ]"
+                >
+                    Reports
+                </Link>
+            </div>
+
             <div class="flex flex-row items-center gap-10">
                 <div class="flex items-center gap-2">
                     <label class="text-sm whitespace-nowrap"
@@ -413,7 +439,6 @@ onUnmounted(() => {
             :gate-passes="gatePassList"
             @close="isGatePassModalOpen = false"
         />
-
 
         <DetailsModal
             :show="showDetailsModal"

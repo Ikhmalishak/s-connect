@@ -24,7 +24,7 @@ const props = defineProps<{
     user: any;
 }>();
 
-const emit = defineEmits(["update:limit", "search", "openPasswordPolicyModal", "openCreateUserModal", "openEditUserModal", "openDeleteUserModal"]);
+const emit = defineEmits(["update:limit", "search", "openCreateUserModal", "openEditUserModal", "openDeleteUserModal"]);
 
 const searchQuery = ref("");
 
@@ -68,22 +68,6 @@ watch(searchQuery, (newVal) => {
                                 </TooltipTrigger>
                                 <TooltipContent>
                                     <p>Create User</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                    </div>
-                    <div>
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger>
-                                    <button
-                                        @click="emit('openPasswordPolicyModal')"
-                                    >
-                                        <FileLock class="w-9 h-9" />
-                                    </button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p>Password Policy</p>
                                 </TooltipContent>
                             </Tooltip>
                         </TooltipProvider>

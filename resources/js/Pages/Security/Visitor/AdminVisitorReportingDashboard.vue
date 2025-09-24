@@ -10,15 +10,9 @@ import {
     BreadcrumbItem,
     BreadcrumbLink,
 } from "@/components/ui/breadcrumb";
-import {
-    Carousel,
-    CarouselContent,
-    CarouselItem,
-    CarouselNext,
-    CarouselPrevious,
-} from "@/components/ui/carousel";
 import { DonutChart } from "@/components/ui/chart-donut";
 import { BarChart } from "@/components/ui/chart-bar";
+import { RangeCalendar } from "@/components/ui/range-calendar";
 import type { DateValue } from "@internationalized/date";
 import {
     DateFormatter,
@@ -34,65 +28,45 @@ import {
 import {
     Select,
     SelectContent,
+    SelectGroup,
     SelectItem,
+    SelectLabel,
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import axios from "axios";
-
-const df = new DateFormatter("en-US", {
-    dateStyle: "long",
-});
+import type { DateRange } from "reka-ui";
+import type { Ref } from "vue";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { date } from "zod";
-
-const items = [
-    { value: 0, label: "Today" },
-    { value: 1, label: "Tomorrow" },
-    { value: 3, label: "In 3 days" },
-    { value: 7, label: "In a week" },
-];
+import { Link } from "@inertiajs/vue3";
 
 // Statistics
 const totalVisitors = ref(0);
 const totalDriver = ref(0);
 const totalContractor = ref(0);
+const totalNewVisitor = ref(0);
+const totalExisitingVisitor = ref(0);
 const total = ref(0);
-
-// Mock data for different sites
-const site1Data = ref([
-    { name: "Visitor", total: 45 },
-    { name: "Driver Outbound", total: 55 },
-    { name: "Contractor", total: 55 },
-    { name: "Driver Inbound", total: 55 },
-]);
-
-const site2Data = ref([
-    { name: "Visitor", total: 45 },
-    { name: "Driver Outbound", total: 55 },
-    { name: "Contractor", total: 55 },
-    { name: "Driver Inbound", total: 55 },
-]);
-
-const site3Data = ref([
-    { name: "Visitor", total: 45 },
-    { name: "Driver Outbound", total: 55 },
-    { name: "Contractor", total: 55 },
-    { name: "Driver Inbound", total: 55 },
-]);
-
-const site4Data = ref([
-    { name: "Visitor", total: 45 },
-    { name: "Driver Outbound", total: 55 },
-    { name: "Contractor", total: 55 },
-    { name: "Driver Inbound", total: 55 },
-]);
-
+const selectedSite = ref("all");
+const selectedSite2 = ref("all");
+const selectedYear = ref("2025");
+const purposeData = ref([]);
+const driverData = ref([]);
+const companyData = ref([]);
 const currentTime = ref(new Date());
-const value = ref<any>(today(getLocalTimeZone())); // quick fix
+const visitorByWeek = ref([]);
+const now = today(getLocalTimeZone());
 let intervalId;
+
+const df = new DateFormatter("en-US", {
+    dateStyle: "medium",
+});
+
+const value = ref({
+    start: now,
+    end: now,
+}) as Ref<DateRange>;
 
 const formattedDate = computed(() =>
     currentTime.value.toLocaleDateString("en-GB", {
@@ -112,75 +86,92 @@ function formatDateLocal(dateValue: DateValue) {
     return d.toLocaleDateString("en-CA"); // gives YYYY-MM-DD in local timezone
 }
 
-async function fetchStatisticAllSites() {
+async function fetchReport() {
     try {
-        const res = await axios.get("/admin/visitor/get-statistic-all-sites", {
+        const res = await axios.get("/admin/visitor/get-report", {
             params: {
-                date: value.value ? formatDateLocal(value.value) : null,
+                start_date: value.value?.start
+                    ? formatDateLocal(value.value.start)
+                    : null,
+                end_date: value.value?.end
+                    ? formatDateLocal(value.value.end)
+                    : null,
+                site: selectedSite.value,
             },
         });
-        console.log(res.data);
-        console.log("Success to fetch statistic all sites");
+
+        console.log("API Response:", res.data);
 
         totalVisitors.value = res.data.total_visitor;
         totalDriver.value = res.data.total_driver;
         totalContractor.value = res.data.total_contractor;
+        totalNewVisitor.value = res.data.new_visitor;
+        totalExisitingVisitor.value = res.data.existing_visitor;
         total.value = res.data.total_all;
+        let purpose = res.data.purpose;
+        let driver = res.data.driver;
+        let company = res.data.company;
+
+        purposeData.value = purpose.map((p) => ({
+            name: p.purpose,
+            total: p.total,
+        }));
+
+        driverData.value = driver.map((d) => ({
+            name: d.purpose,
+            total: d.total,
+        }));
+
+        companyData.value = company.map((c) => ({
+            name: c.visitor_company,
+            total: c.total,
+        }));
     } catch (e) {
-        console.log("Failed to fetch statistic all sites", e);
+        console.error("Failed to fetch statistic all sites", e);
     }
 }
 
-function mapVisitorType(type: string): string {
-    if (type.startsWith("inbound")) return "Driver Inbound";
-    if (type.startsWith("outbound")) return "Driver Outbound";
-    if (type === "visitor") return "Visitor";
-    if (type === "contractor") return "Contractor";
-    return type; // fallback
-}
-
-async function fetchStatisticBySites() {
+async function getVisitorByWeek() {
     try {
-        const res = await axios.get("/admin/visitor/get-statistic-by-sites", {
+        const res = await axios.get("/admin/visitor/get-report-by-week", {
             params: {
-                date: value.value ? formatDateLocal(value.value) : null,
+                year: selectedYear.value,
+                site: selectedSite2.value,
             },
         });
+        let visitor = res.data.data;
 
-        site1Data.value = res.data.site1.map((item: any) => ({
-            name: mapVisitorType(item.visitor_type),
-            total: item.total,
+        visitorByWeek.value = visitor.map((v) => ({
+            name: v.name,
+            contractor: v.contractor,
+            "driver-inbound": v["driver-inbound"],
+            "driver-outbound": v["driver-outbound"],
+            visitor: v.visitor,
         }));
-
-        site2Data.value = res.data.site2.map((item: any) => ({
-            name: mapVisitorType(item.visitor_type),
-            total: item.total,
-        }));
-
-        site3Data.value = res.data.site3.map((item: any) => ({
-            name: mapVisitorType(item.visitor_type),
-            total: item.total,
-        }));
-
-        site4Data.value = res.data.site4.map((item: any) => ({
-            name: mapVisitorType(item.visitor_type),
-            total: item.total,
-        }));
-
-        console.log("Mapped site2Data:", site2Data.value);
     } catch (e) {
-        console.error("Failed to fetch statistic by sites", e);
+        console.error("Failed to fetch visitor by week:", e);
     }
 }
 
 watch(value, () => {
-    fetchStatisticAllSites();
-    fetchStatisticBySites();
+    fetchReport();
+});
+
+watch(selectedSite, () => {
+    fetchReport();
+});
+
+watch(selectedYear, () => {
+    getVisitorByWeek();
+});
+
+watch(selectedSite2, () => {
+    getVisitorByWeek();
 });
 
 onMounted(() => {
-    fetchStatisticAllSites();
-    fetchStatisticBySites();
+    fetchReport();
+    getVisitorByWeek();
 
     intervalId = setInterval(() => {
         currentTime.value = new Date();
@@ -232,19 +223,23 @@ onUnmounted(() => {
     }
 });
 
-function getRandom(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-}
+const firstDonutData = computed(() => [
+    {
+        name: "New Visitor",
+        total: totalNewVisitor.value,
+    },
+    {
+        name: "Existing Visitor",
+        total: totalExisitingVisitor.value,
+    },
+]);
 
-const analyticsData = ref(
-    Array.from({ length: 52 }, (_, i) => ({
-        name: `Week ${i + 1}`,
-        site1: getRandom(20, 70),
-        site2: getRandom(10, 50),
-        site3: getRandom(10, 40),
-        site4: getRandom(5, 30),
-    }))
-);
+const categoryColors = [
+    { key: "visitor", color: "#2563EB" }, // blue-600
+    { key: "driver-inbound", color: "#3B82F6" }, // blue-500
+    { key: "driver-outbound", color: "#60A5FA" }, // blue-400
+    { key: "contractor", color: "#93C5FD" }, // blue-300
+];
 </script>
 
 <template>
@@ -259,7 +254,7 @@ const analyticsData = ref(
                     </BreadcrumbItem>
                     <BreadcrumbSeparator />
                     <BreadcrumbItem>
-                        <BreadcrumbPage>AdminDashboard</BreadcrumbPage>
+                        <BreadcrumbPage>Admin Reporting Dashboard</BreadcrumbPage>
                     </BreadcrumbItem>
                 </BreadcrumbList>
             </Breadcrumb>
@@ -273,6 +268,30 @@ const analyticsData = ref(
                 <img src="/assets/ss1.png" class="h-12 w-12" alt="" />
                 <div>Visitor Management System</div>
             </div>
+            <div class="bg-white border rounded-md p-1 flex gap-1">
+                <Link
+                    href="/admin/visitor/dashboard"
+                    :class="[
+                        'px-3 py-1.5 text-sm rounded-md font-medium transition-all duration-200',
+                        $page.url.startsWith('/admin/visitor/dashboard')
+                            ? 'bg-blue-600 text-white shadow'
+                            : 'text-gray-600 hover:text-blue-600 hover:bg-white',
+                    ]"
+                >
+                    Visitor
+                </Link>
+                <Link
+                    href="/admin/visitor/report-dashboard"
+                    :class="[
+                        'px-3 py-1.5 text-sm rounded-md font-medium transition-all duration-200',
+                        $page.url.startsWith('/admin/visitor/report-dashboard')
+                            ? 'bg-blue-600 text-white shadow'
+                            : 'text-gray-600 hover:text-blue-600 hover:bg-white',
+                    ]"
+                >
+                    Reports
+                </Link>
+            </div>
             <div
                 class="flex flex-row space-x-4 text-base font-normal text-gray-600 text-right"
             >
@@ -280,6 +299,7 @@ const analyticsData = ref(
                 <div>{{ formattedTime }}</div>
             </div>
         </Card>
+
         <!-- Statistics Overview - Fixed Width/Height -->
         <div class="mt-4">
             <Card class="p-4">
@@ -289,7 +309,35 @@ const analyticsData = ref(
                             >Statistics Overview</label
                         >
                     </div>
-                    <div>
+                    <div class="flex flex-row items-center gap-4">
+                        <div>
+                            <Select v-model="selectedSite">
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select Site" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        <SelectLabel>Site</SelectLabel>
+                                        <SelectItem value="all">
+                                            All
+                                        </SelectItem>
+                                        <SelectItem value="s1">
+                                            Site 1
+                                        </SelectItem>
+                                        <SelectItem value="s2">
+                                            Site 2
+                                        </SelectItem>
+                                        <SelectItem value="s3">
+                                            Site 3
+                                        </SelectItem>
+                                        <SelectItem value="s4">
+                                            Site 4
+                                        </SelectItem>
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
                         <div>
                             <Popover>
                                 <PopoverTrigger as-child>
@@ -304,44 +352,115 @@ const analyticsData = ref(
                                         "
                                     >
                                         <CalendarIcon class="mr-2 h-4 w-4" />
-                                        {{
-                                            value
-                                                ? df.format(
-                                                      value.toDate(
-                                                          getLocalTimeZone()
-                                                      )
-                                                  )
-                                                : "Pick a date"
-                                        }}
+                                        <template v-if="value.start">
+                                            <template v-if="value.end">
+                                                {{
+                                                    df.format(
+                                                        value.start.toDate(
+                                                            getLocalTimeZone()
+                                                        )
+                                                    )
+                                                }}
+                                                -
+                                                {{
+                                                    df.format(
+                                                        value.end.toDate(
+                                                            getLocalTimeZone()
+                                                        )
+                                                    )
+                                                }}
+                                            </template>
+                                            <template v-else>
+                                                {{
+                                                    df.format(
+                                                        value.start.toDate(
+                                                            getLocalTimeZone()
+                                                        )
+                                                    )
+                                                }}
+                                            </template>
+                                        </template>
+                                        <template v-else>
+                                            Pick a date
+                                        </template>
                                     </Button>
                                 </PopoverTrigger>
                                 <PopoverContent
-                                    class="flex w-auto flex-col gap-y-2 p-2"
+                                    class="w-auto p-2 flex flex-col gap-2"
                                 >
-                                    <Select
-                                        @update:model-value="
-                                            (v) => {
-                                                if (!v) return;
-                                                value = today(
-                                                    getLocalTimeZone()
-                                                ).add({ days: Number(v) });
-                                            }
+                                    <!-- Quick filters -->
+                                    <div class="flex gap-2">
+                                        <Button
+                                            size="sm"
+                                            variant="secondary"
+                                            @click="
+                                                () => {
+                                                    const now = today(
+                                                        getLocalTimeZone()
+                                                    );
+                                                    value.start = now.set({
+                                                        day: 1,
+                                                    });
+                                                    value.end = now.set({
+                                                        day: now
+                                                            .toDate(
+                                                                getLocalTimeZone()
+                                                            )
+                                                            .getDate(),
+                                                    });
+                                                }
+                                            "
+                                        >
+                                            This Month
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            variant="secondary"
+                                            @click="
+                                                () => {
+                                                    const now = today(
+                                                        getLocalTimeZone()
+                                                    );
+                                                    const firstDay = now
+                                                        .subtract({ months: 1 })
+                                                        .set({ day: 1 });
+                                                    const lastDay = now.set({
+                                                        day: 0,
+                                                    }); // last day of previous month
+                                                    value.start = firstDay;
+                                                    value.end = lastDay;
+                                                }
+                                            "
+                                        >
+                                            Last Month
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            variant="secondary"
+                                            @click="
+                                                () => {
+                                                    const now = today(
+                                                        getLocalTimeZone()
+                                                    );
+                                                    value.start = now;
+                                                    value.end = now;
+                                                }
+                                            "
+                                        >
+                                            Today
+                                        </Button>
+                                    </div>
+
+                                    <!-- Calendar for custom range -->
+                                    <RangeCalendar
+                                        v-model="value"
+                                        initial-focus
+                                        :number-of-months="1"
+                                        @update:start-value="
+                                            (startDate) =>
+                                                (value.start = startDate)
                                         "
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem
-                                                v-for="item in items"
-                                                :key="item.value"
-                                                :value="item.value.toString()"
-                                            >
-                                                {{ item.label }}
-                                            </SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <Calendar v-model="value" />
+                                    />
                                 </PopoverContent>
                             </Popover>
                         </div>
@@ -352,131 +471,151 @@ const analyticsData = ref(
                     class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
                 >
                     <Card
-                        class="p-4 text-center h-24 flex flex-col justify-center bg-blue-50 border-blue-200"
+                        class="p-6 text-center h-32 flex flex-col justify-center bg-gradient-to-br from-blue-500 to-blue-600 border-0 shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 cursor-pointer group"
                     >
-                        <div class="text-2xl font-bold text-blue-600">
+                        <div
+                            class="text-3xl font-bold text-white mb-1 group-hover:scale-110 transition-transform"
+                        >
                             {{ totalVisitors }}
                         </div>
-                        <div class="text-sm text-gray-600">Total Visitor</div>
+                        <div class="text-sm text-blue-100 font-medium">
+                            Total Visitors
+                        </div>
                     </Card>
                     <Card
-                        class="p-4 text-center h-24 flex flex-col justify-center bg-green-50 border-green-200"
+                        class="p-6 text-center h-32 flex flex-col justify-center bg-gradient-to-br from-emerald-500 to-green-600 border-0 shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 cursor-pointer group"
                     >
-                        <div class="text-2xl font-bold text-green-600">
+                        <div
+                            class="text-3xl font-bold text-white mb-1 group-hover:scale-110 transition-transform"
+                        >
                             {{ totalDriver }}
                         </div>
-                        <div class="text-sm text-gray-600">Total Driver</div>
+                        <div class="text-sm text-emerald-100 font-medium">
+                            Total Drivers
+                        </div>
                     </Card>
                     <Card
-                        class="p-4 text-center h-24 flex flex-col justify-center bg-orange-50 border-orange-200"
+                        class="p-6 text-center h-32 flex flex-col justify-center bg-gradient-to-br from-amber-500 to-orange-600 border-0 shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 cursor-pointer group"
                     >
-                        <div class="text-2xl font-bold text-orange-600">
+                        <div
+                            class="text-3xl font-bold text-white mb-1 group-hover:scale-110 transition-transform"
+                        >
                             {{ totalContractor }}
                         </div>
-                        <div class="text-sm text-gray-600">
-                            Total Contractor
+                        <div class="text-sm text-amber-100 font-medium">
+                            Total Contractors
                         </div>
                     </Card>
                     <Card
-                        class="p-4 text-center h-24 flex flex-col justify-center bg-purple-50 border-purple-200"
+                        class="p-6 text-center h-32 flex flex-col justify-center bg-gradient-to-br from-purple-500 to-indigo-600 border-0 shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 cursor-pointer group"
                     >
-                        <div class="text-2xl font-bold text-purple-600">
+                        <div
+                            class="text-3xl font-bold text-white mb-1 group-hover:scale-110 transition-transform"
+                        >
                             {{ total }}
                         </div>
-                        <div class="text-sm text-gray-600">Total</div>
+                        <div class="text-sm text-purple-100 font-medium">
+                            Total Overall
+                        </div>
                     </Card>
                 </div>
             </Card>
         </div>
 
-        <!-- Site Monitoring Cards -->
+        <!-- Statistics Overview - Fixed Width/Height -->
         <div class="mt-4">
             <Card class="p-4">
-                <div class="text-center mb-4">
-                    <label class="text-lg font-semibold"
-                        >Statistics Overview</label
-                    >
+                <div class="items-center mb-4">
+                    <div class="text-center mb-4">
+                        <label class="text-lg font-semibold"
+                            >Statistics Overview</label
+                        >
+                    </div>
                 </div>
+
                 <div
-                    class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 mt-4"
+                    class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
                 >
-                    <Card class="p-4 text-center">
-                        <div class="text-lg font-semibold mb-2">Site 1</div>
+                    <Card
+                        class="p-6 text-center flex flex-col justify-center bg-gradient-to-br from-slate-50 to-blue-50 border border-blue-200 shadow-md hover:shadow-lg transition-all duration-300"
+                    >
                         <DonutChart
-                            v-if="site1Data.length > 0"
                             index="name"
                             :category="'total'"
-                            :data="site1Data"
+                            :data="firstDonutData"
                             :type="'pie'"
                             :colors="[
-                                'hsl(120, 50%, 75%)',
-                                'hsl(120, 50%, 55%)',
-                                'hsl(120, 50%, 35%)',
-                                'hsl(120, 50%, 20%)',
+                                '#111827', // gray-900
+                                '#374151', // gray-700
+                                '#6B7280', // gray-500
+                                '#9CA3AF', // gray-400
+                                '#3B82F6', // blue-500 accent
                             ]"
                         />
-                        <div v-else class="text-center text-gray-500 p-4">
-                            No data available
+                        <div class="mt-3 text-sm font-medium text-gray-700">
+                            New and Existing Visitor
+                        </div>
+                    </Card>
+                    <Card
+                        class="p-6 text-center flex flex-col justify-center bg-gradient-to-br from-slate-50 to-green-50 border border-green-200 shadow-md hover:shadow-lg transition-all duration-300"
+                    >
+                        <DonutChart
+                            index="name"
+                            :category="'total'"
+                            :data="purposeData"
+                            :type="'pie'"
+                            :colors="[
+                                '#EF4444', // red-500
+                                '#3B82F6', // blue-500
+                                '#10B981', // green-500
+                                '#F59E0B', // amber-500
+                                '#8B5CF6', // violet-500
+                            ]"
+                        />
+                        <div class="mt-3 text-sm font-medium text-gray-700">
+                            Visit By Purpose
                         </div>
                     </Card>
 
-                    <Card class="p-4 text-center">
-                        <div class="text-lg font-semibold mb-2">Site 2</div>
+                    <Card
+                        class="p-6 text-center flex flex-col justify-center bg-gradient-to-br from-slate-50 to-orange-50 border border-orange-200 shadow-md hover:shadow-lg transition-all duration-300"
+                    >
                         <DonutChart
-                            v-if="site2Data.length > 0"
                             index="name"
                             :category="'total'"
-                            :data="site2Data"
+                            :data="driverData"
                             :type="'pie'"
                             :colors="[
-                                'hsl(120, 50%, 75%)',
-                                'hsl(120, 50%, 55%)',
-                                'hsl(120, 50%, 35%)',
-                                'hsl(120, 50%, 20%)',
+                                '#F97316', // orange-500
+                                '#FB923C', // orange-400
+                                '#FACC15', // yellow-400
+                                '#FCD34D', // yellow-300
+                                '#FEF9C3', // yellow-100
                             ]"
                         />
-                        <div v-else class="text-center text-gray-500 p-4">
-                            No data available
+                        <div class="mt-3 text-sm font-medium text-gray-700">
+                            Driver Incoming/Outcoming
                         </div>
                     </Card>
-                    <Card class="p-4 text-center">
-                        <div class="text-lg font-semibold mb-2">Site 3</div>
+
+                    <Card
+                        class="p-6 text-center flex flex-col justify-center bg-gradient-to-br from-slate-50 to-purple-50 border border-purple-200 shadow-md hover:shadow-lg transition-all duration-300"
+                    >
                         <DonutChart
-                            v-if="site3Data.length > 0"
                             index="name"
                             :category="'total'"
-                            :data="site3Data"
+                            :data="companyData"
                             :type="'pie'"
                             :colors="[
-                                'hsl(120, 50%, 75%)',
-                                'hsl(120, 50%, 55%)',
-                                'hsl(120, 50%, 35%)',
-                                'hsl(120, 50%, 20%)',
+                                '#059669', // emerald-600
+                                '#10B981', // emerald-500
+                                '#14B8A6', // teal-500
+                                '#2DD4BF', // teal-400
+                                '#99F6E4', // teal-200
                             ]"
                         />
-
-                        <div v-else class="text-center text-gray-500 p-4">
-                            No data available
-                        </div>
-                    </Card>
-                    <Card class="p-4 text-center">
-                        <div class="text-lg font-semibold mb-2">Site 4</div>
-                        <DonutChart
-                            v-if="site4Data.length > 0"
-                            index="name"
-                            :category="'total'"
-                            :data="site4Data"
-                            :type="'pie'"
-                            :colors="[
-                                'hsl(120, 50%, 75%)',
-                                'hsl(120, 50%, 55%)',
-                                'hsl(120, 50%, 35%)',
-                                'hsl(120, 50%, 20%)',
-                            ]"
-                        />
-
-                        <div v-else class="text-center text-gray-500 p-4">
-                            No data available
+                        <div class="mt-3 text-sm font-medium text-gray-700">
+                            Highest Visitor Company
                         </div>
                     </Card>
                 </div>
@@ -486,79 +625,80 @@ const analyticsData = ref(
         <!-- Analytics Chart -->
         <div class="mt-4">
             <Card class="p-4">
-                <div class="text-lg font-semibold mb-4 text-center">
-                    Visitor Analytics - All Sites
+                <div class="flex flex-row justify-between">
+                    <div></div>
+                    <div class="text-lg font-semibold mb-4 text-center">
+                        Visitor Analytics - All Sites
+                    </div>
+                    <div class="flex flex-row gap-4">
+                        <div>
+                            <Select v-model="selectedSite2">
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select Site" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        <SelectLabel>Site</SelectLabel>
+                                        <SelectItem value="all">
+                                            All
+                                        </SelectItem>
+                                        <SelectItem value="s1">
+                                            Site 1
+                                        </SelectItem>
+                                        <SelectItem value="s2">
+                                            Site 2
+                                        </SelectItem>
+                                        <SelectItem value="s3">
+                                            Site 3
+                                        </SelectItem>
+                                        <SelectItem value="s4">
+                                            Site 4
+                                        </SelectItem>
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div>
+                            <Select v-model="selectedYear">
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select Year" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        <SelectLabel>Site</SelectLabel>
+                                        <SelectItem value="2025">
+                                            2025
+                                        </SelectItem>
+                                        <SelectItem value="2024">
+                                            2024
+                                        </SelectItem>
+                                        <SelectItem value="2023">
+                                            2023
+                                        </SelectItem>
+                                        <SelectItem value="2022">
+                                            2022
+                                        </SelectItem>
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
                 </div>
+
                 <BarChart
-                    :data="analyticsData"
+                    :data="visitorByWeek"
                     index="name"
-                    :categories="['site1', 'site2', 'site3', 'site4']"
+                    :categories="categoryColors.map((c) => c.key)"
+                    :colors="categoryColors.map((c) => c.color)"
                     :y-formatter="
                         (tick, i) => {
                             return typeof tick === 'number'
-                                ? `${new Intl.NumberFormat('us')
-                                      .format(tick)
-                                      .toString()}`
+                                ? `${new Intl.NumberFormat('us').format(tick)}`
                                 : '';
                         }
                     "
                     :type="'stacked'"
                 />
-            </Card>
-        </div>
-
-        <!-- Site Monitoring Cards -->
-        <div class="mt-4">
-            <Card class="p-4">
-                <div class="text-center mb-4">
-                    <label class="text-lg font-semibold"
-                        >Statistics Overview</label
-                    >
-                </div>
-                <div
-                    class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-4 mb-6 mt-4"
-                >
-                    <Carousel class="relative w-full max-w-xs mx-auto">
-                        <CarouselContent>
-                            <CarouselItem v-for="(_, index) in 5" :key="index">
-                                <div class="p-1">
-                                    <Card>
-                                        <CardContent
-                                            class="flex aspect-square items-center justify-center p-6"
-                                        >
-                                            <span
-                                                class="text-4xl font-semibold"
-                                                >{{ index + 1 }}</span
-                                            >
-                                        </CardContent>
-                                    </Card>
-                                </div>
-                            </CarouselItem>
-                        </CarouselContent>
-                        <CarouselPrevious />
-                        <CarouselNext />
-                    </Carousel>
-                    <Carousel class="relative w-full max-w-xs mx-auto">
-                        <CarouselContent>
-                            <CarouselItem v-for="(_, index) in 5" :key="index">
-                                <div class="p-1">
-                                    <Card>
-                                        <CardContent
-                                            class="flex aspect-square items-center justify-center p-6"
-                                        >
-                                            <span
-                                                class="text-4xl font-semibold"
-                                                >{{ index + 1 }}</span
-                                            >
-                                        </CardContent>
-                                    </Card>
-                                </div>
-                            </CarouselItem>
-                        </CarouselContent>
-                        <CarouselPrevious />
-                        <CarouselNext />
-                    </Carousel>
-                </div>
             </Card>
         </div>
     </AdminAuthenticatedLayout>

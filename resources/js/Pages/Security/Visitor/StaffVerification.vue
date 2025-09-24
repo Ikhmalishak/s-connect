@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import AdminAuthenticatedLayout from "@/Layouts/AdminAuthenticatedLayout.vue";
+import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import {
     Breadcrumb,
     BreadcrumbPage,
@@ -236,7 +236,7 @@ watch(searchQuery, (newVal) => {
 </script>
 
 <template>
-    <AdminAuthenticatedLayout>
+    <AuthenticatedLayout>
         <!-- Breadcrumb -->
         <template #breadcrumb>
             <Breadcrumb>
@@ -483,5 +483,5 @@ watch(searchQuery, (newVal) => {
                 </DialogFooter>
             </DialogContent>
         </Dialog>
-    </AdminAuthenticatedLayout>
+    </AuthenticatedLayout>
 </template>

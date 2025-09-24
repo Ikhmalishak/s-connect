@@ -12,7 +12,7 @@ import {
     BreadcrumbLink,
 } from "@/components/ui/breadcrumb";
 import UserTable from "@/Components/ManageUser/UserTable.vue";
-import PasswordPolicyModal from "@/Components/ManageUser/PasswordPolicyModal.vue";
+// import PasswordPolicyModal from "@/Components/ManageUser/PasswordPolicyModal.vue";
 import CreateUserModal from "@/Components/ManageUser/CreateUserModal.vue";
 import EditUserModal from "@/Components/ManageUser/EditUserModal .vue";
 import DeleteUserModal from "@/Components/ManageUser/DeleteUserModal.vue";
@@ -46,21 +46,20 @@ function openEditUserModal(user) {
     showEditUserModal.value = true;
 }
 
-async function fetchUser() {
+async function fetchUser(
+    limit = limitTable.value,
+    keyword = searchQuery.value
+) {
     try {
-        const res = await axios.get("/admin/visitor/user-list");
+        const res = await axios.get("/admin/visitor/user-list", {
+            params: {
+                limit,
+                keyword,
+            },
+        });
         userList.value = res.data.data; // <-- fixed
     } catch (error) {
         console.error("Failed to fetch users:", error);
-    }
-}
-
-async function deleteUser(userId: number) {
-    try {
-        await axios.delete(`/delete-user/${userId}`);
-        await fetchUser(); // refresh table after delete
-    } catch (error) {
-        console.error("Failed to delete user:", error);
     }
 }
 
@@ -73,7 +72,9 @@ onMounted(() => {
 });
 
 function openDeleteUserModal(user) {
+    console.log("test enter function", user);
     selectedUser.value = user;
+    console.log("finish assigneded", selectedUser);
     showDeleteUserModal.value = true;
 }
 
@@ -86,6 +87,16 @@ watch(selectedUser, (newUser) => {
     if (newUser) {
         console.log("Selected user changed:", newUser.id);
     }
+});
+
+watch(limitTable, (newVal) => {
+    console.log("Limit changed to:", newVal);
+    fetchUser();
+});
+
+watch(searchQuery, (newVal) => {
+    console.log("Search query changed to:", newVal);
+    fetchUser();
 });
 </script>
 
@@ -101,7 +112,7 @@ watch(selectedUser, (newUser) => {
                     </BreadcrumbItem>
                     <BreadcrumbSeparator />
                     <BreadcrumbItem>
-                        <BreadcrumbPage>Dashboard</BreadcrumbPage>
+                        <BreadcrumbPage>Manage User</BreadcrumbPage>
                     </BreadcrumbItem>
                 </BreadcrumbList>
             </Breadcrumb>
@@ -124,21 +135,80 @@ watch(selectedUser, (newUser) => {
             </div>
         </Card>
 
+
+        <!-- Quick Stats Dashboard -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            <Card class="p-6 bg-gradient-to-br from-blue-50 to-blue-100 border-l-4 border-blue-500 hover:shadow-lg transition-shadow">
+                <div class="flex items-center">
+                    <div class="p-3 bg-blue-500 rounded-full">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-blue-600">Total Users</p>
+                        <p class="text-2xl font-bold text-blue-900">8</p>
+                    </div>
+                </div>
+            </Card>
+
+            <Card class="p-6 bg-gradient-to-br from-green-50 to-green-100 border-l-4 border-green-500 hover:shadow-lg transition-shadow">
+                <div class="flex items-center">
+                    <div class="p-3 bg-green-500 rounded-full">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-green-600">Active Users</p>
+                        <p class="text-2xl font-bold text-green-900">8</p>
+                    </div>
+                </div>
+            </Card>
+
+            <Card class="p-6 bg-gradient-to-br from-purple-50 to-purple-100 border-l-4 border-purple-500 hover:shadow-lg transition-shadow">
+                <div class="flex items-center">
+                    <div class="p-3 bg-purple-500 rounded-full">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-purple-600">Admin Users</p>
+                        <p class="text-2xl font-bold text-purple-900">8</p>
+                    </div>
+                </div>
+            </Card>
+
+            <Card class="p-6 bg-gradient-to-br from-orange-50 to-orange-100 border-l-4 border-orange-500 hover:shadow-lg transition-shadow">
+                <div class="flex items-center">
+                    <div class="p-3 bg-orange-500 rounded-full">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-orange-600">Recent Users</p>
+                        <p class="text-2xl font-bold text-orange-900">8</p>
+                    </div>
+                </div>
+            </Card>
+        </div>
+
         <UserTable
             :user="userList"
             :limit="limitTable"
             @update:limit="limitTable = $event"
             @search="searchQuery = $event"
-            @open-password-policy-modal="showPasswordPolicyModal = true"
             @open-create-user-modal="showCreateUserModal = true"
             @open-edit-user-modal="openEditUserModal"
             @open-delete-user-modal="openDeleteUserModal"
         />
 
-        <PasswordPolicyModal
+        <!-- <PasswordPolicyModal
             :show="showPasswordPolicyModal"
             @close="showPasswordPolicyModal = false"
-        />
+        /> -->
 
         <CreateUserModal
             :show="showCreateUserModal"
@@ -155,7 +225,7 @@ watch(selectedUser, (newUser) => {
 
         <DeleteUserModal
             :show="showDeleteUserModal"
-            :user-id="selectedUser?.id"
+            :user-id="selectedUser"
             v-if="selectedUser"
             @deleted="fetchUser"
             @close="closeDeleteUserModal"

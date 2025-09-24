@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\GatePassController;
 use App\Http\Controllers\PasswordPolicyController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VisitorController;
 use App\Http\Controllers\ProfileController;
@@ -31,7 +32,11 @@ Route::get('/', function () {
 })->name('login');
 
 // Admin-only routes
-Route::middleware(['auth','password.age', 'role:admin'])->group(function () {
+Route::middleware(['auth', 'password.age', 'role:admin'])->group(function () {
+    Route::get('/admin/password-policy', function () {
+        return Inertia::render('Security/Visitor/PasswordPolicy');
+    })->name('admin.password.policy');
+
     Route::get('/admin/visitor/dashboard', [VisitorController::class, 'getAdminVisitorDashboard'])
         ->name('admin.visitordashboard');
 
@@ -39,16 +44,16 @@ Route::middleware(['auth','password.age', 'role:admin'])->group(function () {
     Route::get('/admin/visitor/report-dashboard', [VisitorController::class, 'getAdminVisitorReportingDashboard']);
 
     //api for fetch all user
-    Route::get('/admin/visitor/user-list',[UserController::class, 'getAllUser']);
+    Route::get('/admin/visitor/user-list', [UserController::class, 'getUserTableData']);
 
     //api for update user
     Route::put('/update-user/{user}', [UserController::class, 'update']);
-    
+
     //api for delete user
     Route::delete('/delete-user/{user}', [UserController::class, 'destroy']);
 
     //api for admin manage user page
-    Route::get('/admin/visitor/manage-user',[UserController::class, 'getManageUserPage']);
+    Route::get('/admin/visitor/manage-user', [UserController::class, 'getManageUserPage']);
 
     //api to fetch admin table data (table data can load every data inside table)
     Route::get('/admin/visitor/table-data', [VisitorController::class, 'getAdminVisitorTableData']);
@@ -57,8 +62,8 @@ Route::middleware(['auth','password.age', 'role:admin'])->group(function () {
     Route::post('/admin/visitor/generate-report', [VisitorController::class, 'generateReport'])->name("admin.generateReport");
 
     //api for admin reporting
-    Route::get('/admin/visitor/get-statistic-all-sites', [VisitorController::class, 'getStatisticAllSites']);
-    Route::get('/admin/visitor/get-statistic-by-sites', [VisitorController::class, 'getStatisticBySites']);
+    Route::get('/admin/visitor/get-report', [ReportController::class, 'getReport']);
+    Route::get('admin/visitor/get-report-by-week', [ReportController::class, 'getVisitorByWeek']);
 
     //route to reprint sticker if sticker missing
     Route::get('/reprint/{ack_number}', [VisitorStaffAcknowledgementController::class, 'reprintVisitorSticker']);
@@ -69,14 +74,14 @@ Route::middleware(['auth','password.age', 'role:admin'])->group(function () {
 });
 
 // Guard-only routes
-Route::middleware(['auth','password.age', 'role:guard'])->group(function () {
+Route::middleware(['auth', 'password.age', 'role:guard'])->group(function () {
     //route to get visitor dashboard
     Route::get('/visitor/dashboard', [VisitorController::class, 'getVisitorDashboard'])
         ->name('security.visitordashboard');
 });
 
 // Receptionist-only routes
-Route::middleware(['auth','password.age','role:receptionist'])->group(function () {
+Route::middleware(['auth', 'password.age', 'role:receptionist'])->group(function () {
     Route::get('/admin/visitor/staff-verification', [VisitorController::class, 'getStaffVerification'])
         ->name('receptionist.visitordashboard');
 });

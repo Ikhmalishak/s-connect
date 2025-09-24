@@ -39,49 +39,21 @@ const data = {
             items: [
                 {
                     title: "Dashboard",
-                    url: "/dashboard",
+                    url: "/admin/visitor/dashboard",
                 },
                 {
-                    title: "Project Structure",
-                    url: "/login",
-                },
-            ],
-        },
-        {
-            title: "MIS",
-            url: "#",
-            items: [
-                {
-                    title: "IT Request Form",
-                    url: "/table",
-                },
-                {
-                    title: "IT Change Request Form",
-                    url: "/table",
+                    title: "Manage User",
+                    url: "/admin/visitor/manage-user",
                 },
             ],
         },
         {
-            title: "Engineering",
+            title: "Setting",
             url: "#",
             items: [
                 {
-                    title: "IT Request Form",
-                    url: "/table",
-                },
-                {
-                    title: "IT Change Request Form",
-                    url: "/table",
-                },
-            ],
-        },
-        {
-            title: "Security",
-            url: "#",
-            items: [
-                {
-                    title: "Visitor Form",
-                    url: "/visitor",
+                    title: "Password Configuration",
+                    url: "/admin/password-policy",
                 },
             ],
         },

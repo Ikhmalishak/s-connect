@@ -95,7 +95,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                         <!-- Header -->
                         <div class="flex justify-between items-center mb-4">
                             <h2 class="text-xl font-bold text-blue-700">
-                                Create User
+                                Edit User
                             </h2>
                             <button
                                 @click="emit('close')"
