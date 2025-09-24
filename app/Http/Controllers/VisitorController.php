@@ -508,14 +508,14 @@ class VisitorController extends Controller
 
         // Check-out (with restriction: staff + guard must acknowledge first)
         if (is_null($visitor->time_out)) {
-            //$ack = $visitor->acknowledgements->first();
+            $ack = $visitor->acknowledgements->first();
 
-            // if (!$ack || is_null($ack->acknowledged_at) || is_null($ack->acknowledged_at_security)) {
-            //     return response()->json([
-            //         'status' => 'error',
-            //         'message' => 'Visitor cannot check out until both staff and guard acknowledgements are completed.'
-            //     ], 400);
-            // }
+            if (!$ack || is_null($ack->acknowledged_at) || is_null($ack->acknowledged_at_security)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Visitor cannot check out until both staff and guard acknowledgements are completed.'
+                ], 400);
+            }
 
             $visitor->time_out = now();
             $visitor->duration = Carbon::parse($visitor->time_in)->diffInMinutes(now());
@@ -710,13 +710,13 @@ class VisitorController extends Controller
         $mpdf->WriteHTML($html);
         $mpdf->Output($pdfPath, 'F');
 
-        // $printerName = "Brother_QL_820NWB";
-        // $cmd = "lp -d {$printerName} -o PageSize=Custom.62x30mm -o print-scaling=none -o CutMedia=Auto " . escapeshellarg($pdfPath);
-        // exec($cmd, $output, $returnVar);
+        $printerName = "Brother_QL_820NWB";
+        $cmd = "lp -d {$printerName} -o PageSize=Custom.62x30mm -o print-scaling=none -o CutMedia=Auto " . escapeshellarg($pdfPath);
+        exec($cmd, $output, $returnVar);
 
-        // if ($returnVar !== 0) {
-        //     return response()->json(['status' => 'error', 'output' => $output], 500);
-        // }
+        if ($returnVar !== 0) {
+            return response()->json(['status' => 'error', 'output' => $output], 500);
+        }
 
         return response()->json(['status' => 'success']);
     }
