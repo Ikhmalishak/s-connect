@@ -270,12 +270,6 @@ function usePreset(preset: string) {
             <div class="bg-gray-50 p-4 rounded-lg">
               <h3 class="text-sm font-medium text-gray-700 mb-3">Quick Presets</h3>
               <div class="flex gap-3">
-                <button @click="usePreset('basic')" class="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-sm">
-                  Basic (6+ chars, letters)
-                </button>
-                <button @click="usePreset('standard')" class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm">
-                  Standard (8+ chars, mixed case, numbers)
-                </button>
                 <button @click="usePreset('strong')" class="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors text-sm">
                   Strong (12+ chars, all requirements)
                 </button>
@@ -290,7 +284,7 @@ function usePreset(preset: string) {
               <div class="flex items-center gap-4">
                 <input
                   type="range"
-                  min="6"
+                  min="12"
                   max="32"
                   v-model="policy.min_length"
                   class="flex-1"
@@ -300,7 +294,7 @@ function usePreset(preset: string) {
                 </div>
               </div>
               <div class="text-xs text-gray-500 mt-2">
-                Range: 6-32 characters
+                Range: 12-32 characters
               </div>
             </div>
 

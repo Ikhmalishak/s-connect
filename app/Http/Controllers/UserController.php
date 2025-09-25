@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Hash;
+use Carbon\Carbon;
 
 class UserController extends Controller
 {
@@ -14,12 +16,18 @@ class UserController extends Controller
         return Inertia::render('Security/Visitor/AdminManageUser');
     }
 
-    public function getAllUser()
+    public function getUserStatsCard()
     {
-        $users = User::all();
+        $total_user = User::count();
+
+        $total_admin = User::where('role', "admin")->count();
+
+        $total_recent_users = User::where('created_at', '>=', Carbon::now()->subWeeks(2))->count();
 
         return response()->json([
-            'data' => $users,
+            'total_user' => $total_user,
+            'total_admin' => $total_admin,
+            'total_recent_users' => $total_recent_users,
             'message' => "Users successfully fetched"
         ]);
     }
@@ -65,6 +73,17 @@ class UserController extends Controller
         $user->update($request->all());
 
         return response()->json(['message' => 'User updated successfully']);
+    }
+
+    public function resetPassword(User $user)
+    {
+        $user->update([
+            'password' => Hash::make('12345678'),
+            'is_first_time_login' => 1,
+            'password_changed_at' => now()
+        ]);
+
+        return response()->json(['message' => 'User password successfully reset']);
     }
 
     public function destroy(User $user)

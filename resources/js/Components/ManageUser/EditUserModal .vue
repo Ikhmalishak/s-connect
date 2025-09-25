@@ -25,14 +25,14 @@ import { Input } from "@/components/ui/input";
 const props = defineProps<{ show: boolean; user: any }>();
 
 const formSchema = toTypedSchema(
-    z
-        .object({
-            name: z.string().min(2).max(50),
-            email: z.string().toLowerCase().email(),
-            site: z.enum(["Site 1", "Site 2", "Site 3", "Site 4"]),
-            role: z.enum(["admin", "guard", "receptionist"]),
-        })
+    z.object({
+        name: z.string().min(2).max(50),
+        email: z.string().toLowerCase().email(),
+        site: z.enum(["Site 1", "Site 2", "Site 3", "Site 4"]),
+        role: z.enum(["admin", "guard", "receptionist"]),
+    })
 );
+
 const form = useForm({
     validationSchema: formSchema,
     initialValues: {
@@ -62,22 +62,41 @@ watch(
 
 const emit = defineEmits(["close", "saved"]);
 const errorMessage = ref("");
+const resetPasswordMessage = ref("");
+const isSubmitting = ref(false);
+const isResetting = ref(false);
 
 const onSubmit = form.handleSubmit(async (values) => {
     try {
+        isSubmitting.value = true;
         const res = await axios.put(`/update-user/${props.user.id}`, values);
-        console.log("Form submitted!", res.data);
         emit("saved");
         emit("close");
     } catch (e: any) {
         errorMessage.value =
             e.response?.data?.message ||
-            "Failed to register user. Please try again.";
-
-        setTimeout(() => (errorMessage.value = ""), 1000);
-        console.error("Submit failed:", e);
+            "Failed to update user. Please try again.";
+        setTimeout(() => (errorMessage.value = ""), 2000);
+    } finally {
+        isSubmitting.value = false;
     }
 });
+
+const resetPassword = async () => {
+    try {
+        isResetting.value = true;
+        const res = await axios.post(`/reset-password/${props.user.id}`);
+        resetPasswordMessage.value = res.data.message;
+        setTimeout(() => (resetPasswordMessage.value = ""), 2000);
+    } catch (e: any) {
+        errorMessage.value =
+            e.response?.data?.message ||
+            "Failed to reset password. Please try again.";
+        setTimeout(() => (errorMessage.value = ""), 2000);
+    } finally {
+        isResetting.value = false;
+    }
+};
 </script>
 <template>
     <Teleport to="body">
@@ -106,7 +125,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                         </div>
                         <!-- Form -->
 
-                        <form class="w-2/3 space-y-6" @submit="onSubmit">
+                        <form class="w-4/5 space-y-6" @submit="onSubmit">
                             <FormField v-slot="{ componentField }" name="name">
                                 <FormItem>
                                     <FormLabel>Name</FormLabel>
@@ -198,11 +217,29 @@ const onSubmit = form.handleSubmit(async (values) => {
                             <p v-if="errorMessage" class="text-red-600 mt-2">
                                 {{ errorMessage }}
                             </p>
-                            <!-- Submit -->
-                            <div class="flex justify-end">
-                                <Button class="mt-4" type="submit"
-                                    >Edit</Button
+                            <p
+                                v-if="resetPasswordMessage"
+                                class="text-green-600 mt-2"
+                            >
+                                {{ resetPasswordMessage }}
+                            </p>
+                            <div class="flex justify-end gap-2">
+                                <Button
+                                    type="button"
+                                    variant="primary"
+                                    :disabled="isResetting"
+                                    @click="resetPassword"
+                                    class="border"
                                 >
+                                    {{
+                                        isResetting
+                                            ? "Resetting..."
+                                            : "Reset Password"
+                                    }}
+                                </Button>
+                                <Button type="submit" :disabled="isSubmitting">
+                                    {{ isSubmitting ? "Saving..." : "Edit" }}
+                                </Button>
                             </div>
                         </form>
                     </div>

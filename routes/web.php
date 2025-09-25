@@ -49,9 +49,15 @@ Route::middleware(['auth', 'password.age', 'role:admin'])->group(function () {
     //api for update user
     Route::put('/update-user/{user}', [UserController::class, 'update']);
 
+    //api for reset password user
+    Route::post('/reset-password/{user}', [UserController::class, 'resetPassword']);
+
     //api for delete user
     Route::delete('/delete-user/{user}', [UserController::class, 'destroy']);
 
+    //api for fetch use stats card
+    Route::get('/admin/user-stats-card', [UserController::class, 'getUserStatsCard']);
+    
     //api for admin manage user page
     Route::get('/admin/visitor/manage-user', [UserController::class, 'getManageUserPage']);
 
