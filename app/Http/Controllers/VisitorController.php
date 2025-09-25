@@ -714,13 +714,13 @@ class VisitorController extends Controller
         $mpdf->WriteHTML($html);
         $mpdf->Output($pdfPath, 'F');
 
-        // $printerName = "Brother_QL_820NWB";
-        // $cmd = "lp -d {$printerName} -o PageSize=Custom.62x30mm -o print-scaling=none -o CutMedia=Auto " . escapeshellarg($pdfPath);
-        // exec($cmd, $output, $returnVar);
+        $printerName = "Brother_QL_820NWB";
+        $cmd = "lp -d {$printerName} -o PageSize=Custom.62x30mm -o print-scaling=none -o CutMedia=Auto " . escapeshellarg($pdfPath);
+        exec($cmd, $output, $returnVar);
 
-        // if ($returnVar !== 0) {
-        //     return response()->json(['status' => 'error', 'output' => $output], 500);
-        // }
+        if ($returnVar !== 0) {
+            return response()->json(['status' => 'error', 'output' => $output], 500);
+        }
 
         return response()->json(['status' => 'success']);
     }
