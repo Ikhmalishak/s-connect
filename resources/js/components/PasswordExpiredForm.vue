@@ -4,12 +4,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useForm } from "@inertiajs/vue3";
-import { computed
-
- } from "vue";
+import { computed } from "vue";
 
 const props = defineProps({
     reason: {
+        type: String,
+        required: false,
+    },
+    message: {
         type: String,
         required: false,
     },
@@ -117,6 +119,13 @@ const reasonMessage = computed(() => {
                                 class="text-xs text-white bg-red-800/50 px-2 py-1 rounded"
                             >
                                 {{ form.errors.password_confirmation }}
+                            </div>
+
+                            <!-- 👇 Password policy instructions -->
+                            <div
+                                class="text-xs text-white mt-1"
+                            >
+                                {{ message }}
                             </div>
                         </div>
 

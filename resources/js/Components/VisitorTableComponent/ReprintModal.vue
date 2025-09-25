@@ -81,8 +81,9 @@ async function reprintSticker() {
                         <Input
                             placeholder="Enter verification number"
                             class="w-full mb-4"
+                            v-model="ackNumber"
                         />
-                        
+
                         <!-- Feedback message -->
                         <p
                             v-if="alertMessage"
@@ -101,7 +102,7 @@ async function reprintSticker() {
 
                         <!-- Actions -->
                         <div class="flex justify-end gap-2">
-                            <Button> Reprint </Button>
+                            <Button @click="reprintSticker"> Reprint </Button>
                         </div>
                     </div>
                 </Transition>
