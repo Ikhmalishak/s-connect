@@ -545,11 +545,8 @@ const categoryColors = [
                             :data="firstDonutData"
                             :type="'pie'"
                             :colors="[
-                                '#111827', // gray-900
-                                '#374151', // gray-700
-                                '#6B7280', // gray-500
-                                '#9CA3AF', // gray-400
-                                '#3B82F6', // blue-500 accent
+                                '#DC143C', // gray-900
+                                '#F7CAC9', // gray-700
                             ]"
                         />
                         <div class="mt-3 text-sm font-medium text-gray-700">
@@ -565,11 +562,11 @@ const categoryColors = [
                             :data="purposeData"
                             :type="'pie'"
                             :colors="[
-                                '#EF4444', // red-500
-                                '#3B82F6', // blue-500
-                                '#10B981', // green-500
-                                '#F59E0B', // amber-500
-                                '#8B5CF6', // violet-500
+                                '#134686', // red-500
+                                '#ED3F27', // blue-500
+                                '#FEB21A', // green-500
+                                '#FDF4E3', // amber-500
+                                '#E73879', // violet-500
                             ]"
                         />
                         <div class="mt-3 text-sm font-medium text-gray-700">
@@ -586,11 +583,8 @@ const categoryColors = [
                             :data="driverData"
                             :type="'pie'"
                             :colors="[
-                                '#F97316', // orange-500
-                                '#FB923C', // orange-400
-                                '#FACC15', // yellow-400
-                                '#FCD34D', // yellow-300
-                                '#FEF9C3', // yellow-100
+                                '#3B0270', // orange-500
+                                '#E9B3FB', // orange-400
                             ]"
                         />
                         <div class="mt-3 text-sm font-medium text-gray-700">
