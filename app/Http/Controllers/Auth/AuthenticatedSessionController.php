@@ -33,7 +33,6 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-
         $user = auth()->user();
 
         switch ($user->role) {

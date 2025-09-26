@@ -48,5 +48,21 @@ class Visitor extends Model
             'visitor_staff_acknowledgement_id'
         )->withTimestamps();
     }
+
+    public function getCasts()
+    {
+        $casts = parent::getCasts();
+
+        $settings = EncryptionSetting::where('table_name', $this->getTable())
+            ->pluck('is_encrypted', 'field_name');
+
+        foreach ($settings as $field => $encrypted) {
+            if ($encrypted) {
+                $casts[$field] = 'encrypted';
+            }
+        }
+        
+        return $casts;
+    }
 }
 

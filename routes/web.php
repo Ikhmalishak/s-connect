@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\EncryptionSettingController;
 use App\Http\Controllers\GatePassController;
 use App\Http\Controllers\PasswordPolicyController;
 use App\Http\Controllers\ReportController;
@@ -57,7 +58,7 @@ Route::middleware(['auth', 'password.age', 'role:admin'])->group(function () {
 
     //api for fetch use stats card
     Route::get('/admin/user-stats-card', [UserController::class, 'getUserStatsCard']);
-    
+
     //api for admin manage user page
     Route::get('/admin/visitor/manage-user', [UserController::class, 'getManageUserPage']);
 
@@ -77,6 +78,10 @@ Route::middleware(['auth', 'password.age', 'role:admin'])->group(function () {
     //route to control password policy
     Route::get('/password-policy', [PasswordPolicyController::class, 'index'])->name('password-policy.edit');
     Route::post('/password-policy', [PasswordPolicyController::class, 'update'])->name('password-policy.update');
+
+    //route to control database encryption
+    Route::get('/encryption-settings', [EncryptionSettingController::class, 'index']);
+    Route::post('/encryption-settings', [EncryptionSettingController::class, 'update']);
 });
 
 // Guard-only routes
