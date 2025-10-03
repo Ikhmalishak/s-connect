@@ -9,6 +9,7 @@ use App\Models\Site;
 use App\Models\Visitor;
 use App\Models\VisitorAcknowledgement;
 use App\Models\VisitorStaffAcknowledgement;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
@@ -20,6 +21,8 @@ use Illuminate\Validation\ValidationException;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Mpdf\Mpdf;
 use Illuminate\Support\Str;
+use App\Exports\VisitorsExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class VisitorController extends Controller
 {
@@ -610,82 +613,44 @@ class VisitorController extends Controller
         }
     }
 
-    // public function generateReport(Request $request)
-    // {
-    //     $query = Visitor::query();
+    public function generateReport(Request $request)
+    {
+        // Set global limit untuk proses ini
+        ini_set('max_execution_time', 120);
+        set_time_limit(120);
 
-    //     if ($request->dateRange) {
-    //         $start = $request->dateRange['start'];
-    //         $end = $request->dateRange['end'];
+        $query = Visitor::query();
 
-    //         if ($start && $end) {
-    //             // build date strings in Y-m-d format
-    //             $startDate = sprintf('%04d-%02d-%02d', $start['year'], $start['month'], $start['day']);
-    //             $endDate = sprintf('%04d-%02d-%02d', $end['year'], $end['month'], $end['day']);
+        if ($request->dateRange) {
+            $start = $request->dateRange['start'];
+            $end = $request->dateRange['end'];
 
-    //             $query->whereBetween('date', [$startDate, $endDate]);
-    //         }
-    //     }
+            if ($start && $end) {
+                $startDate = sprintf('%04d-%02d-%02d', $start['year'], $start['month'], $start['day']);
+                $endDate = sprintf('%04d-%02d-%02d', $end['year'], $end['month'], $end['day']);
 
-    //     // Filter visitor type
-    //     if ($request->visitor_type && $request->visitor_type !== "all") {
-    //         $query->where('visitor_type', $request->visitor_type);
-    //     }
+                $query->whereBetween('date', [$startDate, $endDate]);
+            }
+        }
 
-    //     // Filter company
-    //     if ($request->visitor_company && $request->visitor_company !== "all") {
-    //         $query->where('visitor_company', $request->visitor_company);
-    //     }
+        if ($request->visitor_type && $request->visitor_type !== "all") {
+            // ✅ Handle multiple selections (array from checkbox)
+            if (is_array($request->visitor_type)) {
+                $query->whereIn('visitor_type', $request->visitor_type);
+            } else {
+                $query->where('visitor_type', $request->visitor_type);
+            }
+        }
 
-    //     $visitors = $query->get();
+        if ($request->visitor_company && $request->visitor_company !== "all") {
+            $query->where('visitor_company', $request->visitor_company);
+        }
 
-    //     $total_visitors = Visitor::all();
+        $query->orderBy('id', 'desc');
 
-    //     $visitor_counts = $total_visitors->groupBy('visitor_type')->map->count();
-
-    //     $chartData = [
-    //         'type' => 'pie',
-    //         'data' => [
-    //             'labels' => $visitor_counts->keys(),
-    //             'datasets' => [
-    //                 [
-    //                     'data' => $visitor_counts->values(),
-    //                     'backgroundColor' => ['#36A2EB', '#FF6384', '#FFCE56', '#4BC0C0'],
-    //                 ]
-    //             ],
-    //         ],
-    //     ];
-
-    //     $chartDataDonut = [
-    //         'type' => 'doughnut',
-    //         'data' => [
-    //             'labels' => $visitor_counts->keys(),
-    //             'datasets' => [
-    //                 [
-    //                     'data' => $visitor_counts->values(),
-    //                     'backgroundColor' => ['#36A2EB', '#FF6384', '#FFCE56', '#4BC0C0'],
-    //                     'label' => 'Dataset 1',
-    //                 ]
-    //             ],
-    //         ],
-    //     ];
-
-    //     // Get chart image from QuickChart
-    //     $chartUrl = "https://quickchart.io/chart?c=" . urlencode(json_encode($chartData));
-    //     $donutChartUrl = "https://quickchart.io/chart?c=" . urlencode(json_encode($chartDataDonut));
-
-    //     // Get image as base64
-    //     $imageData = base64_encode(file_get_contents($chartUrl));
-    //     $imageSrc = 'data:image/png;base64,' . $imageData;
-
-    //     $imageData2 = base64_encode(file_get_contents($donutChartUrl));
-    //     $imageSrc2 = 'data:image/png;base64,' . $imageData2;
-
-
-    //     $pdf = PDF::loadView('report.advanced-reports', compact('visitors', 'imageSrc', 'imageSrc2'));
-
-    //     return $pdf->download('visitors-reports.pdf');
-    // }
+        // Return Excel file instead of PDF
+        return Excel::download(new VisitorsExport($query), 'visitors-report.xlsx');
+    }
 
     public function printSticker($ackId, $totalPax, $ackNumber)
     {

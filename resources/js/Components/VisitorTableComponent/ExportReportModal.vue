@@ -18,15 +18,6 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectLabel,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 import axios from "axios";
 
 const props = defineProps<{
@@ -44,13 +35,18 @@ const value = ref({
 });
 
 const visitor_company = ref(null);
-const visitor_type = ref(null);
+const visitor_type = ref<string[]>([]);
+const isLoading = ref(false);
 
 const submitForm = async () => {
     try {
+        isLoading.value = true; // ✅ start loading
+
         const params = {
             dateRange: value.value,
-            visitor_type: visitor_type.value || "all",
+            visitor_type: visitor_type.value.length
+                ? visitor_type.value
+                : "all",
             visitor_company: visitor_company.value || "all",
         };
 
@@ -62,26 +58,30 @@ const submitForm = async () => {
             }
         );
 
-        // Create blob from response
-        const fileURL = window.URL.createObjectURL(
-            new Blob([response.data], { type: "application/pdf" })
-        );
-        window.open(fileURL, "_blank");
+        const blob = new Blob([response.data], {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+        const fileURL = window.URL.createObjectURL(blob);
 
-        // // Create a link element
-        // const fileLink = document.createElement("a");
-        // fileLink.href = fileURL;
-        // fileLink.setAttribute("download", "visitors-reports.pdf"); // default name
-        // document.body.appendChild(fileLink);
-
-        // // Trigger download
-        // fileLink.click();
-
-        // // Clean up
-        // document.body.removeChild(fileLink);
+        const fileLink = document.createElement("a");
+        fileLink.href = fileURL;
+        fileLink.setAttribute("download", "visitors-report.xlsx");
+        document.body.appendChild(fileLink);
+        fileLink.click();
+        fileLink.remove();
         window.URL.revokeObjectURL(fileURL);
     } catch (error) {
         console.error("Export failed:", error);
+    } finally {
+        isLoading.value = false; // ✅ stop loading
+
+        // reset filters
+        value.value = {
+            start: today(getLocalTimeZone()),
+            end: today(getLocalTimeZone()),
+        };
+        visitor_type.value = [];
+        visitor_company.value = null;
     }
 };
 </script>
@@ -185,33 +185,42 @@ const submitForm = async () => {
                             <label class="text-right font-medium text-gray-700">
                                 Visitor Type:
                             </label>
-                            <Select v-model="visitor_type">
-                                <SelectTrigger class="w-[280px]">
-                                    <SelectValue
-                                        placeholder="Select Visitor Type"
+                            <div
+                                class="flex flex-col gap-2 w-[280px] border rounded-md p-2"
+                            >
+                                <label class="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        value="visitor"
+                                        v-model="visitor_type"
                                     />
-                                </SelectTrigger>
-                                <SelectContent class="w-auto p-0 z-[10000]">
-                                    <SelectGroup>
-                                        <SelectLabel>Visitor Type</SelectLabel>
-                                        <SelectItem value="all">All</SelectItem>
-                                        <SelectItem value="visitor"
-                                            >Visitor</SelectItem
-                                        >
-                                        <SelectItem
-                                            value="inbound-shipment/transfer"
-                                            >Inbound-Shipment/Transfer</SelectItem
-                                        >
-                                        <SelectItem
-                                            value="outbound-shipment/transfer"
-                                            >Outbound-Shipment/Transfer</SelectItem
-                                        >
-                                        <SelectItem value="contractor"
-                                            >Contractor</SelectItem
-                                        >
-                                    </SelectGroup>
-                                </SelectContent>
-                            </Select>
+                                    Visitor
+                                </label>
+                                <label class="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        value="inbound-shipment/transfer"
+                                        v-model="visitor_type"
+                                    />
+                                    Inbound-Shipment/Transfer
+                                </label>
+                                <label class="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        value="outbound-shipment/transfer"
+                                        v-model="visitor_type"
+                                    />
+                                    Outbound-Shipment/Transfer
+                                </label>
+                                <label class="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        value="contractor"
+                                        v-model="visitor_type"
+                                    />
+                                    Contractor
+                                </label>
+                            </div>
 
                             <!-- Visitor Type -->
                             <label class="text-right font-medium text-gray-700">
@@ -223,12 +232,18 @@ const submitForm = async () => {
                                 class="w-[280px]"
                             />
                             <div class="col-span-2 flex justify-end mt-4">
-                                <button
-                                    type="submit"
-                                    class="bg-red-700 text-white"
-                                >
-                                    Export
-                                </button>
+                                <div class="col-span-2 flex justify-end mt-4">
+                                    <button
+                                        type="submit"
+                                        class="bg-red-700 text-white px-4 py-2 rounded disabled:opacity-50"
+                                        :disabled="isLoading"
+                                    >
+                                        <span v-if="isLoading"
+                                            >⏳ Exporting...</span
+                                        >
+                                        <span v-else>Export</span>
+                                    </button>
+                                </div>
                             </div>
                         </form>
                     </div>

@@ -32,12 +32,6 @@
 <body>
     <h2 style="text-align: center;">Visitors Report</h2>
     <h3 style="text-align: center;">Visitor Type Chart</h3>
-    <div style="text-align: center;">
-        <img src="{{ $imageSrc }}" style="width:400px; height:400px;">
-    </div>
-        <div style="text-align: center;">
-        <img src="{{ $imageSrc2 }}" style="width:400px; height:400px;">
-    </div>
     <table>
         <thead>
             <tr>

@@ -32,6 +32,10 @@ Route::get('/', function () {
     return Inertia::render('Auth/Login');
 })->name('login');
 
+Route::get('/phpinfo', function () {
+    phpinfo();
+});
+
 // Admin-only routes
 Route::middleware(['auth', 'password.age', 'role:admin'])->group(function () {
     Route::get('/admin/password-policy', function () {
