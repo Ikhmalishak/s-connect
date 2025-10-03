@@ -17,9 +17,6 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Events\VisitorRegistered;
 use Illuminate\Validation\ValidationException;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Symfony\Component\Process\Process;
-use Symfony\Component\Process\Exception\ProcessFailedException;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Mpdf\Mpdf;
 use Illuminate\Support\Str;
@@ -81,7 +78,6 @@ class VisitorController extends Controller
 
         $visitors = $query->latest()->get();
 
-        dd($visitors);
         return response()->json([
             'visitor' => $visitors,
         ]);
