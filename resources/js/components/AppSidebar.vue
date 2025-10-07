@@ -55,6 +55,10 @@ const data = {
                     title: "Password Configuration",
                     url: "/admin/password-policy",
                 },
+                {
+                    title: "System Log",
+                    url: "/admin/visitor/system-log",
+                },
             ],
         },
     ],

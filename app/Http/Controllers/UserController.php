@@ -72,6 +72,11 @@ class UserController extends Controller
 
         $user->update($request->all());
 
+        activity()
+            ->causedBy(auth()->user())
+            ->performedOn($user)
+            ->log("Update User: {$user->email}");
+
         return response()->json(['message' => 'User updated successfully']);
     }
 
@@ -83,12 +88,22 @@ class UserController extends Controller
             'password_changed_at' => now()
         ]);
 
+        activity()
+            ->causedBy(auth()->user())
+            ->performedOn($user)
+            ->log("Reset User Password: {$user->email}");
+
         return response()->json(['message' => 'User password successfully reset']);
     }
 
     public function destroy(User $user)
     {
         $user->delete();
+
+        activity()
+            ->causedBy(auth()->user())
+            ->performedOn($user)
+            ->log("Delete User: {$user->email}");
 
         return response()->json(['message' => 'User deleted successfully']);
     }

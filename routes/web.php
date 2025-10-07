@@ -32,10 +32,6 @@ Route::get('/', function () {
     return Inertia::render('Auth/Login');
 })->name('login');
 
-Route::get('/phpinfo', function () {
-    phpinfo();
-});
-
 // Admin-only routes
 Route::middleware(['auth', 'password.age', 'role:admin'])->group(function () {
     Route::get('/admin/password-policy', function () {
@@ -47,6 +43,12 @@ Route::middleware(['auth', 'password.age', 'role:admin'])->group(function () {
 
     //api for admin reporting dashboard
     Route::get('/admin/visitor/report-dashboard', [VisitorController::class, 'getAdminVisitorReportingDashboard']);
+
+    //api for system log interface
+    Route::get('/admin/visitor/system-log', [ReportController::class, 'getSystemLogPage']);
+    
+    //api to fetch list system log
+    Route::get('/admin/visitor/system-log-list', [ReportController::class, 'getSystemLog']);
 
     //api for fetch all user
     Route::get('/admin/visitor/user-list', [UserController::class, 'getUserTableData']);

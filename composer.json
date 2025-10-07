@@ -17,6 +17,7 @@
         "maatwebsite/excel": "^3.1",
         "mpdf/mpdf": "^8.2",
         "simplesoftwareio/simple-qrcode": "^4.2",
+        "spatie/laravel-activitylog": "^4.10",
         "tightenco/ziggy": "^2.0"
     },
     "require-dev": {

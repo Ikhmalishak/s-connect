@@ -14,6 +14,7 @@ use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Validation\Rules\Password;
+use function activity;
 class RegisteredUserController extends Controller
 {
     /**
@@ -63,6 +64,11 @@ class RegisteredUserController extends Controller
         ]);
 
         event(new Registered($user));
+
+        activity()
+            ->causedBy(auth()->user())
+            ->performedOn($user)
+            ->log("Created New User: {$user->email}");
 
         return response()->json([
             'success' => true,

@@ -9,7 +9,6 @@ use App\Models\Site;
 use App\Models\Visitor;
 use App\Models\VisitorAcknowledgement;
 use App\Models\VisitorStaffAcknowledgement;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
@@ -23,6 +22,7 @@ use Mpdf\Mpdf;
 use Illuminate\Support\Str;
 use App\Exports\VisitorsExport;
 use Maatwebsite\Excel\Facades\Excel;
+use function activity;
 
 class VisitorController extends Controller
 {
@@ -422,6 +422,10 @@ class VisitorController extends Controller
             return $this->scanGatePass($code);
         }
 
+        activity()
+            ->causedBy(auth()->user())
+            ->log("Scan Gate Pass");
+
         return response()->json([
             'status' => 'error',
             'message' => 'Invalid QR code format.'
@@ -453,6 +457,10 @@ class VisitorController extends Controller
             $ack->save();
 
             event(new GuardAcknowledgeVisitor());
+
+            activity()
+                ->causedBy(auth()->user())
+                ->log("Verify Security Acknowledgement");
 
             return response()->json([
                 'status' => 'success',
@@ -580,6 +588,10 @@ class VisitorController extends Controller
             $visitor->remarks = $request->input('remarks');
             $visitor->save();
 
+            activity()
+                ->causedBy(auth()->user())
+                ->log("Update Visitor Remarks");
+
             return response()->json([
                 'success' => true,
                 'message' => 'Remarks updated successfully',
@@ -647,6 +659,10 @@ class VisitorController extends Controller
         }
 
         $query->orderBy('id', 'desc');
+
+        activity()
+            ->causedBy(auth()->user())
+            ->log("Generate Report");
 
         // Return Excel file instead of PDF
         return Excel::download(new VisitorsExport($query), 'visitors-report.xlsx');

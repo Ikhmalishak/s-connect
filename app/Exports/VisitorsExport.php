@@ -18,7 +18,6 @@ class VisitorsExport implements FromCollection, WithHeadings
     public function collection()
     {
         return $this->query->get([
-            'id',
             'visitor_name',
             'visitor_type',
             'phone_number',
@@ -35,7 +34,6 @@ class VisitorsExport implements FromCollection, WithHeadings
     public function headings(): array
     {
         return [
-            'ID',
             'Name',
             'Type',
             'Phone Number',
