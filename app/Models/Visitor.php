@@ -49,20 +49,11 @@ class Visitor extends Model
         )->withTimestamps();
     }
 
-    public function getCasts()
-    {
-        $casts = parent::getCasts();
+    protected $casts = [
+        'ic_number' => 'encrypted',
+        'phone_number' => 'encrypted',
+        'passport' => 'encrypted',
+    ];
 
-        $settings = EncryptionSetting::where('table_name', $this->getTable())
-            ->pluck('is_encrypted', 'field_name');
-
-        foreach ($settings as $field => $encrypted) {
-            if ($encrypted) {
-                $casts[$field] = 'encrypted';
-            }
-        }
-        
-        return $casts;
-    }
 }
 
