@@ -750,17 +750,11 @@ function usePreset(preset: string) {
                     </div>
                 </div>
 
-                <button
-                    @click="saveEncryptionSettings"
-                    :disabled="savingEncryption"
-                    class="px-6 py-3 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                <div
+                    class="px-6 py-3 bg-gray-400 text-white rounded-lg shadow cursor-not-allowed text-center"
                 >
-                    {{
-                        savingEncryption
-                            ? "Saving..."
-                            : "Save Encryption Settings"
-                    }}
-                </button>
+                    Can refer to IT department if want to make some adjustment
+                </div>
             </div>
         </Card>
     </AdminAuthenticatedLayout>
