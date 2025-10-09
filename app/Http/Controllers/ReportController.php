@@ -110,27 +110,28 @@ class ReportController extends Controller
         // total all
         $total_all = $total_visitor + $total_driver + $total_contractor;
 
-        // new visitors = IC not found in acknowledgement table
-        $new = (clone $baseQuery)
-            ->whereNotExists(function ($query) {
-                $query->select(DB::raw(1))
-                    ->from('visitor_acknowledgements')
-                    ->whereColumn('visitor_acknowledgements.id_number', 'visitors.ic_number')
-                    ->orWhereColumn('visitor_acknowledgements.id_number', 'visitors.passport');
-            })
-            ->count();
+        // Get all acknowledged IDs
+        $acknowledgedIds = DB::table('visitor_acknowledgements')
+            ->pluck('id_number')
+            ->toArray();
 
-        // existing visitors = IC found in acknowledgement table
-        $existing = (clone $baseQuery)
-            ->whereExists(function ($query) {
-                $query->select(DB::raw(1))
-                    ->from('visitor_acknowledgements')
-                    ->where(function ($q) {
-                        $q->whereColumn('visitor_acknowledgements.id_number', 'visitors.ic_number')
-                            ->orWhereColumn('visitor_acknowledgements.id_number', 'visitors.passport');
-                    });
-            })
-            ->count();
+        // Get visitors in date range
+        $visitors = (clone $baseQuery)->get(['ic_number', 'passport']);
+
+        // Count existing and new visitors
+        $existing = 0;
+        $new = 0;
+
+        foreach ($visitors as $visitor) {
+            if (
+                in_array($visitor->ic_number, $acknowledgedIds) ||
+                (in_array($visitor->passport, $acknowledgedIds) && $visitor->passport != 'N/A')
+            ) {
+                $existing++;
+            } else {
+                $new++;
+            }
+        }
 
         //visit by purpose
         $purpose = (clone $baseQuery)
