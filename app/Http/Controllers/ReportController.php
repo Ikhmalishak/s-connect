@@ -22,7 +22,7 @@ class ReportController extends Controller
         $search = $request->input('search');
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
-        $limit = $request->input('limit', 20);
+        $limit = $request->input('limit', 200);
         $sortBy = $request->input('sort_by', 'created_at');
         $sort = $request->input('sort', 'desc');
 
@@ -118,14 +118,21 @@ class ReportController extends Controller
         // Get visitors in date range
         $visitors = (clone $baseQuery)->get(['ic_number', 'passport']);
 
-        // Count existing and new visitors
+        // Normalize acknowledged IDs by removing dashes
+        $normalizedAcknowledgedIds = array_map(function ($id) {
+            return str_replace('-', '', $id);
+        }, $acknowledgedIds);
+
         $existing = 0;
         $new = 0;
 
         foreach ($visitors as $visitor) {
+            $ic = str_replace('-', '', $visitor->ic_number);
+            $passport = str_replace('-', '', $visitor->passport);
+
             if (
-                in_array($visitor->ic_number, $acknowledgedIds) ||
-                (in_array($visitor->passport, $acknowledgedIds) && $visitor->passport != 'N/A')
+                ($ic !== 'N/A' && in_array($ic, $normalizedAcknowledgedIds)) ||
+                ($passport !== 'N/A' && in_array($passport, $normalizedAcknowledgedIds))
             ) {
                 $existing++;
             } else {
