@@ -27,7 +27,9 @@ class User extends Authenticatable
         'site',
         'role',
         'password_changed_at',
-        'is_first_time_login'
+        'is_first_time_login',
+        'mfa_code',
+        'mfa_expires_at',
     ];
 
     /**

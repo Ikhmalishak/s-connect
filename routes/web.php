@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\EncryptionSettingController;
 use App\Http\Controllers\GatePassController;
+use App\Http\Controllers\MFAController;
 use App\Http\Controllers\PasswordPolicyController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserController;
@@ -31,6 +32,10 @@ Route::get('/', function () {
     // If not authenticated, show login page
     return Inertia::render('Auth/Login');
 })->name('login');
+
+Route::get('/mfa-verify', [MFAController::class, 'showVerifyForm'])->name('mfa.verify');
+Route::post('/mfa-verify', [MFAController::class, 'verifyCode'])->name('mfa.verify');
+Route::post('/mfa-resend', [MFAController::class, 'resendCode'])->name('mfa.resend');
 
 // Admin-only routes
 Route::middleware(['auth', 'password.age', 'role:admin'])->group(function () {

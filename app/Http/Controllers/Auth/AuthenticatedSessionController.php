@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Helpers\MfaHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
@@ -35,9 +36,15 @@ class AuthenticatedSessionController extends Controller
 
         $user = auth()->user();
 
+        // Apply MFA only for admin
+        if ($user->role === 'admin') {
+            MfaHelper::sendMfaCode($user);
+            auth()->logout(); // prevent access until verified
+            return redirect()->route('mfa.verify');
+        }
+
+        // Normal redirect flow for others
         switch ($user->role) {
-            case 'admin':
-                return redirect()->route('admin.visitordashboard');
             case 'guard':
                 return redirect()->route('security.visitordashboard');
             case 'receptionist':
