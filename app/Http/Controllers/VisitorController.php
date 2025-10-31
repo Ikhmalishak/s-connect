@@ -32,6 +32,12 @@ class VisitorController extends Controller
         return Inertia::render('Security/Visitor/VisitorDashboard');
     }
 
+    public function getBooking()
+    {
+
+        return Inertia::render('ManageRoomReservation/RoomReservationDashboard');
+    }
+
     public function getAdminVisitorDashboard(Request $request)
     {
         return Inertia::render('Security/Visitor/AdminVisitorDashboard');

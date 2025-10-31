@@ -36,7 +36,8 @@ Route::get('/', function () {
 Route::get('/mfa-verify', [MFAController::class, 'showVerifyForm'])->name('mfa.verify');
 Route::post('/mfa-verify', [MFAController::class, 'verifyCode'])->name('mfa.verify');
 Route::post('/mfa-resend', [MFAController::class, 'resendCode'])->name('mfa.resend');
-
+Route::get('/admin/booking/dashboard', [VisitorController::class, 'getBooking'])
+        ->name('admin.visitordashboard');
 // Admin-only routes
 Route::middleware(['auth', 'password.age', 'role:admin'])->group(function () {
     Route::get('/admin/password-policy', function () {
