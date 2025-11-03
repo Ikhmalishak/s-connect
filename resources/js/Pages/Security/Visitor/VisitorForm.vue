@@ -286,25 +286,6 @@ const handleVisitUpdate = ({
     setFieldValue(field, value);
 };
 
-// const onSubmit = handleSubmit(async (formValues) => {
-//     console.log("Submitting:", formValues);
-
-//     if (!videoEnded.value || !securityGuidelinesConfirmed.value) {
-//         alert("Please complete all security requirements before submitting.");
-//         return;
-//     }
-
-//     try {
-//         const response = await axios.post("/visitor/submit", formValues);
-//         console.log("Form submitted successfully:", response.data);
-//         registrationResult.value = response.data;
-//         resultModalOpen.value = true;
-//     } catch (error) {
-//         console.error("Submission error:", error);
-//         alert("An error occurred while submitting the form.");
-//     }
-// });
-
 const onSubmit = handleSubmit(async (formValues) => {
     if (submitting.value) return; // block double click
     submitting.value = true;

@@ -24,6 +24,7 @@ import {
 
 const props = defineProps<{
     show: boolean;
+    site: string;
 }>();
 const emit = defineEmits(["close", "refresh"]);
 
@@ -98,6 +99,7 @@ const handleScanCheckout = async () => {
         try {
             const response = await axios.post("/visitor/scan-by-pass", {
                 pass_number: scannedPass.value,
+                site: props.site
             });
             console.log("Checkout", response);
             message.value = "✅ " + response.data.message;
@@ -151,7 +153,7 @@ const handleScanCheckout = async () => {
             <!-- ✅ Centered Icon & Title Side by Side -->
             <div class="flex items-center justify-center mb-6">
                 <ScanQrCode class="w-12 h-12 text-gray-700 mr-3" />
-                <h2 class="text-4xl font-bold">Scan to Check In / Out</h2>
+                <h2 class="text-4xl font-bold">Scan to Check In / Out {{ site }}</h2>
             </div>
 
             <Input

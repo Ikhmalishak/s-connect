@@ -453,6 +453,7 @@ onUnmounted(() => {
         />
         <CheckoutModal
             :show="showCheckoutModal"
+            :site="selectedSite"
             @refresh="
                 () => {
                     fetchGatePassList();

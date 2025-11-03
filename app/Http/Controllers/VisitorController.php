@@ -96,9 +96,11 @@ class VisitorController extends Controller
     {
         $limit = $request->input('limit', 25);
         $keyword = $request->input('keyword');
+        $site = $request->input('site');
 
         $query = Visitor::with(['gatePass:id,pass_number', 'acknowledgements'])
-            ->whereDate('date', now()->toDateString());
+            ->whereDate('date', now()->toDateString())
+            ->where('site_id', $site);
 
         if ($keyword) {
             $query->where(function ($q) use ($keyword) {
@@ -290,7 +292,7 @@ class VisitorController extends Controller
 
                 // Get pass number - handle failure gracefully
                 try {
-                    $pass_id = $this->getPassNumber($validated['visitor_type']);
+                    $pass_id = $this->getPassNumber($validated['visitor_type'], $validated['site_id']);
                 } catch (Exception $e) {
                     // Add to failed and continue instead of returning
                     $failedCreatedVisitors[] = [
@@ -373,7 +375,7 @@ class VisitorController extends Controller
         });
     }
 
-    public function getPassNumber($visitor_type)
+    public function getPassNumber($visitor_type, $site_id)
     {
         if (
             str_starts_with($visitor_type, 'inbound-') ||
@@ -382,8 +384,9 @@ class VisitorController extends Controller
             $visitor_type = 'driver';
         }
 
-        return DB::transaction(function () use ($visitor_type) {
+        return DB::transaction(function () use ($visitor_type, $site_id) {
             $gate_pass = GatePass::where('pass_type', $visitor_type)
+                ->where('site_id', $site_id)
                 ->where('state', 'free')
                 ->lockForUpdate()
                 ->first();
@@ -419,13 +422,14 @@ class VisitorController extends Controller
     public function scan(Request $request)
     {
         $code = $request->input('pass_number');
+        $site = $request->input('site');
 
         if (Str::startsWith($code, 'SKP')) {
             return $this->scanAcknowledgement($code);
         }
 
         if (Str::startsWith($code, 'V') || Str::startsWith($code, 'C') || Str::startsWith($code, 'D')) {
-            return $this->scanGatePass($code);
+            return $this->scanGatePass($code, $site);
         }
 
         activity()
@@ -482,10 +486,13 @@ class VisitorController extends Controller
         ], 400);
     }
 
-    private function scanGatePass(string $passNumber)
+    private function scanGatePass(string $passNumber, string $site)
     {
-        $visitor = Visitor::whereHas('gatePass', function ($q) use ($passNumber) {
-            $q->where('pass_number', $passNumber);
+        $site_id = Site::where('site_code',$site)->value('id');
+
+        $visitor = Visitor::whereHas('gatePass', function ($q) use ($passNumber, $site_id) {
+            $q->where('pass_number', $passNumber)
+                ->where('site_id', $site_id); // ✅ ensure pass belongs to this site
         })
             ->where(function ($query) {
                 $query->whereNull('time_out') // still in premises
@@ -699,13 +706,13 @@ class VisitorController extends Controller
         $mpdf->WriteHTML($html);
         $mpdf->Output($pdfPath, 'F');
 
-        $printerName = "Brother_QL_820NWB";
-        $cmd = "lp -d {$printerName} -o PageSize=Custom.62x30mm -o print-scaling=none -o CutMedia=Auto " . escapeshellarg($pdfPath);
-        exec($cmd, $output, $returnVar);
+        // $printerName = "Brother_QL_820NWB";
+        // $cmd = "lp -d {$printerName} -o PageSize=Custom.62x30mm -o print-scaling=none -o CutMedia=Auto " . escapeshellarg($pdfPath);
+        // exec($cmd, $output, $returnVar);
 
-        if ($returnVar !== 0) {
-            return response()->json(['status' => 'error', 'output' => $output], 500);
-        }
+        // if ($returnVar !== 0) {
+        //     return response()->json(['status' => 'error', 'output' => $output], 500);
+        // }
 
         return response()->json(['status' => 'success']);
     }

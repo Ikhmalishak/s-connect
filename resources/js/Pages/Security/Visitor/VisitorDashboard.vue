@@ -12,6 +12,15 @@ import {
     BreadcrumbItem,
     BreadcrumbLink,
 } from "@/components/ui/breadcrumb";
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectLabel,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import VisitorStatsCards from "@/Components/VisitorTableComponent/VisitorStatCard.vue";
 import VisitorTable from "@/Components/VisitorTableComponent/VisitorTable.vue";
 import VisitorModal from "@/Components/VisitorTableComponent/VisitorModal.vue";
@@ -95,6 +104,7 @@ const showCheckoutModal = ref(false);
 const showNotifyModal = ref(false);
 const selectedVisitor = ref(null);
 const showDetailsModal = ref(false);
+const selectedSite = ref("2")
 let intervalId;
 
 const formattedDate = computed(() =>
@@ -126,7 +136,7 @@ async function fetchVisitors(limit = limitTable.value) {
     }
 }
 
-async function fetchVisitorTableData(limit = limitTable.value, keyword = searchQuery.value){
+async function fetchVisitorTableData(limit = limitTable.value, keyword = searchQuery.value, site = selectedSite.value){
 
     console.log(limit,keyword)
     try{
@@ -135,7 +145,8 @@ async function fetchVisitorTableData(limit = limitTable.value, keyword = searchQ
       {
         params: {
           limit,
-          keyword
+          keyword,
+          site,
         }
       }
         )      
@@ -148,9 +159,15 @@ async function fetchVisitorTableData(limit = limitTable.value, keyword = searchQ
     }
 }
 
-async function fetchGatePassList() {
+async function fetchGatePassList(site = selectedSite.value) {
     try {
-        const res = await axios.get("/gate-passes");
+        const res = await axios.get("/gate-passes",
+            {
+                params: {
+                    site
+                }
+            }
+        );
         gatePassList.value = res.data;
         console.log("Fetched gate pass:", res.data);
     } catch (e) {
@@ -168,9 +185,15 @@ async function fetchVisitorInside() {
     }
 }
 
-async function fetchTotalAvailableGatePass() {
+async function fetchTotalAvailableGatePass(site = selectedSite.value) {
     try {
-        const res = await axios.get("/gate-pass/total");
+        const res = await axios.get("/gate-pass/total",
+            {
+                params:{
+                    site
+                }
+            }
+        );
         console.log("available gate pass", res.data.available_gatepass);
         totalAvailableGatePass.value = res.data.available_gatepass;
     } catch (e) {
@@ -264,13 +287,10 @@ onMounted(() => {
     }
 });
 
-watch(limitTable, (newVal) => {
-    console.log("Limit changed to:", newVal);
-    fetchVisitorTableData();
-});
-
-watch(searchQuery, (newVal) => {
-    console.log("Search query changed to:", newVal);
+watch([limitTable, searchQuery, selectedSite], ([newLimit, newSearch, newSite]) => {
+    console.log("Limit:", newLimit);
+    console.log("Search:", newSearch);
+    console.log("Site:", newSite);
     fetchVisitorTableData();
 });
 
@@ -323,11 +343,32 @@ onUnmounted(() => {
                 <div>Visitor Management System</div>
             </div>
 
-            <div
-                class="flex flex-row space-x-4 text-base font-normal text-gray-600 text-right"
-            >
-                <div>{{ formattedDate }}</div>
-                <div>{{ formattedTime }}</div>
+            <div class="flex flex-row items-center gap-10">
+                <div class="flex items-center gap-2">
+                    <label class="text-sm whitespace-nowrap"
+                        >Select Site :</label
+                    >
+                    <Select v-model="selectedSite">
+                        <SelectTrigger class="w-[180px]">
+                            <SelectValue placeholder="Select Site" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectGroup>
+                                <SelectLabel>Site</SelectLabel>
+                                <SelectItem value="1">Site 1</SelectItem>
+                                <SelectItem value="2">Site 2</SelectItem>
+                                <SelectItem value="3">Site 3</SelectItem>
+                                <SelectItem value="4">Site 4</SelectItem>
+                            </SelectGroup>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div
+                    class="flex flex-row space-x-4 text-base font-normal text-gray-600 text-right"
+                >
+                    <div>{{ formattedDate }}</div>
+                    <div>{{ formattedTime }}</div>
+                </div>
             </div>
         </Card>
 
@@ -379,6 +420,7 @@ onUnmounted(() => {
 
         <CheckoutModal
             :show="showCheckoutModal"
+            :site="selectedSite"
             @refresh="
                 () => {
                     fetchVisitors();

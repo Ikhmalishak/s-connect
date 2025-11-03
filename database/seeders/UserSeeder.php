@@ -20,7 +20,7 @@ class UserSeeder extends Seeder
             'role' => 'admin',
             'site' => 'Site 2',
             'password_changed_at' => now(),
-            'is_first_time_login' => true,
+            'is_first_time_login' => false,
         ]);
 
         User::create([
@@ -30,7 +30,7 @@ class UserSeeder extends Seeder
             'role' => 'guard',
             'site' => 'Site 2',
             'password_changed_at' => now(),
-            'is_first_time_login' => true,
+            'is_first_time_login' => false,
         ]);
 
         User::create([
@@ -40,7 +40,7 @@ class UserSeeder extends Seeder
             'role' => 'receptionist',
             'site' => 'Site 2',
             'password_changed_at' => now(),
-            'is_first_time_login' => true,
+            'is_first_time_login' => false,
         ]);
     }
 }
