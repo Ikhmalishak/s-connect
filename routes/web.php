@@ -5,6 +5,8 @@ use App\Http\Controllers\GatePassController;
 use App\Http\Controllers\MFAController;
 use App\Http\Controllers\PasswordPolicyController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\RoomController;
+use App\Http\Controllers\RoomReservationController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VisitorController;
 use App\Http\Controllers\ProfileController;
@@ -36,8 +38,7 @@ Route::get('/', function () {
 Route::get('/mfa-verify', [MFAController::class, 'showVerifyForm'])->name('mfa.verify');
 Route::post('/mfa-verify', [MFAController::class, 'verifyCode'])->name('mfa.verify');
 Route::post('/mfa-resend', [MFAController::class, 'resendCode'])->name('mfa.resend');
-Route::get('/admin/booking/dashboard', [VisitorController::class, 'getBooking'])
-        ->name('admin.visitordashboard');
+
 // Admin-only routes
 Route::middleware(['auth', 'password.age', 'role:admin'])->group(function () {
     Route::get('/admin/password-policy', function () {
@@ -52,7 +53,7 @@ Route::middleware(['auth', 'password.age', 'role:admin'])->group(function () {
 
     //api for system log interface
     Route::get('/admin/visitor/system-log', [ReportController::class, 'getSystemLogPage']);
-    
+
     //api to fetch list system log
     Route::get('/admin/visitor/system-log-list', [ReportController::class, 'getSystemLog']);
 
@@ -160,5 +161,23 @@ Route::post('/visitor/submit', [VisitorController::class, 'store']);
 
 //api to check acknowledgement whether visitor come for first time or not
 Route::post('/visitor/check-acknowledgement', [VisitorController::class, 'checkAcknowledgement']);
+
+Route::get('/admin/booking/dashboard', [VisitorController::class, 'getBooking'])
+    ->name('admin.visitordashboard');
+
+Route::get('/booking/tablet/{id}', [RoomReservationController::class, 'getRoomReservationTabletInterface'])
+    ->name('booking.tablet');
+Route::get('/room-reservations', [RoomReservationController::class, 'index']);
+Route::post('/room-reservations', [RoomReservationController::class, 'store']);
+Route::post('/room-reservations/{id}/approve', [RoomReservationController::class, 'approve']);
+Route::post('/room-reservations/{id}/reject', [RoomReservationController::class, 'reject']);
+Route::post('/room-reservations/{id}/cancel', [RoomReservationController::class, 'cancel']);
+Route::get('/room-reservations/{id}/status',[RoomReservationController::class,'getRoomStatus']);
+
+Route::get('/rooms', [RoomController::class, 'getRoomBySite']);
+Route::get('/rooms/{id}', [RoomController::class, 'getRoomById']);
+Route::post('/rooms', [RoomController::class, 'store']);
+Route::put('/rooms/{id}', [RoomController::class, 'update']);
+Route::delete('/rooms/{id}', [RoomController::class, 'destroy']);
 
 require __DIR__ . '/auth.php';

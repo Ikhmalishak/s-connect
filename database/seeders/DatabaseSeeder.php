@@ -18,6 +18,8 @@ class DatabaseSeeder extends Seeder
             DepartmentSeeder::class,            
             SiteSeeder::class,
             GatePassSeeder::class,
+            RoomSeeder::class,
+            RoomReservationSeeder::class,
         ]);
     }
 
