@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, onUnmounted } from "vue";
+import { ref, onMounted, computed, onUnmounted, watch, nextTick } from "vue";
 import { usePage } from "@inertiajs/vue3";
 import axios from "axios";
 import dayjs from "dayjs";
@@ -21,12 +21,31 @@ const roomSchedule = ref([]);
 const currentTime = ref("");
 const progress = ref(0);
 
+// Countdown state
+const countdownReady = ref(false);
+const showFlipCountdown = ref(false);
+
+// Interval references for cleanup
+const intervals = ref<NodeJS.Timeout[]>([]);
+
 const updateTime = () => {
     currentTime.value = new Date().toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
     });
 };
+
+// Safe watch for reservation changes
+watch(currentReservation, async (newVal) => {
+    if (newVal && newVal.end_time) {
+        // Hide first, then show after next tick to ensure clean DOM
+        showFlipCountdown.value = false;
+        await nextTick();
+        showFlipCountdown.value = true;
+    } else {
+        showFlipCountdown.value = false;
+    }
+}, { immediate: false });
 
 async function fetchRoomDetails(id = roomId) {
     try {
@@ -36,17 +55,21 @@ async function fetchRoomDetails(id = roomId) {
         capacity.value = res.data.data.capacity;
         roomLocation.value = res.data.data.location;
     } catch (error: any) {
-        console.log("failllll");
+        console.log("Failed to fetch room details");
     }
 }
 
 const fetchRoomStatus = async () => {
-    const res = await axios.get(`/room-reservations/${roomId}/status`);
-    console.log(res.data);
-    roomStatus.value = res.data.status;
-    currentReservation.value = res.data.current_reservation;
-    roomSchedule.value = res.data.room_schedule;
-    minutesAvailable.value = res.data.minutes_left ?? 0;
+    try {
+        const res = await axios.get(`/room-reservations/${roomId}/status`);
+        console.log(res.data);
+        roomStatus.value = res.data.status;
+        currentReservation.value = res.data.current_reservation;
+        roomSchedule.value = res.data.room_schedule;
+        minutesAvailable.value = res.data.minutes_left ?? 0;
+    } catch (error: any) {
+        console.log("Failed to fetch room status");
+    }
 };
 
 function updateCountdown() {
@@ -58,8 +81,8 @@ function updateCountdown() {
 
     if (diff < 0) diff = 0;
 
-    const hoursLeft = Math.floor(diff / 3600); // total hours
-    const minutesLeft = Math.floor((diff % 3600) / 60); // remaining minutes
+    const hoursLeft = Math.floor(diff / 3600);
+    const minutesLeft = Math.floor((diff % 3600) / 60);
 
     timeLeftHours.value = hoursLeft;
     timeLeftMinutes.value = minutesLeft;
@@ -77,28 +100,11 @@ const formattedEnd = computed(() =>
         : ""
 );
 
-function scheduleNextFetch() {
-    const now = new Date();
-    const minutes = now.getMinutes();
-    const seconds = now.getSeconds();
-
-    // Determine next trigger time (:00 or :30)
-    let nextMinute = minutes < 30 ? 30 : 60;
-
-    // Calculate how many milliseconds to wait
-    const msUntilNext =
-        ((nextMinute - minutes - 1) * 60 + (60 - seconds)) * 1000;
-
-    console.log("Next fetch in", msUntilNext / 1000, "seconds");
-
-    // Schedule the fetch
-    setTimeout(() => {
-        fetchRoomStatus(); // <-- your API call
-        scheduleNextFetch(); // schedule next cycle
-    }, msUntilNext);
-}
-
-scheduleNextFetch();
+// Format deadline for flip countdown
+const flipDeadline = computed(() => {
+    if (!currentReservation.value?.end_time) return '';
+    return dayjs(currentReservation.value.end_time).format('YYYY-MM-DD HH:mm:ss');
+});
 
 function updateProgress() {
     if (!currentReservation.value) {
@@ -106,32 +112,34 @@ function updateProgress() {
         return;
     }
 
-    const now = new Date();
-    const start = new Date(currentReservation.value.start_time);
-    const end = new Date(currentReservation.value.end_time);
+    try {
+        const now = new Date();
+        const start = new Date(currentReservation.value.start_time);
+        const end = new Date(currentReservation.value.end_time);
 
-    const total = end.getTime() - start.getTime(); // total ms
-    const elapsed = now.getTime() - start.getTime(); // used ms
+        const total = end.getTime() - start.getTime();
+        const elapsed = now.getTime() - start.getTime();
 
-    let ratio = (elapsed / total) * 100;
+        let ratio = (elapsed / total) * 100;
+        ratio = Math.min(Math.max(ratio, 0), 100);
 
-    // Clamp so it doesn't go below 0 or above 100
-    ratio = Math.min(Math.max(ratio, 0), 100);
-
-    progress.value = ratio;
+        progress.value = ratio;
+    } catch (error) {
+        console.log("Progress update error:", error);
+    }
 }
 
-onMounted(() => {
+onMounted(async () => {
     updateTime();
-    fetchRoomDetails();
-    fetchRoomStatus();
+    await fetchRoomDetails();
+    await fetchRoomStatus();
 
-    setInterval(updateTime, 1000); // clock tick
-    setInterval(updateProgress, 1000);
-    setInterval(updateCountdown, 1000); // <--- LIVE countdown
+    // Store interval references for cleanup
+    intervals.value.push(setInterval(updateTime, 1000));
+    intervals.value.push(setInterval(updateProgress, 1000));
+    intervals.value.push(setInterval(updateCountdown, 1000));
 
     if (window.Echo) {
-        // Existing listener
         window.Echo.channel("rooms")
             .listen(".room.reserved", (e) => {
                 console.log("New RoomReservationCreated event received:", e);
@@ -151,11 +159,13 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+    // Clear all intervals
+    intervals.value.forEach(interval => clearInterval(interval));
+    intervals.value = [];
+
     if (window.Echo) {
-        window.Echo.leave("room-reservation");
-        console.log(
-            'Stopped listening for VisitorRegistered events on "room-reservation" channel.'
-        );
+        window.Echo.leave("rooms");
+        console.log('Stopped listening for events on "rooms" channel.');
     }
 });
 </script>
@@ -174,11 +184,12 @@ onUnmounted(() => {
                 class="max-w-[150px] h-auto my-7 mx-7"
             />
         </div>
+
         <div class="relative flex h-full">
             <!-- Left Section -->
             <div class="flex-1 flex flex-col justify-center">
                 <div class="bg-black/70 p-6">
-                    <div class="flex flex-row items-center gap-10">
+                    <div class="flex flex-row items-center gap-80">
                         <!-- Status Text -->
                         <p class="text-3xl font-light">
                             <template v-if="roomStatus === 'available'">
@@ -197,21 +208,35 @@ onUnmounted(() => {
                             </template>
                         </p>
 
-                        <p
-                            v-if="roomStatus === 'in_use'"
-                            class="text-4xl font-bold text-shadow-xl"
-                        >
-                            {{ timeLeftHours }} hour<span
-                                v-if="timeLeftHours !== 1"
-                                >s</span
-                            >
-                            and
-                            {{ timeLeftMinutes }} minute<span
-                                v-if="timeLeftMinutes !== 1"
-                                >s</span
-                            >
-                            left
-                        </p>
+                        <!-- Flip Countdown with Safe Wrapper -->
+                        <div v-if="showFlipCountdown && currentReservation" class="flip-countdown-container">
+                            <vue3-flip-countdown
+                                :key="`flip-${currentReservation.id}`"
+                                :deadline="flipDeadline"
+                                mainColor="white"
+                                secondFlipColor="white"
+                                mainFlipBackgroundColor="rgba(0,0,0,0.8)"
+                                secondFlipBackgroundColor="rgba(0,0,0,0.8)"
+                                labelColor="white"
+                                :showDays="false"
+                                :showHours="true"
+                                :showMinutes="true"
+                                :showSeconds="true"
+                            />
+                        </div>
+
+                        <!-- Fallback Simple Countdown -->
+                        <div v-else-if="roomStatus === 'in_use' && currentReservation" class="countdown-simple">
+                            <div class="countdown-section">
+                                <div class="countdown-value">{{ timeLeftHours.toString().padStart(2, '0') }}</div>
+                                <div class="countdown-label">HOURS</div>
+                            </div>
+                            <div class="countdown-separator">:</div>
+                            <div class="countdown-section">
+                                <div class="countdown-value">{{ timeLeftMinutes.toString().padStart(2, '0') }}</div>
+                                <div class="countdown-label">MINUTES</div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Room Name -->
@@ -219,17 +244,13 @@ onUnmounted(() => {
                         {{ roomName }}
                     </h1>
 
-                    <!-- <div class="mt-6">Capacity: {{ capacity }} people</div>
-
-                    <div>Location: {{ roomLocation }}</div> -->
-
-                    <div v-if="currentReservation" class="mt-4">
+                    <div v-if="currentReservation" class="mt-4 text-xl">
                         <p>Reserve By: {{ currentReservation.user_name }}</p>
                         <p>Purpose: {{ currentReservation.purpose }}</p>
                         <p>Time: {{ formattedStart }} - {{ formattedEnd }}</p>
                     </div>
 
-                    <div v-else>No active reservation.</div>
+                    <div v-else class="text-xl">No active reservation.</div>
                 </div>
             </div>
 
@@ -260,6 +281,14 @@ onUnmounted(() => {
                             COMPLETED
                         </div>
 
+                        <!-- Active Stamp -->
+                        <div
+                            v-else-if="event.status === 'active'"
+                            class="absolute top-2 right-2 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded-lg shadow-xl"
+                        >
+                            IN PROGRESS
+                        </div>
+
                         <div class="text-sm opacity-80">
                             {{
                                 new Date(event.start_time).toLocaleTimeString(
@@ -283,7 +312,7 @@ onUnmounted(() => {
                             {{ event.user_name }}
                         </div>
                     </div>
-                    <div v-else>No Active Reservation Today</div>
+                    <div v-else class="text-center py-4">No Active Reservation Today</div>
                 </div>
             </div>
         </div>
@@ -294,27 +323,104 @@ onUnmounted(() => {
             :class="roomStatus === 'in_use' ? 'bg-red-700' : 'bg-white/20'"
         >
             <div
-                class="h-full"
+                class="h-full flex items-center justify-center transition-all duration-1000"
                 :class="
                     roomStatus === 'in_use' ? 'bg-green-600' : 'bg-green-500'
                 "
-                :style="`width: ${progress}%; transition: width 1s linear;`"
+                :style="`width: ${progress}%;`"
             >
                 <p
                     v-if="roomStatus === 'in_use'"
-                    class="text-2xl font-bold text-shadow-xl"
+                    class="text-xl font-bold text-white text-shadow"
                 >
-                    {{ timeLeftHours }} hour<span v-if="timeLeftHours !== 1"
-                        >s</span
-                    >
+                    {{ timeLeftHours }} hour<span v-if="timeLeftHours !== 1">s</span>
                     and
-                    {{ timeLeftMinutes }} minute<span
-                        v-if="timeLeftMinutes !== 1"
-                        >s</span
-                    >
+                    {{ timeLeftMinutes }} minute<span v-if="timeLeftMinutes !== 1">s</span>
                     left
                 </p>
             </div>
         </div>
     </div>
 </template>
+
+<style scoped>
+.flip-countdown-container {
+    min-height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.countdown-simple {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-family: 'Courier New', monospace;
+}
+
+.countdown-section {
+    text-align: center;
+    min-width: 100px;
+}
+
+.countdown-value {
+    font-size: 3rem;
+    font-weight: bold;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 15px;
+    border-radius: 10px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    min-width: 80px;
+}
+
+.countdown-label {
+    font-size: 0.8rem;
+    margin-top: 5px;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.countdown-separator {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.text-shadow {
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.text-shadow-xl {
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
+}
+
+/* Custom scrollbar */
+.overflow-y-auto::-webkit-scrollbar {
+    width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+}
+
+/* Flip countdown custom styles */
+:deep(.flip-card) {
+    border-radius: 8px !important;
+}
+
+:deep(.flip-clock) {
+    font-family: 'Courier New', monospace !important;
+}
+
+:deep(.flip-unit) {
+    font-size: 0.8rem !important;
+    color: white !important;
+}
+</style>

@@ -6,6 +6,7 @@ import { resolvePageComponent } from "laravel-vite-plugin/inertia-helpers";
 import { createApp, h } from "vue";
 import { ZiggyVue } from "../../vendor/tightenco/ziggy";
 import Toaster from "./components/ui/toast/Toaster.vue";
+import Countdown from 'vue3-flip-countdown'
 
 const appName = import.meta.env.VITE_APP_NAME || "S-CONNECT";
 
@@ -22,6 +23,7 @@ createInertiaApp({
         })
             .use(plugin)
             .use(ZiggyVue)
+            .use(Countdown)
             .mount(el);
     },
     progress: {
