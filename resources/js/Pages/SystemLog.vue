@@ -47,7 +47,7 @@ const fetchLogs = async () => {
             params: {
                 search: search.value,
                 sort: sortOrder.value,
-                limit: 20,
+                limit: 200,
             },
         });
         logs.value = res.data.data || [];

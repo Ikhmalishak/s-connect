@@ -124,20 +124,30 @@ watch(visitorType, (newVal) => {
     setFieldValue("visitor_type", newVal);
 });
 
+// function handleReset() {
+//     resetForm();
+//     paxCount.value = 1;
+//     paxModalOpen.value = true;
+//     paxInputValue.value = "1";
+//     currentStep.value = 1;
+//     videoEnded.value = false;
+//     securityGuidelinesConfirmed.value = false;
+//     resetVideoTrigger.value = true;
+//     visitorType.value = "";
+//     nextTick(() => {
+//         resetVideoTrigger.value = false;
+//     });
+// }
+
 function handleReset() {
-    resetForm();
-    paxCount.value = 1;
-    paxModalOpen.value = true;
-    paxInputValue.value = "1";
-    currentStep.value = 1;
-    videoEnded.value = false;
-    securityGuidelinesConfirmed.value = false;
-    resetVideoTrigger.value = true;
-    visitorType.value = "";
-    nextTick(() => {
-        resetVideoTrigger.value = false;
-    });
+    if (!navigator.onLine) {
+        alert("⚠️ No internet connection. Please reconnect first!");
+        return;
+    }
+
+    window.location.reload();
 }
+
 
 function confirmPaxCount(count: number) {
     paxCount.value = count;
