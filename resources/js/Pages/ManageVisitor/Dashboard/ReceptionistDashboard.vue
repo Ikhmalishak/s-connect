@@ -76,7 +76,7 @@ const formattedTime = computed(() =>
 async function openVisitorVerificationModal() {
     try {
         const res = await axios.get(
-            `/visitor-staff-acknowledgement-details?ack_number=${ackNumber.value}`
+            `/visitor/get-visitor-staff-acknowledgement-details?ack_number=${ackNumber.value}`
         );
 
         if (res.data.success === false) {
@@ -121,7 +121,7 @@ async function getAllVerifiedVisitor(
     keyword = searchQuery.value
 ) {
     try {
-        const res = await axios.get("/get-verified-visitors", {
+        const res = await axios.get("/visitor/get-verified-visitors", {
             params: {
                 limit,
                 keyword,
@@ -194,7 +194,7 @@ const submitVerification = async () => {
     }
 
     try {
-        const res = await axios.post("/verify-visitor", {
+        const res = await axios.post("/visitor/verify-visitor", {
             ack_number: ackNumber.value,
             staff_name: trimmedStaffName,
             staff_id: trimmedStaffId,

@@ -54,7 +54,7 @@ onBeforeUnmount(() => {
 
 <template>
     <SidebarProvider :defaultOpen="false">
-        <AppSidebar />
+        <AppSidebar :user="user" />
         <!-- Apply blur to everything when idle -->
         <SidebarInset
             class="flex flex-col min-h-screen overflow-hidden relative transition duration-300"
@@ -63,8 +63,8 @@ onBeforeUnmount(() => {
             <header
                 class="sticky top-0 z-10 h-16 bg-gray-200 border-b px-4 flex items-center gap-2"
             >
-                <!-- <SidebarTrigger class="-ml-1" />
-                <Separator orientation="vertical" class="mr-2 h-4" /> -->
+                <SidebarTrigger class="-ml-1" />
+                <Separator orientation="vertical" class="mr-2 h-4" />
                 <slot name="breadcrumb" />
 
                 <div
@@ -108,10 +108,13 @@ onBeforeUnmount(() => {
             class="absolute inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
         >
             <Card class="w-full max-w-md p-6 text-center shadow-lg">
-                <img src="/assets/ss2.png" alt="">
-                <h2 class="text-2xl font-semibold mb-2">Screen Protection Activated</h2>
+                <img src="/assets/ss2.png" alt="" />
+                <h2 class="text-2xl font-semibold mb-2">
+                    Screen Protection Activated
+                </h2>
                 <p class="text-gray-600 dark:text-gray-300 mb-4">
-                    Simply touch or move your mouse to deactivate the screen protection.
+                    Simply touch or move your mouse to deactivate the screen
+                    protection.
                 </p>
             </Card>
         </div>

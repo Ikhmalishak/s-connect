@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\ManageVisitor;
 
+use App\Http\Controllers\Controller;
 use App\Events\GuardAcknowledgeVisitor;
 use App\Events\GuardScanInAndOut;
 use App\Models\GatePass;
@@ -26,81 +27,64 @@ use function activity;
 
 class VisitorController extends Controller
 {
-    public function getVisitorDashboard()
+    public function dashboard()
     {
+        $user = auth()->user();
 
-        return Inertia::render('Security/Visitor/VisitorDashboard');
-    }
-
-    public function getBooking()
-    {
-
-        return Inertia::render('ManageRoomReservation/RoomReservationDashboard');
-    }
-
-    public function getAdminVisitorDashboard(Request $request)
-    {
-        return Inertia::render('Security/Visitor/AdminVisitorDashboard');
-    }
-    public function getAdminVisitorReportingDashboard(Request $request)
-    {
-        return Inertia::render('Security/Visitor/AdminVisitorReportingDashboard');
-    }
-
-    public function getStaffVerification(Request $request)
-    {
-        return Inertia::render('Security/Visitor/StaffVerification');
-    }
-
-    public function getAdminVisitorTableData(Request $request)
-    {
-        $limit = $request->input('limit', 25);
-        $keyword = $request->input('keyword');
-        $site = $request->input('site');
-
-        $query = Visitor::with(['gatePass:id,pass_number', 'site:id,site_code', 'acknowledgements']);
-
-        if ($site) {
-            $query->whereHas('site', function ($q) use ($site) {
-                $q->where('site_code', $site);
-            });
+        if ($user->hasRole(['superadmin','admin'])) {
+            return Inertia::render('ManageVisitor/Dashboard/AdminDashboard');
         }
 
-        if ($keyword) {
-            $query->where(function ($q) use ($keyword, $site) {
-                $q->where('visitor_name', 'LIKE', "%{$keyword}%")
-                    ->orWhereHas('gatePass', function ($sub) use ($keyword) {
-                        $sub->where('pass_number', 'LIKE', "%{$keyword}%");
-                    })
-                    ->orWhere('date', 'LIKE', "%{$keyword}%") // Database format: 2025-08-15
-                    ->orWhereRaw("DATE_FORMAT(date, '%d/%m/%Y') LIKE ?", ["%{$keyword}%"]) // Display format: 15/08/2025
-                    ->orWhere('vehicle_number', 'LIKE', "%{$keyword}%")
-                    ->orWhere('visitor_company', "LIKE", "%{$keyword}%")
-                    ->orWhere('purpose', "LIKE", "%{$keyword}%");
-            });
+        if ($user->hasRole('guard')) {
+            return Inertia::render('ManageVisitor/Dashboard/GuardDashboard');
         }
 
-        // Apply limit only if no search keyword
-        if (!$keyword) {
-            $query->take($limit);
+        if ($user->hasRole('receptionist')) {
+            return Inertia::render('ManageVisitor/Dashboard/ReceptionistDashboard');
         }
 
-        $visitors = $query->latest()->get();
+        abort(403);
+    }
 
-        return response()->json([
-            'visitor' => $visitors,
-        ]);
+    public function getReportDashboard()
+    {
+        return Inertia::render('ManageVisitor/Dashboard/VisitorReportDashboard');
+    }
+    
+    public function getVisitorForm($siteCode)
+    {
+        $site = Site::where('site_code', $siteCode)->firstOrFail();
+
+        //return form page
+        return Inertia::render(
+            'ManageVisitor/Form/RegisterVisitorForm',
+            [
+                'site' => $site,
+            ]
+        );
     }
 
     public function getVisitorTableData(Request $request)
     {
         $limit = $request->input('limit', 25);
         $keyword = $request->input('keyword');
-        $site = $request->input('site');
+        $user = auth()->user();
+        $site = $user->site->id;
 
-        $query = Visitor::with(['gatePass:id,pass_number', 'acknowledgements'])
-            ->whereDate('date', now()->toDateString())
-            ->where('site_id', $site);
+        if ($user->hasRole('admin')) {
+
+            $query = Visitor::with(['gatePass:id,pass_number', 'site:id,site_code', 'acknowledgements']);
+
+            if ($site) {
+                $query->whereHas('site', function ($q) use ($site) {
+                    $q->where('id', $site);
+                });
+            }
+        } else {
+            $query = Visitor::with(['gatePass:id,pass_number', 'acknowledgements'])
+                ->whereDate('date', now()->toDateString())
+                ->where('site_id', $site);
+        }
 
         if ($keyword) {
             $query->where(function ($q) use ($keyword) {
@@ -128,7 +112,7 @@ class VisitorController extends Controller
         ]);
     }
 
-    public function refreshVisitorTablePage(Request $request)
+    public function getVisitorData(Request $request)
     {
         $date = Carbon::now()->format('Y-m-d');
         $startOfDay = Carbon::today();
@@ -140,7 +124,7 @@ class VisitorController extends Controller
         $siteFilter = function ($query) use ($site) {
             if ($site) {
                 $query->whereHas('site', function ($q) use ($site) {
-                    $q->where('site_code', $site);
+                    $q->where('id', $site);
                 });
             }
         };
@@ -212,19 +196,6 @@ class VisitorController extends Controller
         return response()->json([
             'data' => $visitor_inside
         ]);
-    }
-
-    public function getVisitorForm($siteCode)
-    {
-        $site = Site::where('site_code', $siteCode)->firstOrFail();
-
-        //return form page
-        return Inertia::render(
-            'Security/Visitor/VisitorForm',
-            [
-                'site' => $site,
-            ]
-        );
     }
 
     /**
@@ -429,7 +400,7 @@ class VisitorController extends Controller
         }
 
         if (Str::startsWith($code, 'V') || Str::startsWith($code, 'C') || Str::startsWith($code, 'D')) {
-            return $this->scanGatePass($code, $site);
+            return $this->scanGatePass($code);
         }
 
         activity()
@@ -486,9 +457,9 @@ class VisitorController extends Controller
         ], 400);
     }
 
-    private function scanGatePass(string $passNumber, string $site)
+    private function scanGatePass(string $passNumber)
     {
-        $site_id = Site::where('site_code',$site)->value('id');
+        $site_id = auth()->user()->site->id;
 
         $visitor = Visitor::whereHas('gatePass', function ($q) use ($passNumber, $site_id) {
             $q->where('pass_number', $passNumber)

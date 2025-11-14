@@ -11,16 +11,16 @@ use Carbon\Carbon;
 class UserController extends Controller
 {
     //get admin manage user page
-    public function getManageUserPage(Request $request)
+    public function getManageUserPage()
     {
-        return Inertia::render('Security/Visitor/AdminManageUser');
+        return Inertia::render('ManageUser/UserDashboard');
     }
 
     public function getUserStatsCard()
     {
         $total_user = User::count();
 
-        $total_admin = User::where('role', "admin")->count();
+        $total_admin = User::role('admin')->count();
 
         $total_recent_users = User::where('created_at', '>=', Carbon::now()->subWeeks(2))->count();
 
@@ -37,27 +37,27 @@ class UserController extends Controller
         $limit = $request->input('limit', 50);
         $keyword = $request->input('keyword');
 
-        $query = User::query();
+        $query = User::with(['roles', 'site']); // eager load relationships
 
         if ($keyword) {
             $query->where(function ($q) use ($keyword) {
                 $q->where('name', 'LIKE', "%{$keyword}%")
-                    ->orWhere('site', 'LIKE', "%{$keyword}%")
-                    ->orWhere('email', "LIKE", "%{$keyword}%")
-                    ->orWhere('role', "LIKE", "%{$keyword}%");
-
+                    ->orWhere('email', 'LIKE', "%{$keyword}%")
+                    ->orWhereHas('roles', function ($qr) use ($keyword) {
+                        $qr->where('name', 'LIKE', "%{$keyword}%");
+                    })
+                    ->orWhereHas('site', function ($qs) use ($keyword) {
+                        $qs->where('site_code', 'LIKE', "%{$keyword}%");
+                    });
             });
         }
 
-        // Apply limit only if no search keyword
-        if (!$keyword) {
-            $query->take($limit);
-        }
-
+        // Paginate results instead of take()
         $users = $query->latest()->get();
+
         return response()->json([
             'data' => $users,
-            'message' => "Users successfully fetched"
+            'message' => 'Users successfully fetched'
         ]);
     }
 
@@ -67,15 +67,20 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
             'role' => 'required|in:admin,guard,receptionist',
-            'site' => 'required|in:Site 1,Site 2,Site 3,Site 4',
+            'site_id' => 'required',
         ]);
 
-        $user->update($request->all());
+        // Update user info (exclude role since we handle it separately)
+        $user->update($request->only(['name', 'email', 'site_id']));
 
+        // Replace old roles with the new one
+        $user->syncRoles([$request->role]);
+
+        // Log activity
         activity()
             ->causedBy(auth()->user())
             ->performedOn($user)
-            ->log("Update User: {$user->email}");
+            ->log("Updated user {$user->email} role to {$request->role}");
 
         return response()->json(['message' => 'User updated successfully']);
     }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\PasswordPolicy;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class PasswordPolicyController extends Controller
 {
@@ -16,6 +17,10 @@ class PasswordPolicyController extends Controller
             'data' => $policy,
             'messages' => "Successfully fetched policy"
         ]);
+    }
+
+    public function getPasswordPolicyPage(){
+        return Inertia::render('PasswordPolicy');
     }
 
     public function update(Request $request)

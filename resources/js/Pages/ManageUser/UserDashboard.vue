@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import AdminAuthenticatedLayout from "@/Layouts/AdminAuthenticatedLayout.vue";
+import AdminAuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Card } from "@/components/ui/card";
 import axios from "axios";
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
@@ -12,7 +12,6 @@ import {
     BreadcrumbLink,
 } from "@/components/ui/breadcrumb";
 import UserTable from "@/Components/ManageUser/UserTable.vue";
-// import PasswordPolicyModal from "@/Components/ManageUser/PasswordPolicyModal.vue";
 import CreateUserModal from "@/Components/ManageUser/CreateUserModal.vue";
 import EditUserModal from "@/Components/ManageUser/EditUserModal .vue";
 import DeleteUserModal from "@/Components/ManageUser/DeleteUserModal.vue";
@@ -21,11 +20,11 @@ const limitTable = ref("50");
 const searchQuery = ref("");
 const currentTime = ref(new Date());
 const userList = ref([]);
-const showPasswordPolicyModal = ref(false);
 const showCreateUserModal = ref(false);
 const showEditUserModal = ref(false);
 const showDeleteUserModal = ref(false);
 const selectedUser = ref(null);
+const selectedDeleteUser = ref(null);
 const totalAdmin = ref(0);
 const totalUser = ref(0);
 const totalRecentUser = ref(0);
@@ -49,12 +48,17 @@ function openEditUserModal(user) {
     showEditUserModal.value = true;
 }
 
+function openDeleteUserModal(user) {
+    selectedDeleteUser.value = user;
+    showDeleteUserModal.value = true;
+}
+
 async function fetchUser(
     limit = limitTable.value,
     keyword = searchQuery.value
 ) {
     try {
-        const res = await axios.get("/admin/visitor/user-list", {
+        const res = await axios.get("/admin/get-user-list", {
             params: {
                 limit,
                 keyword,
@@ -87,18 +91,6 @@ onMounted(() => {
         currentTime.value = new Date();
     }, 1000);
 });
-
-function openDeleteUserModal(user) {
-    console.log("test enter function", user);
-    selectedUser.value = user;
-    console.log("finish assigneded", selectedUser);
-    showDeleteUserModal.value = true;
-}
-
-function closeDeleteUserModal() {
-    showDeleteUserModal.value = false;
-    selectedUser.value = null;
-}
 
 watch(selectedUser, (newUser) => {
     if (newUser) {
@@ -134,7 +126,7 @@ watch(searchQuery, (newVal) => {
                 </BreadcrumbList>
             </Breadcrumb>
         </template>
-
+        <button @click="openDeleteUserModal">open</button>
         <Card
             class="shadow-lg shadow-opacity-30 p-2 mb-4 text-2xl font-bold flex items-center justify-between bg-gray-100"
         >
@@ -177,7 +169,9 @@ watch(searchQuery, (newVal) => {
                         <p class="text-sm font-medium text-blue-600">
                             Total Users
                         </p>
-                        <p class="text-2xl font-bold text-blue-900">{{ totalUser }}</p>
+                        <p class="text-2xl font-bold text-blue-900">
+                            {{ totalUser }}
+                        </p>
                     </div>
                 </div>
             </Card>
@@ -205,7 +199,9 @@ watch(searchQuery, (newVal) => {
                         <p class="text-sm font-medium text-purple-600">
                             Admin Users
                         </p>
-                        <p class="text-2xl font-bold text-purple-900">{{ totalAdmin }}</p>
+                        <p class="text-2xl font-bold text-purple-900">
+                            {{ totalAdmin }}
+                        </p>
                     </div>
                 </div>
             </Card>
@@ -233,7 +229,9 @@ watch(searchQuery, (newVal) => {
                         <p class="text-sm font-medium text-orange-600">
                             Recent Users
                         </p>
-                        <p class="text-2xl font-bold text-orange-900">{{ totalRecentUser }}</p>
+                        <p class="text-2xl font-bold text-orange-900">
+                            {{ totalRecentUser }}
+                        </p>
                     </div>
                 </div>
             </Card>
@@ -249,30 +247,36 @@ watch(searchQuery, (newVal) => {
             @open-delete-user-modal="openDeleteUserModal"
         />
 
-        <!-- <PasswordPolicyModal
-            :show="showPasswordPolicyModal"
-            @close="showPasswordPolicyModal = false"
-        /> -->
-
         <CreateUserModal
             :show="showCreateUserModal"
-            @close="showCreateUserModal = false"
-            @saved="fetchUser"
+            @close="
+                () => {
+                    showCreateUserModal = false;
+                    fetchUser();
+                }
+            "
         />
 
         <EditUserModal
             :show="showEditUserModal"
             :user="selectedUser"
-            @saved="fetchUser"
-            @close="showEditUserModal = false"
+            @close="
+                () => {
+                    showEditUserModal = false;
+                    fetchUser();
+                }
+            "
         />
 
         <DeleteUserModal
             :show="showDeleteUserModal"
-            :user-id="selectedUser"
-            v-if="selectedUser"
-            @deleted="fetchUser"
-            @close="closeDeleteUserModal"
+            :user="selectedDeleteUser"
+            @close="
+                () => {
+                    showDeleteUserModal = false;
+                    fetchUser();
+                }
+            "
         />
     </AdminAuthenticatedLayout>
 </template>

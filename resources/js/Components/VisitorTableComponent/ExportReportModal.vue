@@ -51,7 +51,7 @@ const submitForm = async () => {
         };
 
         const response = await axios.post(
-            "/admin/visitor/generate-report",
+            "/visitor/generate-visitor-report",
             params,
             {
                 responseType: "blob",

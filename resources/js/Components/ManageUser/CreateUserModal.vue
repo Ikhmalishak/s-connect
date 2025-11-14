@@ -27,7 +27,7 @@ const formSchema = toTypedSchema(
         .object({
             name: z.string().min(2).max(50),
             email: z.string().toLowerCase().email(),
-            site: z.enum(["Site 1", "Site 2", "Site 3", "Site 4"]),
+            site_id: z.string(),
             role: z.enum(["admin", "guard", "receptionist"]),
             password: z
                 .string()
@@ -41,22 +41,24 @@ const formSchema = toTypedSchema(
 );
 const form = useForm({ validationSchema: formSchema });
 const props = defineProps<{ show: boolean }>();
-const emit = defineEmits(["close","saved"]);
+const emit = defineEmits(["close"]);
 const errorMessage = ref("");
-
+const successMessage = ref("");
 
 const onSubmit = form.handleSubmit(async (values) => {
     try {
         const res = await axios.post("/register", values);
         console.log("Form submitted!", res.data);
-        emit("saved");
-        emit("close");
+        setTimeout(() => {
+            successMessage.value = "User created successfully";
+            emit('close');
+        }, 1000);
     } catch (e: any) {
         errorMessage.value =
             e.response?.data?.message ||
             "Failed to register user. Please try again.";
-        
-            setTimeout(() => errorMessage.value = "", 1000)
+
+        setTimeout(() => (errorMessage.value = ""), 1000);
         console.error("Submit failed:", e);
     }
 });
@@ -114,7 +116,10 @@ const onSubmit = form.handleSubmit(async (values) => {
                                     <FormMessage />
                                 </FormItem>
                             </FormField>
-                            <FormField v-slot="{ componentField }" name="site">
+                            <FormField
+                                v-slot="{ componentField }"
+                                name="site_id"
+                            >
                                 <FormItem>
                                     <FormLabel>Site</FormLabel>
                                     <Select v-bind="componentField">
@@ -127,16 +132,16 @@ const onSubmit = form.handleSubmit(async (values) => {
                                         </FormControl>
                                         <SelectContent class="z-[99999]">
                                             <SelectGroup>
-                                                <SelectItem value="Site 1">
+                                                <SelectItem value="1">
                                                     Site 1
                                                 </SelectItem>
-                                                <SelectItem value="Site 2">
+                                                <SelectItem value="2">
                                                     Site 2
                                                 </SelectItem>
-                                                <SelectItem value="Site 3">
+                                                <SelectItem value="3">
                                                     Site 3
                                                 </SelectItem>
-                                                <SelectItem value="Site 4">
+                                                <SelectItem value="4">
                                                     Site 4
                                                 </SelectItem>
                                             </SelectGroup>
@@ -210,6 +215,10 @@ const onSubmit = form.handleSubmit(async (values) => {
                             <!-- Error message -->
                             <p v-if="errorMessage" class="text-red-600 mt-2">
                                 {{ errorMessage }}
+                            </p>
+                            <!-- Success message -->
+                            <p v-if="successMessage" class="text-red-600 mt-2">
+                                {{ successMessage }}
                             </p>
                             <!-- Submit -->
                             <div class="flex justify-end">

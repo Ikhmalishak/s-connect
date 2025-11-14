@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\ManageRoomReservation;
 
+use App\Http\Controllers\Controller;
 use App\Events\RoomReservationCreated;
 use App\Models\RoomReservation;
 use Illuminate\Http\Request;
@@ -11,6 +12,10 @@ use Carbon\Carbon;
 
 class RoomReservationController extends Controller
 {
+    public function dashboard()
+    {
+        return Inertia::render('ManageRoomReservation/RoomReservationDashboard');
+    }
     public function getRoomReservationTabletInterface($id)
     {
         return Inertia::render('ManageRoomReservation/RoomReservationTablet', [
@@ -97,12 +102,8 @@ class RoomReservationController extends Controller
             ->whereDate('date', $request->date)
             ->where('status', "active")
             ->where(function ($q) use ($startDateTime, $endDateTime) {
-                $q->whereBetween('start_time', [$startDateTime, $endDateTime])
-                    ->orWhereBetween('end_time', [$startDateTime, $endDateTime])
-                    ->orWhere(function ($q2) use ($startDateTime, $endDateTime) {
-                        $q2->where('start_time', '<=', $startDateTime)
-                            ->where('end_time', '>=', $endDateTime);
-                    });
+                $q->where('start_time', '<', $endDateTime)
+                    ->where('end_time', '>', $startDateTime);
             })
             ->exists();
 
@@ -138,6 +139,8 @@ class RoomReservationController extends Controller
     public function cancel($id)
     {
         $reservation = RoomReservation::findOrFail($id);
+
+        event(new RoomReservationCreated());
 
         $reservation->update(['status' => 'cancelled']);
 

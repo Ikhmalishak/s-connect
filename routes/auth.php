@@ -18,6 +18,9 @@ Route::middleware('guest')->group(function () {
 
     Route::post('register', [RegisteredUserController::class, 'store']);
 
+    Route::get('/login', [RegisteredUserController::class, 'login'])
+        ->name('login');
+
     Route::post('/login', [AuthenticatedSessionController::class, 'store'])
         ->name('login.submit');
 
@@ -35,6 +38,7 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
+
     Route::get('verify-email', EmailVerificationPromptController::class)
         ->name('verification.notice');
 

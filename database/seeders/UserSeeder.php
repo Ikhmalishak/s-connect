@@ -13,34 +13,44 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        User::create([
+        $superuser = User::create([
+            'name' => 'Super Admin',
+            'email' => 'superadmin@skpres.com',
+            'password' => Hash::make('12345678'),
+            'site_id' => '2',
+            'password_changed_at' => now(),
+            'is_first_time_login' => false,
+        ]);
+        $superuser->assignRole('superadmin');
+
+        $admin = User::create([
             'name' => 'Admin',
             'email' => 'admin@skpres.com',
             'password' => Hash::make('12345678'),
-            'role' => 'admin',
-            'site' => 'Site 2',
+            'site_id' => '2',
             'password_changed_at' => now(),
             'is_first_time_login' => false,
         ]);
+        $admin->assignRole('admin');
 
-        User::create([
+        $guard = User::create([
             'name' => 'Guard',
             'email' => 'guard@skpres.com',
             'password' => Hash::make('12345678'),
-            'role' => 'guard',
-            'site' => 'Site 2',
+            'site_id' => '2',
             'password_changed_at' => now(),
             'is_first_time_login' => false,
         ]);
+        $guard->assignRole('guard');
 
-        User::create([
+        $receptionist = User::create([
             'name' => 'Receptionist',
             'email' => 'receptionist@skpres.com',
             'password' => Hash::make('12345678'),
-            'role' => 'receptionist',
-            'site' => 'Site 2',
+            'site_id' => '2',
             'password_changed_at' => now(),
             'is_first_time_login' => false,
         ]);
+        $receptionist->assignRole('receptionist');
     }
 }

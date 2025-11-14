@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import AdminAuthenticatedLayout from "@/Layouts/AdminAuthenticatedLayout.vue";
+import AdminAuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Card } from "@/components/ui/card";
 import {
     Breadcrumb,
@@ -43,7 +43,7 @@ const formattedTime = computed(() =>
 const fetchLogs = async () => {
     loading.value = true;
     try {
-        const res = await axios.get("/admin/visitor/system-log-list", {
+        const res = await axios.get("/admin/get-system-log-list", {
             params: {
                 search: search.value,
                 sort: sortOrder.value,

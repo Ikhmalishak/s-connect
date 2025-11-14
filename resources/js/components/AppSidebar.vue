@@ -18,7 +18,7 @@ import {
     SidebarMenuItem,
     SidebarRail,
 } from "@/components/ui/sidebar";
-import { usePage } from "@inertiajs/vue3";
+import { usePage, Link } from "@inertiajs/vue3";
 
 const page = usePage();
 
@@ -27,56 +27,94 @@ const props = defineProps({
     variant: { type: String, required: false },
     collapsible: { type: String, required: false },
     class: { type: null, required: false },
+    user: { type: Object, required: true },
 });
 
-// This is sample data.
-const data = {
-    versions: ["1.0.1"],
-    navMain: [
-        {
-            title: "Home",
-            url: "#",
-            items: [
-                {
-                    title: "Dashboard",
-                    url: "/admin/visitor/dashboard",
-                },
-                {
-                    title: "Manage User",
-                    url: "/admin/visitor/manage-user",
-                },
-            ],
-        },
-        {
-            title: "Setting",
-            url: "#",
-            items: [
-                {
-                    title: "Password Configuration",
-                    url: "/admin/password-policy",
-                },
-                {
-                    title: "System Log",
-                    url: "/admin/visitor/system-log",
-                },
-            ],
-        },
-    ],
-};
+// Extract permission names from the user
+const userPermissionNames = props.user?.permissions?.map((p) => p) || [];
+
+// Sample navigation structure
+const navMain = [
+    {
+        title: "Home",
+        items: [
+            { title: "Dashboard", url: "/dashboard", permission: "public" },
+        ],
+        permission: "public",
+    },
+    {
+        title: "Manage Visitor",
+        items: [
+            {
+                title: "Overview",
+                url: "/visitor/dashboard",
+                permission: "visitor.access",
+            },
+            {
+                title: "Report",
+                url: "/visitor/report",
+                permission: "visitor.report",
+            },
+        ],
+        permission: "visitor.access", // parent permission
+    },
+    {
+        title: "Meeting Room Reservation",
+        items: [
+            {
+                title: "Overview",
+                url: "/room-reservation/dashboard",
+                permission: "room-reservation.access",
+            }
+        ],
+        permission: "room-reservation.access",
+    },
+    {
+        title: "Setting",
+        items: [
+            {
+                title: "Password Configuration",
+                url: "/admin/get-password-policy-page",
+                permission: "superadmin",
+            },
+            {
+                title: "System Log",
+                url: "/admin/system-log",
+                permission: "superadmin",
+            },
+            {
+                title: "Manage User",
+                url: "/admin/manage-user",
+                permission: "superadmin",
+            },
+        ],
+        permission: "superadmin",
+    },
+];
+
+// Filter nav items by user permissions (both parent and children)
+const filteredNav = navMain
+    .map((parent) => {
+        const filteredItems = parent.items.filter((child) =>
+            userPermissionNames.includes(child.permission)
+        );
+        if (filteredItems.length === 0) return null;
+        return { ...parent, items: filteredItems };
+    })
+    .filter(Boolean);
 </script>
 
 <template>
     <Sidebar v-bind="props">
+        <!-- Sidebar header -->
         <SidebarHeader class="p-0">
-            <VersionSwitcher
-                :versions="data.versions"
-                :default-version="data.versions[0]"
-            />
-            <!-- <SearchForm /> -->
+            <VersionSwitcher :versions="['1.0.1']" :default-version="'1.0.1'" />
         </SidebarHeader>
+
+        <!-- Sidebar content -->
         <SidebarContent class="gap-0">
             <Collapsible
-                v-for="item in data.navMain"
+                v-for="item in filteredNav"
                 :key="item.title"
                 :title="item.title"
                 default-open
@@ -94,6 +132,7 @@ const data = {
                             />
                         </CollapsibleTrigger>
                     </SidebarGroupLabel>
+
                     <CollapsibleContent>
                         <SidebarGroupContent>
                             <SidebarMenu>
@@ -108,9 +147,9 @@ const data = {
                                         "
                                         class="hover:bg-blue-100"
                                     >
-                                        <a :href="childItem.url">{{
+                                        <Link :href="childItem.url">{{
                                             childItem.title
-                                        }}</a>
+                                        }}</Link>
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>
                             </SidebarMenu>
@@ -118,7 +157,16 @@ const data = {
                     </CollapsibleContent>
                 </SidebarGroup>
             </Collapsible>
+
+            <!-- Fallback if no items are visible -->
+            <div
+                v-if="filteredNav.length === 0"
+                class="p-4 text-center text-sm text-muted-foreground"
+            >
+                No menu items available for your role.
+            </div>
         </SidebarContent>
+
         <SidebarRail />
     </Sidebar>
 </template>

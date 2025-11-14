@@ -20,7 +20,7 @@ const submit = async () => {
         const response = await axios.post("/mfa-verify", { code: code.value });
 
         if (response.status === 200) {
-            router.visit("/admin/visitor/dashboard");
+            router.visit("/");
         }
     } catch (err) {
         if (err.response?.status === 422) {

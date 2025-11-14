@@ -14,10 +14,9 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('department_id')->nullable()->constrained()->onDelete('set null');
             $table->foreignId('manager_id')->nullable()->references('id')->on('users')->onDelete('set null');
+            $table->foreignId('site_id')->nullable()->references('id')->on('sites')->onDelete('set null');
             $table->string('name');
-            $table->string('site');
             $table->string('email')->unique();
-            $table->string('role')->default('user');
             $table->timestamp('password_changed_at')->nullable();
             $table->boolean('is_first_time_login')->default(true);
             $table->timestamp('email_verified_at')->nullable();

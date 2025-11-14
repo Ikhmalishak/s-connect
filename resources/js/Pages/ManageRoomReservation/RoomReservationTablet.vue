@@ -36,20 +36,24 @@ const updateTime = () => {
 };
 
 // Safe watch for reservation changes
-watch(currentReservation, async (newVal) => {
-    if (newVal && newVal.end_time) {
-        // Hide first, then show after next tick to ensure clean DOM
-        showFlipCountdown.value = false;
-        await nextTick();
-        showFlipCountdown.value = true;
-    } else {
-        showFlipCountdown.value = false;
-    }
-}, { immediate: false });
+watch(
+    currentReservation,
+    async (newVal) => {
+        if (newVal && newVal.end_time) {
+            // Hide first, then show after next tick to ensure clean DOM
+            showFlipCountdown.value = false;
+            await nextTick();
+            showFlipCountdown.value = true;
+        } else {
+            showFlipCountdown.value = false;
+        }
+    },
+    { immediate: false }
+);
 
 async function fetchRoomDetails(id = roomId) {
     try {
-        const res = await axios.get(`/rooms/${id}`);
+        const res = await axios.get(`/room-reservation/get-room-by-id/${id}`);
         console.log(res.data);
         roomName.value = res.data.data.name;
         capacity.value = res.data.data.capacity;
@@ -61,7 +65,7 @@ async function fetchRoomDetails(id = roomId) {
 
 const fetchRoomStatus = async () => {
     try {
-        const res = await axios.get(`/room-reservations/${roomId}/status`);
+        const res = await axios.get(`/room-reservation/${roomId}/status`);
         console.log(res.data);
         roomStatus.value = res.data.status;
         currentReservation.value = res.data.current_reservation;
@@ -102,8 +106,10 @@ const formattedEnd = computed(() =>
 
 // Format deadline for flip countdown
 const flipDeadline = computed(() => {
-    if (!currentReservation.value?.end_time) return '';
-    return dayjs(currentReservation.value.end_time).format('YYYY-MM-DD HH:mm:ss');
+    if (!currentReservation.value?.end_time) return "";
+    return dayjs(currentReservation.value.end_time).format(
+        "YYYY-MM-DD HH:mm:ss"
+    );
 });
 
 function updateProgress() {
@@ -129,10 +135,23 @@ function updateProgress() {
     }
 }
 
+function scheduleNextHalfHourRefresh() {
+    console.log("30 minutes");
+    const now = new Date();
+    const msUntilNextHalfHour =
+        (30 - (now.getMinutes() % 30)) * 60 * 1000 - now.getSeconds() * 1000;
+    setTimeout(async () => {
+        await fetchRoomStatus();
+        await fetchRoomDetails();
+        scheduleNextHalfHourRefresh(); // schedule next one
+    }, msUntilNextHalfHour);
+}
+
 onMounted(async () => {
     updateTime();
     await fetchRoomDetails();
     await fetchRoomStatus();
+    scheduleNextHalfHourRefresh();
 
     // Store interval references for cleanup
     intervals.value.push(setInterval(updateTime, 1000));
@@ -160,7 +179,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
     // Clear all intervals
-    intervals.value.forEach(interval => clearInterval(interval));
+    intervals.value.forEach((interval) => clearInterval(interval));
     intervals.value = [];
 
     if (window.Echo) {
@@ -209,7 +228,10 @@ onUnmounted(() => {
                         </p>
 
                         <!-- Flip Countdown with Safe Wrapper -->
-                        <div v-if="showFlipCountdown && currentReservation" class="flip-countdown-container">
+                        <div
+                            v-if="showFlipCountdown && currentReservation"
+                            class="flip-countdown-container"
+                        >
                             <vue3-flip-countdown
                                 :key="`flip-${currentReservation.id}`"
                                 :deadline="flipDeadline"
@@ -226,14 +248,31 @@ onUnmounted(() => {
                         </div>
 
                         <!-- Fallback Simple Countdown -->
-                        <div v-else-if="roomStatus === 'in_use' && currentReservation" class="countdown-simple">
+                        <div
+                            v-else-if="
+                                roomStatus === 'in_use' && currentReservation
+                            "
+                            class="countdown-simple"
+                        >
                             <div class="countdown-section">
-                                <div class="countdown-value">{{ timeLeftHours.toString().padStart(2, '0') }}</div>
+                                <div class="countdown-value">
+                                    {{
+                                        timeLeftHours
+                                            .toString()
+                                            .padStart(2, "0")
+                                    }}
+                                </div>
                                 <div class="countdown-label">HOURS</div>
                             </div>
                             <div class="countdown-separator">:</div>
                             <div class="countdown-section">
-                                <div class="countdown-value">{{ timeLeftMinutes.toString().padStart(2, '0') }}</div>
+                                <div class="countdown-value">
+                                    {{
+                                        timeLeftMinutes
+                                            .toString()
+                                            .padStart(2, "0")
+                                    }}
+                                </div>
                                 <div class="countdown-label">MINUTES</div>
                             </div>
                         </div>
@@ -289,7 +328,7 @@ onUnmounted(() => {
                             IN PROGRESS
                         </div>
 
-                        <div class="text-sm opacity-80">
+                        <div class="text-sm">
                             {{
                                 new Date(event.start_time).toLocaleTimeString(
                                     [],
@@ -308,11 +347,13 @@ onUnmounted(() => {
                         <div class="text-base font-semibold">
                             {{ event.purpose }}
                         </div>
-                        <div class="text-xs opacity-50">
+                        <div class="text-xs">
                             {{ event.user_name }}
                         </div>
                     </div>
-                    <div v-else class="text-center py-4">No Active Reservation Today</div>
+                    <div v-else class="text-center py-4">
+                        No Active Reservation Today
+                    </div>
                 </div>
             </div>
         </div>
@@ -322,22 +363,26 @@ onUnmounted(() => {
             class="absolute bottom-0 left-0 w-full h-10"
             :class="roomStatus === 'in_use' ? 'bg-red-700' : 'bg-white/20'"
         >
-            <div
-                class="h-full flex items-center justify-center transition-all duration-1000"
-                :class="
-                    roomStatus === 'in_use' ? 'bg-green-600' : 'bg-green-500'
-                "
-                :style="`width: ${progress}%;`"
-            >
+            <!-- Wrapper (your second div) -->
+            <div class="h-full flex items-center relative">
+                <!-- TEXT (inside second div, but floating, not affecting layout) -->
                 <p
                     v-if="roomStatus === 'in_use'"
-                    class="text-xl font-bold text-white text-shadow"
+                    class="absolute left-3 z-10 text-white font-bold text-xl"
                 >
-                    {{ timeLeftHours }} hour<span v-if="timeLeftHours !== 1">s</span>
-                    and
-                    {{ timeLeftMinutes }} minute<span v-if="timeLeftMinutes !== 1">s</span>
-                    left
+                    {{ timeLeftHours }}h {{ timeLeftMinutes }}m left
                 </p>
+
+                <!-- Green Progress (your third div) -->
+                <div
+                    class="h-full transition-all duration-1000"
+                    :class="
+                        roomStatus === 'in_use'
+                            ? 'bg-green-600'
+                            : 'bg-green-500'
+                    "
+                    :style="`width: ${progress}%;`"
+                ></div>
             </div>
         </div>
     </div>
@@ -355,7 +400,7 @@ onUnmounted(() => {
     display: flex;
     align-items: center;
     gap: 15px;
-    font-family: 'Courier New', monospace;
+    font-family: "Courier New", monospace;
 }
 
 .countdown-section {
@@ -416,7 +461,7 @@ onUnmounted(() => {
 }
 
 :deep(.flip-clock) {
-    font-family: 'Courier New', monospace !important;
+    font-family: "Courier New", monospace !important;
 }
 
 :deep(.flip-unit) {

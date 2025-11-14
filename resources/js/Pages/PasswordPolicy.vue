@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import AdminAuthenticatedLayout from "@/Layouts/AdminAuthenticatedLayout.vue";
+import AdminAuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Card } from "@/components/ui/card";
 import {
     Breadcrumb,
@@ -65,12 +65,12 @@ const formattedTime = computed(() =>
 onMounted(async () => {
     try {
         //password policy
-        const res = await axios.get("/password-policy");
+        const res = await axios.get("/admin/password-policy");
         policy.value = { ...res.data.data };
         originalPolicy.value = { ...res.data.data };
 
         //encryption database
-        const result = await axios.get("/encryption-settings");
+        const result = await axios.get("/admin/encryption-settings");
         console.log(result.data);
         encryptionSettings.value = result.data.data;
 
@@ -176,7 +176,7 @@ async function savePolicy() {
     errorMessage.value = "";
 
     try {
-        const res = await axios.post("/password-policy", policy.value);
+        const res = await axios.post("/admin/password-policy", policy.value);
         successMessage.value =
             res.data.message || "Password policy updated successfully!";
         originalPolicy.value = { ...policy.value };

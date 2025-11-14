@@ -12,7 +12,7 @@ return new class extends Migration {
             $table->foreignId('room_id')->constrained('rooms')->onDelete('cascade');
             $table->string('user_name');
             $table->string('user_id');
-            $table->string('email');
+            $table->string('email')->nullable();
             $table->dateTime('start_time');
             $table->dateTime('end_time');
             $table->date('date');

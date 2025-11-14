@@ -14,7 +14,7 @@ class ReportController extends Controller
 
     public function getSystemLogPage(Request $request)
     {
-        return Inertia::render('Security/Visitor/SystemLog');
+        return Inertia::render('SystemLog');
     }
 
     public function getSystemLog(Request $request)

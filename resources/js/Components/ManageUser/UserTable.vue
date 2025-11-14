@@ -24,7 +24,7 @@ const props = defineProps<{
     user: any;
 }>();
 
-const emit = defineEmits(["update:limit", "search", "openCreateUserModal", "openEditUserModal", "openDeleteUserModal"]);
+const emit = defineEmits(["update:limit", "search", "openCreateUserModal", "openEditUserModal","openDeleteUserModal"]);
 
 const searchQuery = ref("");
 
@@ -149,9 +149,9 @@ watch(searchQuery, (newVal) => {
                         >
                             <td class="text-center p-2">{{ index + 1 }}</td>
                             <td class="text-center p-2">{{ u.name }}</td>
-                            <td class="text-center p-2">{{ u.site ?? "-" }}</td>
+                            <td class="text-center p-2">{{ u.site?.name ?? "-" }}</td>
                             <td class="text-center p-2">{{ u.email }}</td>
-                            <td class="text-center p-2">{{ u.role ?? "-" }}</td>
+                            <td class="text-center p-2">{{ u.roles[0].name ?? "-" }}</td>
                             <td class="text-center p-2">
                                 {{
                                     u.password_changed_at

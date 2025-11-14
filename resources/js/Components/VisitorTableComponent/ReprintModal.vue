@@ -3,11 +3,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ref } from "vue";
 import axios from "axios";
-interface GatePass {
-    id: number;
-    pass_number: string;
-    state: string;
-}
 
 const props = defineProps<{
     show: boolean;
@@ -24,7 +19,7 @@ const alertMessage = ref("");
 //function to reprint visitor sticker
 async function reprintSticker() {
     try {
-        const res = await axios.get(`/reprint/${ackNumber.value}`);
+        const res = await axios.get(`/visitor/reprint-visitor-sticker/${ackNumber.value}`);
 
         console.log("Successfully reprinted sticker", res.data);
 

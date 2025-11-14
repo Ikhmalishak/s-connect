@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import AdminAuthenticatedLayout from "@/Layouts/AdminAuthenticatedLayout.vue";
+import AdminAuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Card, CardContent } from "@/components/ui/card";
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import {
@@ -88,7 +88,7 @@ function formatDateLocal(dateValue: DateValue) {
 
 async function fetchReport() {
     try {
-        const res = await axios.get("/admin/visitor/get-report", {
+        const res = await axios.get("/visitor/get-visitor-report-data", {
             params: {
                 start_date: value.value?.start
                     ? formatDateLocal(value.value.start)
@@ -133,7 +133,7 @@ async function fetchReport() {
 
 async function getVisitorByWeek() {
     try {
-        const res = await axios.get("/admin/visitor/get-report-by-week", {
+        const res = await axios.get("/visitor/get-visitor-data-by-week", {
             params: {
                 year: selectedYear.value,
                 site: selectedSite2.value,
@@ -254,7 +254,7 @@ const categoryColors = [
                     </BreadcrumbItem>
                     <BreadcrumbSeparator />
                     <BreadcrumbItem>
-                        <BreadcrumbPage>Admin Reporting Dashboard</BreadcrumbPage>
+                        <BreadcrumbPage>Visitor Report Dashboard</BreadcrumbPage>
                     </BreadcrumbItem>
                 </BreadcrumbList>
             </Breadcrumb>
@@ -267,30 +267,6 @@ const categoryColors = [
             <div class="flex flex-row items-center space-x-3">
                 <img src="/assets/ss1.png" class="h-12 w-12" alt="" />
                 <div>Visitor Management System</div>
-            </div>
-            <div class="bg-white border rounded-md p-1 flex gap-1">
-                <Link
-                    href="/admin/visitor/dashboard"
-                    :class="[
-                        'px-3 py-1.5 text-sm rounded-md font-medium transition-all duration-200',
-                        $page.url.startsWith('/admin/visitor/dashboard')
-                            ? 'bg-blue-600 text-white shadow'
-                            : 'text-gray-600 hover:text-blue-600 hover:bg-white',
-                    ]"
-                >
-                    Visitor
-                </Link>
-                <Link
-                    href="/admin/visitor/report-dashboard"
-                    :class="[
-                        'px-3 py-1.5 text-sm rounded-md font-medium transition-all duration-200',
-                        $page.url.startsWith('/admin/visitor/report-dashboard')
-                            ? 'bg-blue-600 text-white shadow'
-                            : 'text-gray-600 hover:text-blue-600 hover:bg-white',
-                    ]"
-                >
-                    Reports
-                </Link>
             </div>
             <div
                 class="flex flex-row space-x-4 text-base font-normal text-gray-600 text-right"

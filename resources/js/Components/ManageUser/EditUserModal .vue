@@ -28,7 +28,7 @@ const formSchema = toTypedSchema(
     z.object({
         name: z.string().min(2).max(50),
         email: z.string().toLowerCase().email(),
-        site: z.enum(["Site 1", "Site 2", "Site 3", "Site 4"]),
+        site_id: z.string(),
         role: z.enum(["admin", "guard", "receptionist"]),
     })
 );
@@ -38,8 +38,8 @@ const form = useForm({
     initialValues: {
         name: props.user?.name || "",
         email: props.user?.email || "",
-        site: props.user?.site || "",
-        role: props.user?.role || "",
+        site_id: String(props.user?.site_id || ""),
+        role: props.user?.roles[0].name || "",
     },
 });
 
@@ -51,8 +51,8 @@ watch(
                 values: {
                     name: newUser.name,
                     email: newUser.email,
-                    site: newUser.site,
-                    role: newUser.role,
+                    site_id: String(newUser.site_id),
+                    role: newUser.roles[0].name,
                 },
             });
         }
@@ -62,6 +62,7 @@ watch(
 
 const emit = defineEmits(["close", "saved"]);
 const errorMessage = ref("");
+const successMessage = ref("");
 const resetPasswordMessage = ref("");
 const isSubmitting = ref(false);
 const isResetting = ref(false);
@@ -69,9 +70,13 @@ const isResetting = ref(false);
 const onSubmit = form.handleSubmit(async (values) => {
     try {
         isSubmitting.value = true;
-        const res = await axios.put(`/update-user/${props.user.id}`, values);
-        emit("saved");
-        emit("close");
+        await axios.put(`/admin/update-user/${props.user.id}`, values);
+
+        // show success message
+        successMessage.value = "User updated successfully!";
+
+        // keep message visible for 1.5–2s, then close modal
+        setTimeout(() => (successMessage.value = ""), 1500);
     } catch (e: any) {
         errorMessage.value =
             e.response?.data?.message ||
@@ -85,7 +90,7 @@ const onSubmit = form.handleSubmit(async (values) => {
 const resetPassword = async () => {
     try {
         isResetting.value = true;
-        const res = await axios.post(`/reset-password/${props.user.id}`);
+        const res = await axios.post(`/admin/reset-password/${props.user.id}`);
         resetPasswordMessage.value = res.data.message;
         setTimeout(() => (resetPasswordMessage.value = ""), 2000);
     } catch (e: any) {
@@ -152,7 +157,10 @@ const resetPassword = async () => {
                                     <FormMessage />
                                 </FormItem>
                             </FormField>
-                            <FormField v-slot="{ componentField }" name="site">
+                            <FormField
+                                v-slot="{ componentField }"
+                                name="site_id"
+                            >
                                 <FormItem>
                                     <FormLabel>Site</FormLabel>
                                     <Select v-bind="componentField">
@@ -165,16 +173,16 @@ const resetPassword = async () => {
                                         </FormControl>
                                         <SelectContent class="z-[99999]">
                                             <SelectGroup>
-                                                <SelectItem value="Site 1">
+                                                <SelectItem value="1">
                                                     Site 1
                                                 </SelectItem>
-                                                <SelectItem value="Site 2">
+                                                <SelectItem value="2">
                                                     Site 2
                                                 </SelectItem>
-                                                <SelectItem value="Site 3">
+                                                <SelectItem value="3">
                                                     Site 3
                                                 </SelectItem>
-                                                <SelectItem value="Site 4">
+                                                <SelectItem value="4">
                                                     Site 4
                                                 </SelectItem>
                                             </SelectGroup>
@@ -216,6 +224,12 @@ const resetPassword = async () => {
                             <!-- Error message -->
                             <p v-if="errorMessage" class="text-red-600 mt-2">
                                 {{ errorMessage }}
+                            </p>
+                            <p
+                                v-if="successMessage"
+                                class="text-green-600 mt-2"
+                            >
+                                {{ successMessage }}
                             </p>
                             <p
                                 v-if="resetPasswordMessage"

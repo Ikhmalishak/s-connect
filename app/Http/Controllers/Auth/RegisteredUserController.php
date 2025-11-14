@@ -25,6 +25,11 @@ class RegisteredUserController extends Controller
         return Inertia::render('Auth/Register');
     }
 
+    public function login()
+    {
+        return Inertia::render('Auth/Login');
+    }
+    
     /**
      * Handle an incoming registration request.
      *
@@ -50,18 +55,19 @@ class RegisteredUserController extends Controller
             'email' => 'required|string|lowercase|email|max:255|unique:' . User::class,
             'password' => ['required', $passwordRule],
             'role' => 'required|string',
-            'site' => 'required|string',
+            'site_id' => 'required|string',
         ]);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role' => $request->role,
             'password_changed_at' => now(),
             'is_first_time_login' => 1,
-            'site' => $request->site,
+            'site_id' => $request->site_id,
         ]);
+
+        $user->syncRoles($request->role);
 
         event(new Registered($user));
 

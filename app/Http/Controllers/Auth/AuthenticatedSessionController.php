@@ -37,21 +37,13 @@ class AuthenticatedSessionController extends Controller
         $user = auth()->user();
 
         // Apply MFA only for admin
-        if ($user->role === 'admin') {
-            MfaHelper::sendMfaCode($user);
-            auth()->logout(); // prevent access until verified
-            return redirect()->route('mfa.verify');
-        }
+        // if ($user->hasRole('admin')) {
+        //     MfaHelper::sendMfaCode($user);
+        //     auth()->logout();
+        //     return redirect()->route('mfa.verify');
+        // }
 
-        // Normal redirect flow for others
-        switch ($user->role) {
-            case 'guard':
-                return redirect()->route('security.visitordashboard');
-            case 'receptionist':
-                return redirect()->route('receptionist.visitordashboard');
-            default:
-                return redirect()->route('login');
-        }
+        return redirect()->route('welcome');
     }
 
     /**

@@ -48,7 +48,7 @@ const cancelBookingStatusMessage = ref();
 const cancelBookingStatusType = ref();
 const roomList = ref<Room[]>([]);
 const bookingList = ref<Booking[]>([]);
-const selectedSite = ref("1");
+const selectedSite = ref("2");
 const selectedDate = ref(today(getLocalTimeZone()));
 const showBookingFormModal = ref(false);
 const showBookingDetailsModal = ref(false);
@@ -113,7 +113,7 @@ const df = new DateFormatter("en-US", {
 });
 
 async function fetchRooms(site_id = selectedSite.value) {
-    const res = await axios.get("/rooms", {
+    const res = await axios.get("/room-reservation/get-rooms-by-site", {
         params: {
             site_id,
         },
@@ -128,7 +128,7 @@ async function fetchRoomReservations(
     site_id = selectedSite.value,
     date = selectedDate.value
 ) {
-    const res = await axios.get("/room-reservations", {
+    const res = await axios.get("/room-reservation/get-room-reservations", {
         params: {
             site_id,
             date,
@@ -194,7 +194,7 @@ const submitBooking = async (formData: any) => {
     createBookingStatusMessage.value = ""; // reset first
 
     try {
-        const res = await axios.post("/room-reservations", formData);
+        const res = await axios.post("/room-reservation/create-room-reservations", formData);
 
         createBookingStatusMessage.value = res.data.message; // <-- show success here
         createBookingStatusType.value = "success";
@@ -221,7 +221,7 @@ function openBookingDetails(booking) {
 
 const cancelBooking = async (id) => {
     try {
-        const res = await axios.post(`/room-reservations/${id}/cancel`);
+        const res = await axios.post(`/room-reservation/${id}/cancel`);
         cancelBookingStatusMessage.value = res.data.message;
         cancelBookingStatusType.value = "success";
         fetchRoomReservations();

@@ -41,8 +41,8 @@ public function verifyCode(Request $request)
     if ($request->expectsJson()) {
         return response()->json(['message' => 'Authenticated successfully.']);
     }
-
-    return redirect()->route('admin.visitordashboard');
+dd("here");
+    return redirect()->route('welcome');
 }
 
 public function resendCode(Request $request)

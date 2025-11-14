@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { usePage } from "@inertiajs/vue3";
-import AdminAuthenticatedLayout from "@/Layouts/AdminAuthenticatedLayout.vue";
+import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Card } from "@/components/ui/card";
 import axios from "axios";
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
-import { Link } from "@inertiajs/vue3"; // Add this import
 import {
     Breadcrumb,
     BreadcrumbPage,
@@ -13,14 +12,6 @@ import {
     BreadcrumbItem,
     BreadcrumbLink,
 } from "@/components/ui/breadcrumb";
-import VisitorStatsCards from "@/Components/VisitorTableComponent/VisitorStatCard.vue";
-import VisitorTable from "@/Components/VisitorTableComponent/AdminVisitorTable.vue";
-import VisitorModal from "@/Components/VisitorTableComponent/VisitorModal.vue";
-import GatePassModal from "@/Components/VisitorTableComponent/GatePassModal.vue";
-import CheckoutModal from "@/Components/VisitorTableComponent/CheckoutModal.vue";
-import NotifyGuardModal from "@/Components/VisitorTableComponent/NotifyGuardModal.vue";
-import DetailsModal from "@/Components/VisitorTableComponent/DetailsModal.vue";
-import ReprintModal from "@/Components/VisitorTableComponent/ReprintModal.vue";
 import {
     Select,
     SelectContent,
@@ -30,6 +21,13 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import VisitorStatsCards from "@/Components/VisitorTableComponent/VisitorStatCard.vue";
+import VisitorTable from "@/Components/VisitorTableComponent/VisitorTable.vue";
+import VisitorModal from "@/Components/VisitorTableComponent/VisitorModal.vue";
+import GatePassModal from "@/Components/VisitorTableComponent/GatePassModal.vue";
+import CheckoutModal from "@/Components/VisitorTableComponent/CheckoutModal.vue";
+import NotifyGuardModal from "@/Components/VisitorTableComponent/NotifyGuardModal.vue";
+import DetailsModal from "@/Components/VisitorTableComponent/DetailsModal.vue";
 
 interface GatePass {
     id: number;
@@ -57,7 +55,7 @@ interface VisitorForm {
     gate_pass_id?: number;
     gate_pass: GatePass;
     other_reasons: string;
-    person_to_meet: string;
+    person_to_meet:string;
 }
 
 interface VisitorForm2 {
@@ -81,6 +79,7 @@ interface VisitorResponse {
     visitor_inside: VisitorForm2[];
     visitor_in_by_hour: VisitorInByHour[];
     visitor_out_by_hour: VisitorOutByHour[];
+    total_visitor_today: number;
 }
 
 const { props: pageProps } = usePage();
@@ -92,6 +91,7 @@ const visitorIn = ref<VisitorForm2[]>([]);
 const visitorInByHour = ref<VisitorInByHour[]>([]);
 const visitorOutByHour = ref<VisitorOutByHour[]>([]);
 const notifyVisitors = ref<VisitorForm[]>([]);
+const totalVisitorToday = ref(0);
 const limitTable = ref("50");
 const searchQuery = ref("");
 const currentTime = ref(new Date());
@@ -104,8 +104,7 @@ const showCheckoutModal = ref(false);
 const showNotifyModal = ref(false);
 const selectedVisitor = ref(null);
 const showDetailsModal = ref(false);
-const showReprintModal = ref(false);
-const selectedSite = ref("S2");
+const selectedSite = ref("2")
 let intervalId;
 
 const formattedDate = computed(() =>
@@ -121,49 +120,55 @@ const formattedTime = computed(() =>
     currentTime.value.toLocaleTimeString("en-GB")
 );
 
-async function fetchVisitors(site = selectedSite.value) {
+async function fetchVisitors(limit = limitTable.value) {
     try {
-        const res = await axios.get<VisitorResponse>(`/api/visitors`, {
-            params: {
-                site,
-            },
-        });
+        const res = await axios.get<VisitorResponse>(
+            `/visitor/get-visitor-data`
+        );
         visitorOut.value = res.data.visitor_today;
         visitorIn.value = res.data.visitor_inside;
         visitorInByHour.value = res.data.visitor_in_by_hour;
         visitorOutByHour.value = res.data.visitor_out_by_hour;
+        totalVisitorToday.value = res.data.total_visitor_today;
         console.log("Fetched:", res.data);
     } catch (e) {
         console.error("Failed to fetch visitors", e);
     }
 }
 
-async function fetchAdminVisitorTableData(
-    limit = limitTable.value,
-    keyword = searchQuery.value,
-    site = selectedSite.value
-) {
-    console.log(limit, keyword);
-    try {
-        const res = await axios.get("/admin/visitor/table-data", {
-            params: {
-                limit,
-                keyword,
-                site,
-            },
-        });
+async function fetchVisitorTableData(limit = limitTable.value, keyword = searchQuery.value){
+
+    console.log(limit,keyword)
+    try{
+        const res = await axios.get(
+            '/visitor/get-visitor-table-data',
+      {
+        params: {
+          limit,
+          keyword,
+        }
+      }
+        )      
         console.log("inside fetch table data", res.data.visitor);
 
         visitorForms.value = res.data.visitor;
-    } catch (e) {
-        console.log("Failed to fetch visitors table data", e);
+
+    } catch (e){
+        console.log("Failed to fetch visitors table data", e)
     }
 }
 
-async function fetchGatePassList() {
+async function fetchGatePass(site = selectedSite.value) {
     try {
-        const res = await axios.get("/gate-passes");
-        gatePassList.value = res.data;
+        const res = await axios.get("/visitor/gate-passes",
+            {
+                params: {
+                    site
+                }
+            }
+        );
+        gatePassList.value = res.data.gate_pass;
+        totalAvailableGatePass.value = res.data.available_gatepass;
         console.log("Fetched gate pass:", res.data);
     } catch (e) {
         console.error("Failed to fetch gate pass", e);
@@ -172,21 +177,11 @@ async function fetchGatePassList() {
 
 async function fetchVisitorInside() {
     try {
-        const res = await axios.get("/visitor/visitor-inside");
+        const res = await axios.get("/visitor/get-visitor-inside");
         console.log("Fetching visitor inside", res.data);
         visitorInsideList.value = res.data.data;
     } catch (e) {
         console.error("Failed to fetch visitor inside", e);
-    }
-}
-
-async function fetchTotalAvailableGatePass() {
-    try {
-        const res = await axios.get("/gate-pass/total");
-        console.log("available gate pass", res.data.available_gatepass);
-        totalAvailableGatePass.value = res.data.available_gatepass;
-    } catch (e) {
-        console.log("Failed to fetch total available gate pass", e);
     }
 }
 
@@ -227,11 +222,10 @@ function openDetailsModal(visitorId) {
 
 onMounted(() => {
     console.log("Mounted VisitorTable.vue");
-    fetchGatePassList();
-    fetchVisitorInside();
-    fetchTotalAvailableGatePass();
-    fetchAdminVisitorTableData();
     fetchVisitors();
+    fetchGatePass();
+    fetchVisitorInside();
+    fetchVisitorTableData();
 
     intervalId = setInterval(() => {
         currentTime.value = new Date();
@@ -242,9 +236,9 @@ onMounted(() => {
         window.Echo.channel("visitors")
             .listen(".visitor.registered", (e) => {
                 console.log("New VisitorRegistered event received:", e);
-                fetchAdminVisitorTableData();
-                fetchTotalAvailableGatePass();
-                fetchGatePassList();
+                fetchVisitors();
+                fetchVisitorTableData();
+                fetchGatePass();
             })
             .error((error) => {
                 console.error("WebSocket error on visitors channel:", error);
@@ -265,18 +259,8 @@ onMounted(() => {
                 console.error("WebSocket error on guard channel:", error);
             });
 
-        // New NotifyGuard listener
-        window.Echo.channel("guard")
-            .listen(".guard.scan", (e) => {
-                console.log("GuardScanInAndOut event received:", e);
-                fetchAdminVisitorTableData();
-            })
-            .error((error) => {
-                console.error("WebSocket error on guard channel:", error);
-            });
-
         console.log(
-            "Listening for VisitorRegistered and NotifyGuard and GuardScanInAndOut events via Reverb."
+            "Listening for VisitorRegistered and NotifyGuard events via Reverb."
         );
     } else {
         console.error(
@@ -285,21 +269,14 @@ onMounted(() => {
     }
 });
 
-watch(limitTable, (newVal) => {
-    console.log("Limit changed to:", newVal);
-    fetchAdminVisitorTableData();
+watch([limitTable, searchQuery, selectedSite], ([newLimit, newSearch, newSite]) => {
+    console.log("Limit:", newLimit);
+    console.log("Search:", newSearch);
+    console.log("Site:", newSite);
+    fetchVisitorTableData();
+    fetchGatePass();
 });
 
-watch(searchQuery, (newVal) => {
-    console.log("Search query changed to:", newVal);
-    fetchAdminVisitorTableData();
-});
-
-watch(selectedSite, (newVal) => {
-    console.log("Site changed", newVal);
-    fetchAdminVisitorTableData();
-    fetchVisitors();
-});
 watch(isGatePassModalOpen, (newValue, oldValue) => {
     console.log(`Modal changed: ${oldValue} -> ${newValue}`);
     if (newValue) {
@@ -324,7 +301,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <AdminAuthenticatedLayout>
+    <AuthenticatedLayout>
         <template #breadcrumb>
             <Breadcrumb>
                 <BreadcrumbList>
@@ -348,58 +325,13 @@ onUnmounted(() => {
                 <img src="/assets/ss1.png" class="h-12 w-12" alt="" />
                 <div>Visitor Management System</div>
             </div>
-            <div class="bg-white border rounded-md p-1 flex gap-1">
-                <Link
-                    href="/admin/visitor/dashboard"
-                    :class="[
-                        'px-3 py-1.5 text-sm rounded-md font-medium transition-all duration-200',
-                        $page.url.startsWith('/admin/visitor/dashboard')
-                            ? 'bg-blue-600 text-white shadow'
-                            : 'text-gray-600 hover:text-blue-600 hover:bg-white',
-                    ]"
-                >
-                    Visitor
-                </Link>
-                <Link
-                    href="/admin/visitor/report-dashboard"
-                    :class="[
-                        'px-3 py-1.5 text-sm rounded-md font-medium transition-all duration-200',
-                        $page.url.startsWith('/admin/visitor/report-dashboard')
-                            ? 'bg-blue-600 text-white shadow'
-                            : 'text-gray-600 hover:text-blue-600 hover:bg-white',
-                    ]"
-                >
-                    Reports
-                </Link>
-            </div>
 
-            <div class="flex flex-row items-center gap-10">
-                <div class="flex items-center gap-2">
-                    <label class="text-sm whitespace-nowrap"
-                        >Select Site :</label
-                    >
-                    <Select v-model="selectedSite">
-                        <SelectTrigger class="w-[180px]">
-                            <SelectValue placeholder="Select Site" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectGroup>
-                                <SelectLabel>Site</SelectLabel>
-                                <SelectItem value="S1">Site 1</SelectItem>
-                                <SelectItem value="S2">Site 2</SelectItem>
-                                <SelectItem value="S3">Site 3</SelectItem>
-                                <SelectItem value="S4">Site 4</SelectItem>
-                            </SelectGroup>
-                        </SelectContent>
-                    </Select>
-                </div>
                 <div
                     class="flex flex-row space-x-4 text-base font-normal text-gray-600 text-right"
                 >
                     <div>{{ formattedDate }}</div>
                     <div>{{ formattedTime }}</div>
                 </div>
-            </div>
         </Card>
 
         <NotifyGuardModal
@@ -420,11 +352,12 @@ onUnmounted(() => {
             :visitors="visitorForms"
             :limit="limitTable"
             :count="totalAvailableGatePass"
+            :total-visitor-today="totalVisitorToday"
             @update:limit="limitTable = $event"
             @search="searchQuery = $event"
             @open-gate-pass-modal="isGatePassModalOpen = true"
+            @open-checkout-modal="showCheckoutModal = true"
             @open-details-modal="openDetailsModal"
-            @open-reprint-modal="showReprintModal = true"
         />
 
         <VisitorModal
@@ -447,22 +380,18 @@ onUnmounted(() => {
             @updateRemarks="handleUpdateRemarks"
         />
 
-        <ReprintModal
-            :show="showReprintModal"
-            @close="showReprintModal = false"
-        />
         <CheckoutModal
             :show="showCheckoutModal"
             :site="selectedSite"
             @refresh="
                 () => {
-                    fetchGatePassList();
-                    fetchTotalAvailableGatePass();
+                    fetchVisitors();
+                    fetchGatePass();
                     fetchVisitorInside();
-                    fetchAdminVisitorTableData();
+                    fetchVisitorTableData();
                 }
             "
             @close="showCheckoutModal = false"
         />
-    </AdminAuthenticatedLayout>
+    </AuthenticatedLayout>
 </template>

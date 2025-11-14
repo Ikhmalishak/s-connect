@@ -1,5 +1,14 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
+import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
+import {
+    Breadcrumb,
+    BreadcrumbPage,
+    BreadcrumbSeparator,
+    BreadcrumbList,
+    BreadcrumbItem,
+    BreadcrumbLink,
+} from "@/components/ui/breadcrumb";
 
 // Reactive data
 const currentSlide = ref(0);
@@ -106,32 +115,22 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="bg-white min-h-screen">
-    <!-- Header -->
-    <nav class="bg-white/95 backdrop-blur-md border-b shadow-sm sticky top-0 z-50">
-      <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-        <div class="flex items-center space-x-2 group cursor-pointer">
-          <div class="w-8 h-8 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-lg flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
-            <span class="text-white font-bold text-sm">S</span>
-          </div>
-          <span class="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
-            S Connect
-          </span>
-        </div>
-
-        <div class="hidden md:flex space-x-4">
-          <a href="#" class="px-4 py-2 text-gray-700 hover:text-blue-600 transition-colors hover:bg-blue-50 rounded-lg">
-            Home
-          </a>
-          <a href="#" class="px-4 py-2 text-gray-700 hover:text-blue-600 transition-colors hover:bg-blue-50 rounded-lg">
-            Forms
-          </a>
-          <a href="/login" class="px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 transform hover:scale-105">
-            Login
-          </a>
-        </div>
-      </div>
-    </nav>
+    <AuthenticatedLayout>
+        <template #breadcrumb>
+            <Breadcrumb>
+                <BreadcrumbList>
+                    <BreadcrumbItem>
+                        <BreadcrumbLink href="/"
+                            >S-CONNECT</BreadcrumbLink
+                        >
+                    </BreadcrumbItem>
+                    <BreadcrumbSeparator />
+                    <BreadcrumbItem>
+                        <BreadcrumbPage>Dashboard</BreadcrumbPage>
+                    </BreadcrumbItem>
+                </BreadcrumbList>
+            </Breadcrumb>
+        </template>
 
     <!-- Hero Section with Carousel -->
     <section class="relative h-screen flex items-center justify-center overflow-hidden">
@@ -314,22 +313,6 @@ onUnmounted(() => {
       </div>
     </section>
 
-    <!-- CTA Section -->
-    <section class="py-20 bg-gradient-to-r from-blue-600 to-cyan-600">
-      <div class="max-w-4xl mx-auto px-4 text-center">
-        <h2 class="text-4xl font-bold text-white mb-6">
-          Ready to Transform Your Business?
-        </h2>
-        <p class="text-xl text-blue-100 mb-8">
-          Join thousands of companies already using S Connect to streamline their operations
-        </p>
-        <button class="bg-white text-blue-600 px-8 py-4 rounded-full font-semibold hover:bg-gray-100 transition-colors duration-300 transform hover:scale-105 inline-flex items-center space-x-2">
-          <span>Start Your Free Trial</span>
-          <span class="text-lg">→</span>
-        </button>
-      </div>
-    </section>
-
     <!-- Footer -->
     <footer class="bg-gray-900 text-white py-12">
       <div class="max-w-7xl mx-auto px-4 text-center">
@@ -342,7 +325,7 @@ onUnmounted(() => {
         <p class="text-gray-400">© 2025 S Connect. All rights reserved.</p>
       </div>
     </footer>
-  </div>
+    </AuthenticatedLayout>
 </template>
 
 <style scoped>
