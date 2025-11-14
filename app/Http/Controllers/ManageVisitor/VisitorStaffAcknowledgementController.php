@@ -199,6 +199,7 @@ public function getAllVerifiedVisitor(Request $request)
             'margin_right' => 0,
             'margin_top' => 0,
             'margin_bottom' => 0,
+            'tempDir' => storage_path('tmp/mpdf')
         ]);
         $mpdf->WriteHTML($html);
         $mpdf->Output($pdfPath, 'F');
