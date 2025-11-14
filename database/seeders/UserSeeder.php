@@ -33,6 +33,16 @@ class UserSeeder extends Seeder
         ]);
         $admin->assignRole('admin');
 
+        $admin2 = User::create([
+            'name' => 'Guard Site 2',
+            'email' => 'guards2@skpres.com',
+            'password' => Hash::make('12345678'),
+            'site_id' => '2',
+            'password_changed_at' => now(),
+            'is_first_time_login' => false,
+        ]);
+        $admin2->assignRole('guard');
+
         $guard = User::create([
             'name' => 'Guard',
             'email' => 'guard@skpres.com',
@@ -45,7 +55,7 @@ class UserSeeder extends Seeder
 
         $receptionist = User::create([
             'name' => 'Receptionist',
-            'email' => 'receptionist@skpres.com',
+            'email' => 'receptionists2@skpres.com',
             'password' => Hash::make('12345678'),
             'site_id' => '2',
             'password_changed_at' => now(),

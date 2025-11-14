@@ -63,13 +63,34 @@ async function fetchRoomDetails(id = roomId) {
     }
 }
 
+// Function to calculate event status
+const calculateEventStatus = (event) => {
+    const now = new Date();
+    const startTime = new Date(event.start_time);
+    const endTime = new Date(event.end_time);
+
+    if (now < startTime) {
+        return "upcoming";
+    } else if (now >= startTime && now <= endTime) {
+        return "in_progress";
+    } else {
+        return "completed";
+    }
+};
+
 const fetchRoomStatus = async () => {
     try {
         const res = await axios.get(`/room-reservation/${roomId}/status`);
         console.log(res.data);
         roomStatus.value = res.data.status;
         currentReservation.value = res.data.current_reservation;
-        roomSchedule.value = res.data.room_schedule;
+
+        // Calculate status for each room schedule event
+        roomSchedule.value = res.data.room_schedule.map((event) => ({
+            ...event,
+            status: calculateEventStatus(event),
+        }));
+
         minutesAvailable.value = res.data.minutes_left ?? 0;
     } catch (error: any) {
         console.log("Failed to fetch room status");
@@ -135,6 +156,14 @@ function updateProgress() {
     }
 }
 
+// Function to update schedule statuses in real-time
+function updateScheduleStatuses() {
+    roomSchedule.value = roomSchedule.value.map((event) => ({
+        ...event,
+        status: calculateEventStatus(event),
+    }));
+}
+
 function scheduleNextHalfHourRefresh() {
     console.log("30 minutes");
     const now = new Date();
@@ -157,6 +186,7 @@ onMounted(async () => {
     intervals.value.push(setInterval(updateTime, 1000));
     intervals.value.push(setInterval(updateProgress, 1000));
     intervals.value.push(setInterval(updateCountdown, 1000));
+    intervals.value.push(setInterval(updateScheduleStatuses, 30000)); // Update status every 30 seconds
 
     if (window.Echo) {
         window.Echo.channel("rooms")
@@ -244,6 +274,7 @@ onUnmounted(() => {
                                 :showHours="true"
                                 :showMinutes="true"
                                 :showSeconds="true"
+                                countdownSize="4rem"
                             />
                         </div>
 
@@ -284,7 +315,7 @@ onUnmounted(() => {
                     </h1>
 
                     <div v-if="currentReservation" class="mt-4 text-xl">
-                        <p>Reserve By: {{ currentReservation.user_name }}</p>
+                        <p>Reserved By: {{ currentReservation.user_name }}</p>
                         <p>Purpose: {{ currentReservation.purpose }}</p>
                         <p>Time: {{ formattedStart }} - {{ formattedEnd }}</p>
                     </div>
@@ -315,12 +346,33 @@ onUnmounted(() => {
                         <!-- Completed Stamp -->
                         <div
                             v-if="event.status === 'completed'"
-                            class="absolute top-2 right-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-lg shadow-xl"
+                            class="absolute top-2 right-2 text-white text-xs font-bold px-2 py-1 rounded-lg shadow-xl"
+                            :class="
+                                roomStatus === 'in_use'
+                                    ? 'bg-red-600'
+                                    : 'bg-green-600'
+                            "
                         >
                             COMPLETED
                         </div>
 
-                        <!-- Active Stamp -->
+                        <!-- In Progress Stamp -->
+                        <div
+                            v-else-if="event.status === 'in_progress'"
+                            class="absolute top-2 right-2 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded-lg shadow-xl"
+                        >
+                            IN PROGRESS
+                        </div>
+
+                        <!-- Upcoming Stamp -->
+                        <div
+                            v-else-if="event.status === 'upcoming'"
+                            class="absolute top-2 right-2 bg-yellow-300 text-black text-xs font-bold px-2 py-1 rounded-lg shadow-xl"
+                        >
+                            UPCOMING
+                        </div>
+
+                        <!-- Active Stamp (backward compatibility) -->
                         <div
                             v-else-if="event.status === 'active'"
                             class="absolute top-2 right-2 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded-lg shadow-xl"
@@ -391,7 +443,7 @@ onUnmounted(() => {
 <style scoped>
 .flip-countdown-container {
     min-height: 120px;
-    display: flex;
+    display: flex ;
     align-items: center;
     justify-content: center;
 }
