@@ -453,15 +453,6 @@ function setRowMask(visitorId: number, state: boolean) {
                             </td>
                             <td class="text-center p-2">
                                 <button
-                                    v-if="visitor.time_in"
-                                    class="p-1 rounded cursor-not-allowed"
-                                    title="Cannot unmask after check-in"
-                                >
-                                    <EyeOff class="w-5 h-5 text-black" />
-                                </button>
-
-                                <button
-                                    v-else
                                     class="p-1 rounded hover:bg-gray-200"
                                     @mouseenter="setRowMask(visitor.id, true)"
                                     @mouseleave="setRowMask(visitor.id, false)"
