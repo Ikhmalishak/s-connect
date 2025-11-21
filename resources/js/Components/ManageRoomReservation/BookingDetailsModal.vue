@@ -7,6 +7,16 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(["close", "cancel"]);
+
+function formatTime(utcTime) {
+    const date = new Date(utcTime); // parse UTC
+    return date.toLocaleTimeString("en-GB", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+        timeZone: "Asia/Kuala_Lumpur", // convert to MYT
+    });
+}
 </script>
 
 <template>
@@ -65,8 +75,8 @@ const emit = defineEmits(["close", "cancel"]);
                             <div>
                                 <p class="text-sm text-gray-500">Time</p>
                                 <p class="font-medium">
-                                    {{ booking.start_time.slice(11, 16) }} -
-                                    {{ booking.end_time.slice(11, 16) }}
+                                    {{ formatTime(booking.start_time) }} -
+                                    {{ formatTime(booking.end_time) }}
                                 </p>
                             </div>
 

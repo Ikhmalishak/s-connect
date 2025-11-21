@@ -31,7 +31,7 @@ class VisitorController extends Controller
     {
         $user = auth()->user();
 
-        if ($user->hasRole(['superadmin','admin'])) {
+        if ($user->hasRole(['superadmin', 'admin'])) {
             return Inertia::render('ManageVisitor/Dashboard/AdminDashboard');
         }
 
@@ -50,7 +50,7 @@ class VisitorController extends Controller
     {
         return Inertia::render('ManageVisitor/Dashboard/VisitorReportDashboard');
     }
-    
+
     public function getVisitorForm($siteCode)
     {
         $site = Site::where('site_code', $siteCode)->firstOrFail();
@@ -68,18 +68,18 @@ class VisitorController extends Controller
     {
         $limit = $request->input('limit', 25);
         $keyword = $request->input('keyword');
+        $filterSite = $request->input('site');
         $user = auth()->user();
         $site = $user->site->id;
 
-        if ($user->hasRole('admin')) {
+        if ($user->hasRole(['admin', 'superadmin'])) {
 
             $query = Visitor::with(['gatePass:id,pass_number', 'site:id,site_code', 'acknowledgements']);
 
-            if ($site) {
-                $query->whereHas('site', function ($q) use ($site) {
-                    $q->where('id', $site);
-                });
+            if ($filterSite) {
+                $query->where('site_id', $filterSite);
             }
+
         } else {
             $query = Visitor::with(['gatePass:id,pass_number', 'acknowledgements'])
                 ->whereDate('date', now()->toDateString())
@@ -114,18 +114,15 @@ class VisitorController extends Controller
 
     public function getVisitorData(Request $request)
     {
-        $date = Carbon::now()->format('Y-m-d');
+        $date = Carbon::today()->toDateString();
         $startOfDay = Carbon::today();
         $endOfDay = Carbon::now();
 
-        $site = $request->input('site'); // site_code
+        $filterSite = $request->input('site'); // expects site_id
 
-        // Base query builder with optional site filter
-        $siteFilter = function ($query) use ($site) {
-            if ($site) {
-                $query->whereHas('site', function ($q) use ($site) {
-                    $q->where('id', $site);
-                });
+        $siteFilter = function ($q) use ($filterSite) {
+            if ($filterSite) {
+                $q->where('site_id', $filterSite);
             }
         };
 
@@ -146,7 +143,7 @@ class VisitorController extends Controller
             ->groupBy('visitor_type')
             ->get();
 
-        // Get time_in count grouped by hour
+        // time_in grouped by hour
         $visitor_in_by_hour = Visitor::select([
             DB::raw("HOUR(time_in) as hour"),
             DB::raw("COUNT(*) as total_in")
@@ -158,7 +155,7 @@ class VisitorController extends Controller
             ->orderBy("hour")
             ->get();
 
-        // Get time_out count grouped by hour
+        // time_out grouped by hour
         $visitor_out_by_hour = Visitor::select([
             DB::raw("HOUR(time_out) as hour"),
             DB::raw("COUNT(*) as total_out")
@@ -183,13 +180,21 @@ class VisitorController extends Controller
         ]);
     }
 
-    public function getVisitorInside()
+    public function getVisitorInside(Request $request)
     {
-        $date = now()->toDateString(); // or Carbon::today()->toDateString()
+        $date = now()->toDateString();
+        $filterSite = $request->input('site');
+
+        $siteFilter = function ($q) use ($filterSite) {
+            if ($filterSite) {
+                $q->where('site_id', $filterSite);
+            }
+        };
 
         $visitor_inside = Visitor::whereNotNull('time_in')
             ->whereNull('time_out')
             ->whereDate('date', $date)
+            ->where($siteFilter)
             ->with('gatePass')
             ->get();
 

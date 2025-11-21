@@ -24,7 +24,7 @@ import { Input } from "@/components/ui/input";
 const timeRegex = /^([01]\d|2[0-3]):(00|30)$/;
 const timeSlots = [];
 const startHour = 8; // 8:00 AM
-const endHour = 18; // 6:00 PM
+const endHour = 20; // 8:00 PM
 
 const formSchema = toTypedSchema(
     z

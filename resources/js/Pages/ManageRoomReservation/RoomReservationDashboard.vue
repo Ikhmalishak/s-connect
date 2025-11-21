@@ -106,6 +106,9 @@ const timeSlots = ref([
     "15:00",
     "16:00",
     "17:00",
+    "18:00",
+    "19:00",
+    "20:00",
 ]);
 
 const df = new DateFormatter("en-US", {
@@ -194,7 +197,10 @@ const submitBooking = async (formData: any) => {
     createBookingStatusMessage.value = ""; // reset first
 
     try {
-        const res = await axios.post("/room-reservation/create-room-reservations", formData);
+        const res = await axios.post(
+            "/room-reservation/create-room-reservations",
+            formData
+        );
 
         createBookingStatusMessage.value = res.data.message; // <-- show success here
         createBookingStatusType.value = "success";
@@ -259,7 +265,7 @@ onMounted(() => {
                 <BreadcrumbList>
                     <BreadcrumbItem>
                         <BreadcrumbLink href="/"
-                            >Visitor Management System</BreadcrumbLink
+                            >Room Reservation Management System</BreadcrumbLink
                         >
                     </BreadcrumbItem>
                     <BreadcrumbSeparator />
@@ -274,7 +280,7 @@ onMounted(() => {
             class="shadow-lg shadow-opacity-30 p-2 mb-4 text-2xl font-bold flex items-center justify-between bg-gray-100"
         >
             <div class="flex flex-row items-center">
-                <img src="/assets/ss1.png" class="h-12 w-12" alt="" />
+                <img src="/assets/meetingroom.png" class="h-10 w-auto" alt="" />
                 <div>Room Reservation Management System</div>
             </div>
 
