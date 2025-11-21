@@ -68,18 +68,18 @@ class VisitorController extends Controller
     {
         $limit = $request->input('limit', 25);
         $keyword = $request->input('keyword');
-        $filterSite = $request->input('site');
         $user = auth()->user();
         $site = $user->site->id;
 
-        if ($user->hasRole(['admin', 'superadmin'])) {
+        if ($user->hasRole('admin')) {
 
             $query = Visitor::with(['gatePass:id,pass_number', 'site:id,site_code', 'acknowledgements']);
 
-            if ($filterSite) {
-                $query->where('site_id', $filterSite);
+            if ($site) {
+                $query->whereHas('site', function ($q) use ($site) {
+                    $q->where('id', $site);
+                });
             }
-
         } else {
             $query = Visitor::with(['gatePass:id,pass_number', 'acknowledgements'])
                 ->whereDate('date', now()->toDateString())
@@ -117,16 +117,25 @@ class VisitorController extends Controller
         $date = Carbon::today()->toDateString();
         $startOfDay = Carbon::today();
         $endOfDay = Carbon::now();
+        $user = auth()->user();
+        $userSite = $user->site->id;   // non-admin restriction
+        $filterSite = $request->input('site'); // admin filter
 
-        $filterSite = $request->input('site'); // expects site_id
+        // Build site filtering rule
+        $siteFilter = function ($q) use ($user, $userSite, $filterSite) {
 
-        $siteFilter = function ($q) use ($filterSite) {
-            if ($filterSite) {
-                $q->where('site_id', $filterSite);
+            if ($user->hasRole('admin')) {
+                // admin can filter by selected site (optional)
+                if ($filterSite) {
+                    $q->where('site_id', $filterSite);
+                }
+            } else {
+                // non-admin ALWAYS restricted to their own site
+                $q->where('site_id', $userSite);
             }
         };
 
-        // Currently inside
+        // 1. Inside visitors
         $visitor_inside = Visitor::whereNotNull('time_in')
             ->whereNull('time_out')
             ->whereDate('date', $date)
@@ -135,7 +144,7 @@ class VisitorController extends Controller
             ->groupBy('visitor_type')
             ->get();
 
-        // Visitors out
+        // 2. Today (already out)
         $visitor_today = Visitor::whereDate('date', $date)
             ->whereNotNull('time_out')
             ->where($siteFilter)
@@ -143,7 +152,7 @@ class VisitorController extends Controller
             ->groupBy('visitor_type')
             ->get();
 
-        // time_in grouped by hour
+        // 3. Time in by hour
         $visitor_in_by_hour = Visitor::select([
             DB::raw("HOUR(time_in) as hour"),
             DB::raw("COUNT(*) as total_in")
@@ -155,7 +164,7 @@ class VisitorController extends Controller
             ->orderBy("hour")
             ->get();
 
-        // time_out grouped by hour
+        // 4. Time out by hour
         $visitor_out_by_hour = Visitor::select([
             DB::raw("HOUR(time_out) as hour"),
             DB::raw("COUNT(*) as total_out")
@@ -167,6 +176,7 @@ class VisitorController extends Controller
             ->orderBy("hour")
             ->get();
 
+        // 5. Total visitors today
         $total_visitor_today = Visitor::whereDate('date', $date)
             ->where($siteFilter)
             ->count();
@@ -182,19 +192,29 @@ class VisitorController extends Controller
 
     public function getVisitorInside(Request $request)
     {
-        $date = now()->toDateString();
-        $filterSite = $request->input('site');
+        $user = auth()->user();
+        $userSite = $user->site->id;   // non-admin restriction
+        $filterSite = $request->input('site'); // admin filter
 
-        $siteFilter = function ($q) use ($filterSite) {
-            if ($filterSite) {
-                $q->where('site_id', $filterSite);
+        // Build site filtering rule
+        $siteFilter = function ($q) use ($user, $userSite, $filterSite) {
+
+            if ($user->hasRole('admin')) {
+                // admin can filter by selected site (optional)
+                if ($filterSite) {
+                    $q->where('site_id', $filterSite);
+                }
+            } else {
+                // non-admin ALWAYS restricted to their own site
+                $q->where('site_id', $userSite);
             }
         };
+        $date = now()->toDateString(); // or Carbon::today()->toDateString()
 
         $visitor_inside = Visitor::whereNotNull('time_in')
             ->whereNull('time_out')
-            ->whereDate('date', $date)
             ->where($siteFilter)
+            ->whereDate('date', $date)
             ->with('gatePass')
             ->get();
 

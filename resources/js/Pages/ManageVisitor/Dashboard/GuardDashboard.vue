@@ -177,7 +177,11 @@ async function fetchGatePass(site = selectedSite.value) {
 
 async function fetchVisitorInside() {
     try {
-        const res = await axios.get("/visitor/get-visitor-inside");
+        const res = await axios.get("/visitor/get-visitor-inside",{
+            params: {
+                site: selectedSite.value,
+            },
+        });
         console.log("Fetching visitor inside", res.data);
         visitorInsideList.value = res.data.data;
     } catch (e) {
