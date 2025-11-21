@@ -70,17 +70,20 @@ class VisitorController extends Controller
         $keyword = $request->input('keyword');
         $user = auth()->user();
         $site = $user->site->id;
+        $filterSite = $request->input('site');
 
         if ($user->hasRole('admin')) {
 
             $query = Visitor::with(['gatePass:id,pass_number', 'site:id,site_code', 'acknowledgements']);
 
-            if ($site) {
-                $query->whereHas('site', function ($q) use ($site) {
-                    $q->where('id', $site);
-                });
+            // Admin filter based on dropdown selection
+            if ($filterSite) {
+                $query->where('site_id', $filterSite);
             }
+
         } else {
+
+            // Non-admin always restricted to own site
             $query = Visitor::with(['gatePass:id,pass_number', 'acknowledgements'])
                 ->whereDate('date', now()->toDateString())
                 ->where('site_id', $site);
