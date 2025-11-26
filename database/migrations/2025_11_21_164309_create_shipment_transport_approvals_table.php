@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     public function up(): void
     {
         Schema::create('shipment_transport_approvals', function (Blueprint $table) {
@@ -17,9 +16,12 @@ return new class extends Migration
             $table->string('remarks')->nullable();
             $table->timestamp('approved_at')->nullable();
             $table->timestamps();
-            
-            // Ensure one approval per department per shipment
-            $table->unique(['shipment_transport_id', 'department']);
+
+            $table->unique(
+                ['shipment_transport_id', 'department'],
+                'st_approvals_transport_dept_unique'
+            );
+
         });
     }
 

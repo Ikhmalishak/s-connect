@@ -14,18 +14,19 @@ return new class extends Migration
         Schema::create('shipment_transports', function (Blueprint $table) {
             $table->id();
             $table->foreignId('site_id')->constrained('sites')->onDelete('cascade');
-            $table->string('transport_type')->nullable();
-            $table->string('sku_number')->nullable();
-            $table->string('model_project')->nullable();
-            $table->string('forwarder')->nullable();
-            $table->string('country')->nullable();
-            $table->string('work_order')->nullable();
+            $table->string('transport_type');          
+            $table->string('transport_number');
+            $table->string('sku_number');
+            $table->string('model_project');
+            $table->string('forwarder');
+            $table->string('country');
+            $table->string('work_order');
             //only for container            
-            $table->string('hauler');
-            $table->string('high_security_seal');
-            $table->string('gps');
-            $table->string('fork_seal');
-            $table->string('temporary_seal');
+            $table->string('hauler')->nullable();
+            $table->string('high_security_seal')->nullable();
+            $table->string('gps')->nullable();
+            $table->string('fork_seal')->nullable();
+            $table->string('temporary_seal')->nullable();
             $table->date('date')->nullable();
             $table->enum('status', ['pending', 'in_transit', 'delivered'])->default('pending');
             $table->string('created_by')->nullable();

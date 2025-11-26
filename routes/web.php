@@ -1,12 +1,15 @@
 <?php
 
 use App\Http\Controllers\EncryptionSettingController;
+use App\Http\Controllers\ManageContainer\InspectionQuestionController;
 use App\Http\Controllers\ManageVisitor\GatePassController;
 use App\Http\Controllers\MFAController;
 use App\Http\Controllers\PasswordPolicyController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ManageRoomReservation\RoomController;
 use App\Http\Controllers\ManageRoomReservation\RoomReservationController;
+use App\Http\Controllers\ManageContainer\ShipmentTransportController;
+use App\Http\Controllers\ManageContainer\ShipmentTransportInspectionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ManageVisitor\VisitorController;
 use App\Http\Controllers\ProfileController;
@@ -131,4 +134,15 @@ Route::get('/mfa-verify', [MFAController::class, 'showVerifyForm'])->name('mfa.v
 Route::post('/mfa-verify', [MFAController::class, 'verifyCode'])->name('mfa.verify');
 Route::post('/mfa-resend', [MFAController::class, 'resendCode'])->name('mfa.resend');
 
+// manage container module
+Route::middleware(['auth'])->prefix('container')->name('container.')->group(function () {
+    Route::get('/dashboard', [ShipmentTransportController::class, 'dashboard'])
+        ->name('dashboard');
+});
+
+Route::post('/containers/create', [ShipmentTransportController::class, 'store'])->name('container.create');
+Route::get('/containers', [ShipmentTransportController::class, 'index'])->name('container.index');
+Route::get('/containers/questions',[InspectionQuestionController::class,'index'])->name('container.question');
+Route::post('/containers/create-inspection', [ShipmentTransportInspectionController::class, 'createInspection'])->name('container.create-inspection');
+Route::post('/containers/update-inspection/{id}', [ShipmentTransportInspectionController::class, 'updateInspection'])->name('container.update-inspection');
 require __DIR__ . '/auth.php';

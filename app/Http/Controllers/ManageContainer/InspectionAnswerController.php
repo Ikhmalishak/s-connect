@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\ManageContainer;
 
-use App\Models\ShipmentTransport;
+use App\Http\Controllers\Controller;
+use App\Models\InspectionAnswer;
 use Illuminate\Http\Request;
 
-class ShipmentTransportController extends Controller
+class InspectionAnswerController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -34,7 +35,7 @@ class ShipmentTransportController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(ShipmentTransport $shipmentTransport)
+    public function show(InspectionAnswer $inspectionAnswer)
     {
         //
     }
@@ -42,7 +43,7 @@ class ShipmentTransportController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(ShipmentTransport $shipmentTransport)
+    public function edit(InspectionAnswer $inspectionAnswer)
     {
         //
     }
@@ -50,7 +51,7 @@ class ShipmentTransportController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, ShipmentTransport $shipmentTransport)
+    public function update(Request $request, InspectionAnswer $inspectionAnswer)
     {
         //
     }
@@ -58,7 +59,7 @@ class ShipmentTransportController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(ShipmentTransport $shipmentTransport)
+    public function destroy(InspectionAnswer $inspectionAnswer)
     {
         //
     }
