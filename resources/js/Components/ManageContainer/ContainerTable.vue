@@ -11,22 +11,31 @@ import {
 import { Plus } from "lucide-vue-next";
 import { Card } from "@/components/ui/card";
 import CustomTooltip from "../CustomTooltip.vue";
-import { onMounted, ref } from "vue";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 
 const emit = defineEmits([
     "openCreateContainerModal",
     "openContainerInspectionModal",
+    "openViewInspectionModal",
+    "openCreateContainerRecordModal",
 ]);
-const containers = ref([]);
 
-async function fetchContainers() {
-    // Fetch container data from API
-    const res = await axios.get("/containers");
-    console.log("Fetched containers:", res.data.data);
-    containers.value = res.data.data;
+interface Container {
+    id: number;
+    transport_type: string;
+    transport_number: string;
+    inspection: {
+        id: number;
+        status: string;
+    } | null;
+    photo: any;
+    status: string;
 }
+
+const props = defineProps<{
+    containers: Container[];
+}>();
 
 async function createInspection(containerId) {
     console.log("Create Inspection clicked", containerId);
@@ -37,10 +46,6 @@ async function createInspection(containerId) {
 
     emit("openContainerInspectionModal", containerId);
 }
-
-onMounted(() => {
-    fetchContainers();
-});
 </script>
 
 <template>
@@ -130,6 +135,11 @@ onMounted(() => {
                             <th
                                 class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
                             >
+                                Security Checking
+                            </th>
+                            <th
+                                class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
+                            >
                                 Container Status
                             </th>
                         </tr>
@@ -170,6 +180,12 @@ onMounted(() => {
                                     "
                                     variant="outline"
                                     class="bg-yellow-500 text-white"
+                                    @click="
+                                        $emit(
+                                            'openViewInspectionModal',
+                                            container.id
+                                        )
+                                    "
                                 >
                                     View Inspection
                                 </Button>
@@ -177,9 +193,41 @@ onMounted(() => {
 
                             <td class="p-2">
                                 <Button
+                                    v-if="
+                                        container.photo &&
+                                        container.photo.length === 0
+                                    "
+                                    variant="outline"
+                                    :class="[
+                                        'text-white w-[150px]',
+                                        container.inspection?.status ===
+                                        'passed'
+                                            ? 'bg-green-600'
+                                            : 'bg-gray-400 cursor-not-allowed',
+                                    ]"
+                                    :disabled="
+                                        container.inspection?.status !==
+                                        'passed'
+                                    "
+                                    @click="
+                                        $emit(
+                                            'openCreateContainerRecordModal',
+                                            container.id
+                                        )
+                                    "
+                                >
+                                    Create Record
+                                </Button>
+                                <Button v-else class="text-white w-[150px]">
+                                    View Report
+                                </Button>
+                            </td>
+
+                            <td class="p-2">
+                                <Button
                                     variant="outline"
                                     class="bg-green-600 text-white"
-                                    >Create Record</Button
+                                    >Security Checking</Button
                                 >
                             </td>
                             <td class="p-2">{{ container.status }}</td>

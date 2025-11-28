@@ -16,11 +16,11 @@ class InspectionAnswer extends Model
 
     public function inspection()
     {
-        return $this->belongsTo(ShipmentTransportInspection::class);
+        return $this->belongsTo(ShipmentTransportInspection::class, 'shipment_transport_inspection_id');
     }
 
     public function question()
     {
-        return $this->belongsTo(InspectionQuestion::class);
+        return $this->belongsTo(InspectionQuestion::class, 'inspection_question_id');
     }
 }

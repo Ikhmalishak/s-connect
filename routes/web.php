@@ -10,6 +10,7 @@ use App\Http\Controllers\ManageRoomReservation\RoomController;
 use App\Http\Controllers\ManageRoomReservation\RoomReservationController;
 use App\Http\Controllers\ManageContainer\ShipmentTransportController;
 use App\Http\Controllers\ManageContainer\ShipmentTransportInspectionController;
+use App\Http\Controllers\ManageContainer\ShipmentTransportPhotoController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ManageVisitor\VisitorController;
 use App\Http\Controllers\ProfileController;
@@ -145,4 +146,6 @@ Route::get('/containers', [ShipmentTransportController::class, 'index'])->name('
 Route::get('/containers/questions',[InspectionQuestionController::class,'index'])->name('container.question');
 Route::post('/containers/create-inspection', [ShipmentTransportInspectionController::class, 'createInspection'])->name('container.create-inspection');
 Route::post('/containers/update-inspection/{id}', [ShipmentTransportInspectionController::class, 'updateInspection'])->name('container.update-inspection');
+Route::get('/containers/inspection-details/{id}', [ShipmentTransportInspectionController::class, 'getInspectionDetails'])->name('container.inspection-details');
+Route::post('containers/create-photo', [ShipmentTransportPhotoController::class, 'store'])->name('container.create-photo');
 require __DIR__ . '/auth.php';

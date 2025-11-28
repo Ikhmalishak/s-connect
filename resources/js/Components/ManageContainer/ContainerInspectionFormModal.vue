@@ -24,7 +24,6 @@ interface FormData {
 }
 
 // Refs
-const transportType = ref<"Truck" | "Container" | "">("");
 const questions = ref<Question[]>([]);
 const formData = ref<FormData>({
     received_at: "",

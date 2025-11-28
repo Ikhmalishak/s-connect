@@ -4,7 +4,6 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Card } from "@/components/ui/card";
 import axios from "axios";
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
-import { Link } from "@inertiajs/vue3"; // Add this import
 import {
     Breadcrumb,
     BreadcrumbPage,
@@ -17,11 +16,18 @@ import ContainerStatCard from "@/Components/ManageContainer/ContainerStatCard.vu
 import ContainerTable from "@/Components/ManageContainer/ContainerTable.vue";
 import CreateContainerFormModal from "@/Components/ManageContainer/CreateContainerFormModal.vue";
 import ContainerInspectionFormModal from "@/Components/ManageContainer/ContainerInspectionFormModal.vue";
+import ViewInspectionModal from "@/Components/ManageContainer/ViewInspectionModal.vue";
+import CreateContainerRecordModal from "@/Components/ManageContainer/CreateContainerRecordModal.vue";
 
 const currentTime = ref(new Date());
 const openCreateContainerModal = ref(false);
-const openContainerInspectionModal = ref(false);
-const currentContainerId = ref<number | null>(null);
+const openCreateContainerInspectionModal = ref(false);
+const openViewContainerInspectionModal = ref(false);
+const openCreateContainerRecordModal = ref(false);
+const currentCreateContainerId = ref<number | null>(null);
+const currentViewContainerId = ref<number | null>(null);
+const currentCreateContainerRecordId = ref<number | null>(null);
+const containers = ref([]);
 
 let intervalId;
 
@@ -38,10 +44,34 @@ const formattedTime = computed(() =>
     currentTime.value.toLocaleTimeString("en-GB")
 );
 
-function handleOpenContainerInspectionModal(containerId: number) {
-    console.log("Opening Container Inspection Modal for ID:", containerId);
-    currentContainerId.value = containerId;
-    openContainerInspectionModal.value = true;
+function handleOpenCreatContainerInspectionModal(containerId: number) {
+    console.log(
+        "Opening Create Container Inspection Modal for ID:",
+        containerId
+    );
+    currentCreateContainerId.value = containerId;
+    openCreateContainerInspectionModal.value = true;
+}
+
+function handleOpenViewContainerInspectionModal(containerId: number) {
+    console.log("Opening View Container Inspection Modal for ID:", containerId);
+    currentViewContainerId.value = containerId;
+    console.log("Current View Container ID:", currentViewContainerId.value);
+    openViewContainerInspectionModal.value = true;
+}
+
+function handleOpenCreateContainerRecordModal(containerId: number) {
+    console.log("Opening Create Container Record Modal for ID:", containerId);
+    currentCreateContainerRecordId.value = containerId;
+    console.log("Current View Container ID:", currentViewContainerId.value);
+    openCreateContainerRecordModal.value = true;
+}
+
+async function fetchContainers() {
+    // Fetch container data from API
+    const res = await axios.get("/containers");
+    console.log("Fetched containers:", res.data.data);
+    containers.value = res.data.data;
 }
 
 onMounted(() => {
@@ -50,6 +80,8 @@ onMounted(() => {
     intervalId = setInterval(() => {
         currentTime.value = new Date();
     }, 1000);
+
+    fetchContainers();
 
     if (window.Echo) {
         // Existing listener
@@ -138,23 +170,61 @@ onUnmounted(() => {
                 </div>
             </div>
         </Card>
-        
+
         <ContainerStatCard />
 
         <ContainerTable
+            :containers="containers"
             @open-create-container-modal="openCreateContainerModal = true"
-            @open-container-inspection-modal="handleOpenContainerInspectionModal"
+            @open-container-inspection-modal="
+                handleOpenCreatContainerInspectionModal
+            "
+            @open-view-inspection-modal="handleOpenViewContainerInspectionModal"
+            @open-create-container-record-modal="
+                handleOpenCreateContainerRecordModal
+            "
         />
 
         <CreateContainerFormModal
             v-model:show="openCreateContainerModal"
-            @close="openCreateContainerModal = false"
+            @close="
+                () => {
+                    openCreateContainerModal = false;
+                    fetchContainers();
+                }
+            "
         />
 
         <ContainerInspectionFormModal
-            v-model:show="openContainerInspectionModal"
-            :id="currentContainerId"
-            @close="openContainerInspectionModal = false"
+            v-model:show="openCreateContainerInspectionModal"
+            :id="currentCreateContainerId"
+            @close="
+                () => {
+                    openCreateContainerInspectionModal = false;
+                    fetchContainers();
+                }
+            "
+        />
+
+        <ViewInspectionModal
+            v-model:show="openViewContainerInspectionModal"
+            :id="currentViewContainerId"
+            @close="
+                () => {
+                    openViewContainerInspectionModal = false;
+                }
+            "
+        />
+
+        <CreateContainerRecordModal
+            v-model:show="openCreateContainerRecordModal"
+            :id="currentCreateContainerRecordId"
+            @close="
+                () => {
+                    openCreateContainerRecordModal = false;
+                    fetchContainers();
+                }
+            "
         />
     </AuthenticatedLayout>
 </template>

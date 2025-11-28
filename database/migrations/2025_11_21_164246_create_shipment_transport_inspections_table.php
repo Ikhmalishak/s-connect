@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('shipment_transport_inspections', function (Blueprint $table) {
             $table->id();
             $table->foreignId('shipment_transport_id')->constrained('shipment_transports')->onDelete('cascade');
-            $table->dateTime('received_at')->nullable();
-            $table->dateTime('inspected_at')->nullable();
+            $table->date('received_at')->nullable();
+            $table->date('inspected_at')->nullable();
             $table->enum('status', ['pending','passed', 'failed'])->default('passed');
             $table->string('remarks'); //if failed, add remarks
             $table->string('inspected_by')->nullable();

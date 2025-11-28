@@ -10,6 +10,8 @@ class ShipmentTransportInspection extends Model
     protected $fillable = [
         'shipment_transport_id',
         'status',
+        'received_at',
+        'inspected_at',
         'inspected_by',
         'remarks',
     ];

@@ -1,65 +1,38 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\ManageContainer;
 
+use App\Http\Controllers\Controller;
 use App\Models\ShipmentTransportPhoto;
 use Illuminate\Http\Request;
 
 class ShipmentTransportPhotoController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
-    }
+        $rules = [
+            'shipment_transport_id' => 'required|exists:shipment_transports,id',
+            'photos' => 'required|array',
+            'photos.*' => 'required|image|max:5120', // each file must be an image, max 5MB
+        ];
+        $validated = $request->validate($rules);
+        
+        $createdPhotos = [];
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(ShipmentTransportPhoto $shipmentTransportPhoto)
-    {
-        //
-    }
+        foreach($validated['photos'] as $key => $photo){
+            $path = $photo->store('container_photo', 'public');
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(ShipmentTransportPhoto $shipmentTransportPhoto)
-    {
-        //
-    }
+            $createdPhotos[$key] = ShipmentTransportPhoto::create([
+                'shipment_transport_id' => $validated['shipment_transport_id'],
+                'label' => $key,
+                'photo_path' => $path,
+                'taken_by' => auth()->user()->id
+            ]);
+        }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, ShipmentTransportPhoto $shipmentTransportPhoto)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(ShipmentTransportPhoto $shipmentTransportPhoto)
-    {
-        //
+        return response()->json([
+            'message' => 'Photos uploaded successfully.',
+            'data' => $createdPhotos,
+        ]);
     }
 }

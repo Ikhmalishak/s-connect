@@ -17,7 +17,7 @@ class ShipmentTransportController extends Controller
     public function index()
     {
         $site_id = auth()->user()->site_id;
-        $shipments = ShipmentTransport::where('site_id', $site_id)->with('inspection')->get();
+        $shipments = ShipmentTransport::where('site_id', $site_id)->with(['inspection','photo'])->get();
 
         return response()->json([
             'data' => $shipments,

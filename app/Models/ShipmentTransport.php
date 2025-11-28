@@ -28,4 +28,8 @@ public function inspection()
     return $this->hasOne(ShipmentTransportInspection::class);
 }
 
+public function photo()
+{
+    return $this->hasMany(ShipmentTransportPhoto::class);
+}
 }
