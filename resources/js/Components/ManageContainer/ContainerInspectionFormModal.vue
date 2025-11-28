@@ -12,7 +12,7 @@ interface Question {
 
 interface Answer {
     question_id: number;
-    passed: boolean | null; // Changed to allow null for neutral state
+    passed: boolean | null;
     remarks?: string;
     photo: File | null;
 }
@@ -36,6 +36,7 @@ const isLoading = ref(false);
 const props = defineProps<{
   show: boolean;
   id: number | null;
+  isEditMode?: boolean; // Add this to know if we're editing
 }>();
 
 const emit = defineEmits(["close", "save"]);
@@ -57,16 +58,13 @@ const failedAnswers = computed(() =>
     formData.value.answers.filter((a) => a.passed === false)
 );
 
-// Show all questions if none failed, otherwise only show failed questions
 const shouldShowQuestion = (index: number) =>
     !anyFailed.value || formData.value.answers[index]?.passed === false;
 
-// Get visible questions (for validation)
 const visibleQuestions = computed(() =>
     questions.value.filter((_, index) => shouldShowQuestion(index))
 );
 
-// Get visible answers (for validation)
 const visibleAnswers = computed(() =>
     formData.value.answers.filter((_, index) => shouldShowQuestion(index))
 );
@@ -80,6 +78,56 @@ async function fetchQuestions() {
     } catch (error) {
         console.error("Error fetching questions:", error);
         alert("Failed to load questions. Please try again.");
+    }
+}
+
+// NEW: Fetch existing inspection answers for pre-fill
+// UPDATED: Fetch existing inspection answers for pre-fill
+async function fetchInspectionAnswers(containerId: number) {
+    console.log('testttttttgwefbvhbf');
+    try {
+        isLoading.value = true;
+        const response = await axios.get(
+            `/containers/inspection-answer`
+        );
+        
+        // Your API returns { data: [...], messages: "..." }
+        const inspectionData = response.data.data[0]; // Get first inspection
+        
+        console.log("Inspection answers fetched:", inspectionData);
+        
+        // Pre-fill dates
+        if (inspectionData.received_at) {
+            formData.value.received_at = inspectionData.received_at;
+        }
+        if (inspectionData.inspected_at) {
+            formData.value.inspected_at = inspectionData.inspected_at;
+        }
+        
+        // Pre-fill answers
+        if (inspectionData.answers && inspectionData.answers.length > 0) {
+            inspectionData.answers.forEach((existingAnswer: any) => {
+                // Find the question index in your questions array
+                const questionIndex = questions.value.findIndex(
+                    (q) => q.id === existingAnswer.inspection_question_id
+                );
+                if (questionIndex !== -1 && formData.value.answers[questionIndex]) {
+                    formData.value.answers[questionIndex] = {
+                        question_id: existingAnswer.inspection_question_id,
+                        passed: existingAnswer.passed === 1 ? true : existingAnswer.passed === 0 ? false : null,
+                        remarks: existingAnswer.remarks || "",
+                        photo: null, // Can't pre-fill file input
+                    };
+                }
+            });
+        }
+        
+        console.log("Form pre-filled successfully");
+    } catch (error) {
+        console.error("Error fetching inspection answers:", error);
+        alert("Failed to load inspection data. Please try again.");
+    } finally {
+        isLoading.value = false;
     }
 }
 
@@ -101,10 +149,9 @@ const validateDates = (): boolean => {
         return false;
     }
 
-    // Check if dates are within reasonable range
     const today = new Date();
     const minDate = new Date();
-    minDate.setFullYear(minDate.getFullYear() - 1); // Allow up to 1 year back
+    minDate.setFullYear(minDate.getFullYear() - 1);
 
     if (received > today || inspected > today) {
         alert("Dates cannot be in the future");
@@ -120,11 +167,9 @@ const validateDates = (): boolean => {
 };
 
 const validateForm = (): boolean => {
-    // If there are any failed questions, validate only the visible (failed) questions
     if (anyFailed.value) {
         for (let i = 0; i < formData.value.answers.length; i++) {
             const answer = formData.value.answers[i];
-            // Only validate failed questions (which are visible)
             if (answer.passed === false && !answer.remarks?.trim()) {
                 alert(
                     `Remarks are required for failed question: ${questions.value[i].question}`
@@ -135,7 +180,6 @@ const validateForm = (): boolean => {
         return true;
     }
 
-    // If no failures, validate all questions are answered
     if (unansweredCount.value > 0) {
         alert(`Please answer all ${unansweredCount.value} remaining questions`);
         return false;
@@ -149,14 +193,12 @@ const handleFileUpload = (index: number, event: Event) => {
     const file = target.files?.[0] || null;
 
     if (file) {
-        // Validate file type
         if (!file.type.startsWith("image/")) {
             alert("Please upload an image file (JPEG, PNG, etc.)");
             target.value = "";
             return;
         }
 
-        // Validate file size (5MB limit)
         if (file.size > 5 * 1024 * 1024) {
             alert("File size must be less than 5MB");
             target.value = "";
@@ -171,7 +213,7 @@ const handleAnswerChange = (index: number, field: string, value: any) => {
     if (!formData.value.answers[index]) {
         formData.value.answers[index] = {
             question_id: questions.value[index].id,
-            passed: null, // Default to null (neutral)
+            passed: null,
             photo: null,
         };
     }
@@ -181,12 +223,10 @@ const handleAnswerChange = (index: number, field: string, value: any) => {
         [field]: value,
     };
 
-    // Clear remarks and photo if switching from fail to pass or neutral
     if (field === "passed" && value !== false) {
         formData.value.answers[index].remarks = "";
         formData.value.answers[index].photo = null;
 
-        // Clear file input
         const fileInput = document.querySelector(
             `[data-question-index="${index}"]`
         ) as HTMLInputElement;
@@ -222,23 +262,20 @@ const onSubmit = async (event: Event) => {
 
     if (isLoading.value) return;
 
-    // Validate form
     if (!validateDates() || !validateForm()) return;
 
     isLoading.value = true;
 
     try {
-        // Prepare form data for file upload
         const submissionData = new FormData();
         submissionData.append("received_at", formData.value.received_at);
         submissionData.append("inspected_at", formData.value.inspected_at);
 
-        // Only submit answers for visible questions (all if no failures, only failed if any failures)
         const answersToSubmit = anyFailed.value
             ? formData.value.answers.filter(
                   (a) => a.passed === false || a.passed === true
-              ) // Submit failed and any answered passes
-            : formData.value.answers; // Submit all if no failures
+              )
+            : formData.value.answers;
 
         submissionData.append(
             "answers",
@@ -251,7 +288,6 @@ const onSubmit = async (event: Event) => {
             )
         );
 
-        // Append photos for failed questions
         formData.value.answers.forEach((answer) => {
             if (answer.photo && answer.passed === false) {
                 submissionData.append(
@@ -274,10 +310,8 @@ const onSubmit = async (event: Event) => {
         const data = response.data;
         console.log("Success:", data);
 
-        // Show success message
         alert("Inspection submitted successfully!");
 
-        // Close modal and reset
         emit("close");
         resetForm();
     } catch (error) {
@@ -293,7 +327,7 @@ const resetForm = () => {
         inspected_at: "",
         answers: questions.value.map((q) => ({
             question_id: q.id,
-            passed: null, // Changed to null for neutral state
+            passed: null,
             photo: null,
         })),
     };
@@ -332,19 +366,41 @@ const getBorderClass = (passed: boolean | null): string => {
 watch(questions, () => {
     formData.value.answers = questions.value.map((q) => ({
         question_id: q.id,
-        passed: null, // Changed to null for neutral state
+        passed: null,
         photo: null,
     }));
 });
 
-// Set default dates when modal opens
+// NEW: Watch for modal open and handle pre-fill
 watch(
     () => props.show,
-    (newVal) => {
+    async (newVal) => {
+        console.log('Modal show changed:', newVal);
+        console.log('isEditMode:', props.isEditMode);
+        console.log('id:', props.id);
         if (newVal) {
-            const today = getCurrentDate();
-            formData.value.received_at = today;
-            formData.value.inspected_at = today;
+            // First, make sure questions are loaded
+            if (questions.value.length === 0) {
+                await fetchQuestions();
+            }
+            
+            // Initialize answers array
+            formData.value.answers = questions.value.map((q) => ({
+                question_id: q.id,
+                passed: null,
+                photo: null,
+            }));
+            
+            // If edit mode and has ID, fetch existing data
+            if (props.isEditMode && props.id) {
+                console.log('true');
+                await fetchInspectionAnswers(props.id);
+            } else {
+                // New inspection - set default dates
+                const today = getCurrentDate();
+                formData.value.received_at = today;
+                formData.value.inspected_at = today;
+            }
         }
     }
 );
@@ -375,7 +431,7 @@ onMounted(() => {
                                     Container Inspection Form
                                 </h2>
                                 <p class="text-sm text-gray-600 mt-1">
-                                    Complete all inspection details below
+                                    Complete all inspection details below {{ show }} {{ isEditMode }} {{ id }}
                                 </p>
                             </div>
                             <button

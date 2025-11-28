@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\EncryptionSettingController;
+use App\Http\Controllers\ManageContainer\InspectionAnswerController;
 use App\Http\Controllers\ManageContainer\InspectionQuestionController;
 use App\Http\Controllers\ManageVisitor\GatePassController;
 use App\Http\Controllers\MFAController;
@@ -148,4 +149,5 @@ Route::post('/containers/create-inspection', [ShipmentTransportInspectionControl
 Route::post('/containers/update-inspection/{id}', [ShipmentTransportInspectionController::class, 'updateInspection'])->name('container.update-inspection');
 Route::get('/containers/inspection-details/{id}', [ShipmentTransportInspectionController::class, 'getInspectionDetails'])->name('container.inspection-details');
 Route::post('containers/create-photo', [ShipmentTransportPhotoController::class, 'store'])->name('container.create-photo');
+Route::get('/containers/inspection-answer',[ShipmentTransportInspectionController::class,'showByShipmentTransportId'])->name('container.get-inspection-answer-by-shipment-transport-id');
 require __DIR__ . '/auth.php';

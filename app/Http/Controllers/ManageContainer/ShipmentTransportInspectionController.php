@@ -107,4 +107,16 @@ class ShipmentTransportInspectionController extends Controller
             'data' => $inspection
         ]);
     }
+
+    public function showByShipmentTransportId(Request $request)
+    {
+        // $id = $request->shipment_transport_id;
+        $id = 1;
+        $inspection_answer = ShipmentTransportInspection::where('shipment_transport_id', $id)->with(['transport','answers.question'])->get();
+
+        return response()->json([
+            'data' => $inspection_answer,
+            'messages' => 'Successsssss'
+        ]);
+    }
 }

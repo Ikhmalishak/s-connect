@@ -22,11 +22,13 @@ import CreateContainerRecordModal from "@/Components/ManageContainer/CreateConta
 const currentTime = ref(new Date());
 const openCreateContainerModal = ref(false);
 const openCreateContainerInspectionModal = ref(false);
+const openEditContainerInspectionModal = ref(false);
 const openViewContainerInspectionModal = ref(false);
 const openCreateContainerRecordModal = ref(false);
 const currentCreateContainerId = ref<number | null>(null);
 const currentViewContainerId = ref<number | null>(null);
 const currentCreateContainerRecordId = ref<number | null>(null);
+const currentEditContainerId = ref<number | null>(1);
 const containers = ref([]);
 
 let intervalId;
@@ -172,7 +174,9 @@ onUnmounted(() => {
         </Card>
 
         <ContainerStatCard />
-
+<button @click="openEditContainerInspectionModal=true">
+    test
+</button>
         <ContainerTable
             :containers="containers"
             @open-create-container-modal="openCreateContainerModal = true"
@@ -198,6 +202,7 @@ onUnmounted(() => {
         <ContainerInspectionFormModal
             v-model:show="openCreateContainerInspectionModal"
             :id="currentCreateContainerId"
+            :is-edit-mode="false"
             @close="
                 () => {
                     openCreateContainerInspectionModal = false;
@@ -205,6 +210,20 @@ onUnmounted(() => {
                 }
             "
         />
+
+        <ContainerInspectionFormModal
+            v-model:show="openEditContainerInspectionModal"
+            :id="currentEditContainerId"
+            :is-edit-mode="true"
+            @close="
+                () => {
+                    openEditContainerInspectionModal = false;
+                    fetchContainers();
+                }
+            "
+        />
+
+
 
         <ViewInspectionModal
             v-model:show="openViewContainerInspectionModal"
