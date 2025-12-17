@@ -1,18 +1,20 @@
 <script setup lang="ts">
-import { DonutChart } from '@/components/ui/chart-donut';
+import { DonutChart } from "@/components/ui/chart-donut";
 import { Card } from "@/components/ui/card";
 
 const visitorInsidePieChart = [
     { name: "Employee", total: 120 },
     { name: "Contractor", total: 80 },
     { name: "Guest", total: 40 },
-]
+];
 
 const visitorOutsidePieChart = [
     { name: "Employee", total: 120 },
     { name: "Contractor", total: 80 },
     { name: "Guest", total: 40 },
-]
+];
+
+const testttt = "Hello Donut Chart";
 </script>
 
 <template>
@@ -37,6 +39,7 @@ const visitorOutsidePieChart = [
                         <div class="w-full max-w-[250px] h-[185px]">
                             <DonutChart
                                 index="name"
+                                title="Total Container"
                                 :category="'total'"
                                 :data="visitorInsidePieChart"
                                 :type="'donut'"
@@ -59,6 +62,20 @@ const visitorOutsidePieChart = [
                         <div class="w-full max-w-[250px] h-[185px]">
                             <DonutChart
                                 index="name"
+                                title="Container Checking"
+                                :category="'total'"
+                                :data="visitorOutsidePieChart"
+                                class="w-4/5 h-4/5"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Donut Chart Out -->
+                    <div class="flex-1 h-full flex justify-center">
+                        <div class="w-full max-w-[250px] h-[185px]">
+                            <DonutChart
+                                index="name"
+                                title="Container Approval"
                                 :category="'total'"
                                 :data="visitorOutsidePieChart"
                                 :type="'donut'"
@@ -67,24 +84,12 @@ const visitorOutsidePieChart = [
                         </div>
                     </div>
 
-                                        <!-- Donut Chart Out -->
+                    <!-- Donut Chart Out -->
                     <div class="flex-1 h-full flex justify-center">
                         <div class="w-full max-w-[250px] h-[185px]">
                             <DonutChart
                                 index="name"
-                                :category="'total'"
-                                :data="visitorOutsidePieChart"
-                                :type="'donut'"
-                                class="w-4/5 h-4/5"
-                            />
-                        </div>
-                    </div>
-
-                                        <!-- Donut Chart Out -->
-                    <div class="flex-1 h-full flex justify-center">
-                        <div class="w-full max-w-[250px] h-[185px]">
-                            <DonutChart
-                                index="name"
+                                title="Security Checking"
                                 :category="'total'"
                                 :data="visitorOutsidePieChart"
                                 :type="'donut'"

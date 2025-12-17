@@ -6,27 +6,10 @@ const props = defineProps<{ show: boolean; id: number | null }>();
 const emit = defineEmits(["close", "save"]);
 const isLoading = ref(false);
 
-// Define all photo fields
-const photoFields = [
-    "pallet_condition_photo",
-    "pallet_label_photo",
-    "gps_photo_before_installation",
-    "container_truck_photo",
-    "empty_container_photo",
-    "inside_gps_photo",
-    "half_loaded_photo",
-    "one_side_door_closed_with_container_number_photo",
-    "complete_loaded_photo",
-    "outside_gps_photo",
-    "security_seal_photo",
-    "container_full_seal_photo",
-];
-
 // Reactive object to hold files
 const formData = ref<Record<string, File | null>>({});
-photoFields.forEach((f) => (formData.value[f] = null));
 
-const handleFileUpload = (field: string, event: Event) => {
+const handleFileUpload = (event: Event) => {
     const target = event.target as HTMLInputElement;
     const file = target.files?.[0] || null;
 
@@ -45,15 +28,17 @@ const handleFileUpload = (field: string, event: Event) => {
         target.value = "";
         return;
     }
+    const key = target.name;
 
-    formData.value[field] = file;
+    formData.value[key] = file;
+    console.log(formData.value);
 };
 
 const onSubmit = async () => {
-    // if (Object.values(formData.value).some((f) => !f)) {
-    //     alert("All photos are required!");
-    //     return;
-    // }
+    if (Object.values(formData.value).some((f) => !f)) {
+        alert("All photos are required!");
+        return;
+    }
 
     if (!props.id) {
         alert("Container ID is missing!");
@@ -61,24 +46,17 @@ const onSubmit = async () => {
     }
 
     isLoading.value = true;
+
+    console.log(formData.value);
     try {
         const data = new FormData();
-
-        // const values = Object.values(formData.value);
-        //Object.values will return every values inside object in array
-        // console.log(values);
-
-        for (const [key, file] of Object.entries(formData.value)) {
-            if (file) {
-                console.log("Field:", key, "File:", file);
-                // or append to FormData
-                data.append(`photos[${key}]`, file);
-            }
-        }
-
         data.append("shipment_transport_id", props.id.toString());
 
-        const res = await axios.post("/containers/create-photo", data, {
+        for (const [key, file] of Object.entries(formData.value)) {
+            if (file) data.append(key, file);
+        }
+        
+        const res = await axios.post("/test", data, {
             headers: { "Content-Type": "multipart/form-data" },
         });
         console.log("Success:", res.data);
@@ -116,20 +94,14 @@ const onSubmit = async () => {
                         </div>
 
                         <form @submit.prevent="onSubmit" class="space-y-4">
-                            <div
-                                v-for="(field, index) in photoFields"
-                                :key="field"
-                                class="flex flex-col gap-2"
-                            >
-                                <label class="font-medium text-black">
-                                    {{ index + 1 }}.
-                                    {{ field.replace(/_/g, " ").toUpperCase() }}
-                                </label>
+                            <div class="flex flex-col gap-2">
+                                <label class="font-medium text-black"></label>
                                 <input
                                     type="file"
+                                    name="security_checking_photo"
                                     accept="image/*"
                                     :disabled="isLoading"
-                                    @change="handleFileUpload(field, $event)"
+                                    @change="handleFileUpload($event)"
                                     class="file:border-0 file:bg-blue-50 file:text-blue-700 file:font-medium file:px-4 file:py-2 file:rounded-md hover:file:bg-blue-100"
                                 />
                             </div>

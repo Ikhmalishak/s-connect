@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import axios from "axios";
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
 
 const props = defineProps<{
     show: boolean;
@@ -16,6 +16,16 @@ async function fetchInspectionDetails(id: number) {
 
 const emit = defineEmits(["close", "save"]);
 const inspectionDetails = ref(null);
+
+const excludeLabels = ["security_checking_photo"];
+
+const filteredPhotos = computed(() => {
+    return (
+        inspectionDetails.value?.transport?.photo?.filter(
+            (p: any) => excludeLabels.includes(p.label)
+        ) || []
+    );
+});
 
 watch(
     () => props.id,
@@ -114,69 +124,63 @@ watch(
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Checklist -->
-                            <div>
-                                <h3 class="font-semibold text-gray-700 mb-3">
-                                    Inspection Checklist
-                                </h3>
-                                <div class="space-y-2">
-                                    <div
-                                        v-for="a in inspectionDetails?.answers"
-                                        :key="a.id"
-                                        class="items-start gap-3 p-3 rounded border"
-                                        :class="
-                                            a.passed === 1
-                                                ? 'bg-green-50 border-green-200'
-                                                : 'bg-red-50 border-red-200'
-                                        "
+                            
+                            <!-- Container Photos -->
+                            <div
+                                v-if="
+                                    inspectionDetails?.transport?.photo?.length
+                                "
+                            >
+                                <div class="flex items-center gap-3 mb-4">
+                                    <h3 class="font-bold text-gray-800 text-lg">
+                                        Container Photos
+                                    </h3>
+                                </div>
+                                <div
+                                    v-for="(value, index) in filteredPhotos"
+                                    :key="index"
+                                    class="group mt-4"
+                                >
+                                    <p
+                                        class="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2"
                                     >
-                                        <div class="flex items-center gap-2">
-                                            <span
-                                                class="text-lg flex-shrink-0"
-                                                :class="
-                                                    a.passed === 1
-                                                        ? 'text-green-600'
-                                                        : 'text-red-600'
-                                                "
-                                            >
-                                                {{ a.passed === 1 ? "✓" : "✗" }}
-                                            </span>
-                                            <span
-                                                class="text-sm text-gray-700"
-                                                >{{ a.question.question }}</span
-                                            >
-                                        </div>
+                                        {{
+                                            value.label
+                                                .replace(/_/g, " ")
+                                                .toUpperCase()
+                                        }}
+                                    </p>
+                                    <a
+                                        :href="'/storage/' + value.photo_path"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="block relative overflow-hidden rounded-lg border-2 border-gray-300 hover:border-orange-500 transition-all duration-200"
+                                    >
+                                        <img
+                                            :src="
+                                                '/storage/' + value.photo_path
+                                            "
+                                            :alt="value.label"
+                                            class="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-200"
+                                        />
                                         <div
-                                            v-if="a.remarks"
-                                            class="mt-2 flex gap-2 flex-wrap"
+                                            class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center"
                                         >
-                                            <span
-                                                class="text-sm text-gray-600 font-semibold"
-                                                >Remarks:</span
+                                            <svg
+                                                class="w-10 h-10 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
                                             >
-                                            <span
-                                                class="text-sm text-gray-800"
-                                                >{{ a.remarks }}</span
-                                            >
-                                        </div>
-                                        <div
-                                            v-if="a.photo_path"
-                                            class="mt-2 flex gap-2 flex-wrap"
-                                        >
-                                            <a
-                                                :href="`/storage/${a.photo_path}`"
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                            >
-                                                <img
-                                                    :src="`/storage/${a.photo_path}`"
-                                                    alt="Inspection Photo"
-                                                    class="w-20 h-20 object-cover rounded border cursor-pointer"
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
                                                 />
-                                            </a>
+                                            </svg>
                                         </div>
-                                    </div>
+                                    </a>
                                 </div>
                             </div>
                         </div>

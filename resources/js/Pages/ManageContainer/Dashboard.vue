@@ -18,6 +18,9 @@ import CreateContainerFormModal from "@/Components/ManageContainer/CreateContain
 import ContainerInspectionFormModal from "@/Components/ManageContainer/ContainerInspectionFormModal.vue";
 import ViewInspectionModal from "@/Components/ManageContainer/ViewInspectionModal.vue";
 import CreateContainerRecordModal from "@/Components/ManageContainer/CreateContainerRecordModal.vue";
+import ViewContainerRecordModal from "@/Components/ManageContainer/ViewContainerRecordModal.vue";
+import CreateContainerSecurityCheckingModal from "@/Components/ManageContainer/CreateContainerSecurityCheckingModal.vue";
+import ViewContainerSecurityCheckingModal from "@/Components/ManageContainer/ViewContainerSecurityCheckingModal.vue";
 
 const currentTime = ref(new Date());
 const openCreateContainerModal = ref(false);
@@ -25,10 +28,16 @@ const openCreateContainerInspectionModal = ref(false);
 const openEditContainerInspectionModal = ref(false);
 const openViewContainerInspectionModal = ref(false);
 const openCreateContainerRecordModal = ref(false);
+const openViewContainerRecordModal = ref(false);
+const openContainerSecurityCheckingModal = ref(false);
+const openViewContainerSecurityCheckingModal = ref(false);
 const currentCreateContainerId = ref<number | null>(null);
 const currentViewContainerId = ref<number | null>(null);
 const currentCreateContainerRecordId = ref<number | null>(null);
-const currentEditContainerId = ref<number | null>(1);
+const currentEditContainerId = ref<number | null>(null);
+const currentViewContainerRecordId = ref<number | null>(null);
+const currentContainerSecurityCheckingId = ref<number | null>(null);
+const currentViewContainerSecurityCheckingId = ref<number | null>(null);
 const containers = ref([]);
 
 let intervalId;
@@ -67,6 +76,36 @@ function handleOpenCreateContainerRecordModal(containerId: number) {
     currentCreateContainerRecordId.value = containerId;
     console.log("Current View Container ID:", currentViewContainerId.value);
     openCreateContainerRecordModal.value = true;
+}
+
+function handleOpenViewContainerRecordModal(containerId: number) {
+    console.log("Opening View Container Record Modal for ID:", containerId);
+    currentViewContainerRecordId.value = containerId;
+    console.log(
+        "Current View Container ID:",
+        currentViewContainerRecordId.value
+    );
+    openViewContainerRecordModal.value = true;
+}
+
+function handleOpenContainerSecurityCheckingModal(containerId: number) {
+    console.log("Opening Container Security Checking Modal for ID:", containerId);
+    currentContainerSecurityCheckingId.value = containerId;
+    console.log(
+        "Current Container Security Checking",
+        currentContainerSecurityCheckingId.value
+    );
+    openContainerSecurityCheckingModal.value = true;
+}
+
+function handleOpenViewContainerSecurityCheckingModal(containerId: number) {
+    console.log("Opening Container Security Checking Modal for ID:", containerId);
+    currentViewContainerSecurityCheckingId.value = containerId;
+    console.log(
+        "Current Container Security Checking",
+        currentViewContainerSecurityCheckingId.value
+    );
+    openViewContainerSecurityCheckingModal.value = true;
 }
 
 async function fetchContainers() {
@@ -174,9 +213,7 @@ onUnmounted(() => {
         </Card>
 
         <ContainerStatCard />
-<button @click="openEditContainerInspectionModal=true">
-    test
-</button>
+
         <ContainerTable
             :containers="containers"
             @open-create-container-modal="openCreateContainerModal = true"
@@ -187,6 +224,13 @@ onUnmounted(() => {
             @open-create-container-record-modal="
                 handleOpenCreateContainerRecordModal
             "
+            @open-view-container-record-modal="
+                handleOpenViewContainerRecordModal
+            "
+            @open-container-security-checking-modal="
+            handleOpenContainerSecurityCheckingModal"
+            @open-view-container-security-checking-modal="
+            handleOpenViewContainerSecurityCheckingModal"
         />
 
         <CreateContainerFormModal
@@ -223,8 +267,6 @@ onUnmounted(() => {
             "
         />
 
-
-
         <ViewInspectionModal
             v-model:show="openViewContainerInspectionModal"
             :id="currentViewContainerId"
@@ -245,5 +287,37 @@ onUnmounted(() => {
                 }
             "
         />
+
+        <ViewContainerRecordModal
+            v-model:show="openViewContainerRecordModal"
+            :id="currentViewContainerRecordId"
+            @close="
+                () => {
+                    openViewContainerRecordModal = false;
+                }
+            "
+        />
+
+        <CreateContainerSecurityCheckingModal
+            v-model:show="openContainerSecurityCheckingModal"
+            :id="currentContainerSecurityCheckingId"
+            @close="
+                () => {
+                    openContainerSecurityCheckingModal = false;
+                    fetchContainers();
+                }
+            "
+        />
+
+        <ViewContainerSecurityCheckingModal
+           v-model:show="openViewContainerSecurityCheckingModal"
+            :id="currentViewContainerSecurityCheckingId"
+            @close="
+                () => {
+                    openViewContainerSecurityCheckingModal = false;
+                }
+            "
+        />
+
     </AuthenticatedLayout>
 </template>

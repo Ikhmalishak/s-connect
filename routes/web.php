@@ -17,11 +17,27 @@ use App\Http\Controllers\ManageVisitor\VisitorController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\ManageVisitor\VisitorStaffAcknowledgementController;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
     if (auth()->check()) {
+        $user = Auth::user();
+
+        // First-time login → force password update
+        if ($user->is_first_time_login) {  
+            return redirect()->route('password.expired')->with('reason', 'first_time');
+        }
+
+        // if user never changed password, fallback to created_at
+        $lastChanged = $user->password_changed_at ?? $user->created_at;
+
+        if (Carbon::parse($lastChanged)->addDays(180)->isPast()) {
+            // force redirect to password update page
+            return redirect()->route('password.expired')->with('reason', 'expired');
+        }
+
         return Inertia::render('Welcome'); // main dashboard for logged-in users
     }
 
@@ -29,12 +45,12 @@ Route::get('/', function () {
 })->name('welcome');
 
 //Route to get the welcome page
-Route::get('/dashboard', function () {
+Route::middleware('password.age')->get('/dashboard', function () {
     return Inertia::render('Welcome');
 })->name('dashboard');
 
 //routes for manage visitor module
-Route::middleware(['auth'])->prefix('visitor')->name('visitor.')->group(function () {
+Route::middleware(['auth', 'password.age'])->prefix('visitor')->name('visitor.')->group(function () {
 
     // Dashboard (view only)
     Route::get('/dashboard', [VisitorController::class, 'dashboard'])
@@ -76,7 +92,7 @@ Route::middleware(['auth'])->prefix('visitor')->name('visitor.')->group(function
 
 
 //routes for manage room reservation module
-Route::middleware(['auth'])->prefix('room-reservation')->name('room-reservation.')->group(function () {
+Route::middleware(['auth', 'password.age'])->prefix('room-reservation')->name('room-reservation.')->group(function () {
 
     // Dashboard (view only)
     Route::get('/dashboard', [RoomReservationController::class, 'dashboard'])
@@ -96,7 +112,7 @@ Route::middleware(['auth'])->prefix('room-reservation')->name('room-reservation.
 });
 
 //routes for superadmin
-Route::middleware(['auth', 'can:superadmin'])
+Route::middleware(['auth', 'can:superadmin', 'password.age'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
@@ -108,7 +124,7 @@ Route::middleware(['auth', 'can:superadmin'])
         Route::post('/reset-password/{user}', [UserController::class, 'resetPassword']);
         Route::delete('/delete-user/{user}', [UserController::class, 'destroy']);
         Route::get('/user-stats-card', [UserController::class, 'getUserStatsCard']);
-        Route::get('/get-password-policy-page',[PasswordPolicyController::class,'getPasswordPolicyPage']);
+        Route::get('/get-password-policy-page', [PasswordPolicyController::class, 'getPasswordPolicyPage']);
         Route::get('/password-policy', [PasswordPolicyController::class, 'index'])->name('password-policy.edit');
         Route::post('/password-policy', [PasswordPolicyController::class, 'update'])->name('password-policy.update');
         Route::get('/encryption-settings', [EncryptionSettingController::class, 'index']);
@@ -116,7 +132,7 @@ Route::middleware(['auth', 'can:superadmin'])
         Route::apiResource('sites', SiteController::class);
     });
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'password.age'])->group(function () {
     //profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -144,10 +160,11 @@ Route::middleware(['auth'])->prefix('container')->name('container.')->group(func
 
 Route::post('/containers/create', [ShipmentTransportController::class, 'store'])->name('container.create');
 Route::get('/containers', [ShipmentTransportController::class, 'index'])->name('container.index');
-Route::get('/containers/questions',[InspectionQuestionController::class,'index'])->name('container.question');
+Route::get('/containers/questions', [InspectionQuestionController::class, 'index'])->name('container.question');
 Route::post('/containers/create-inspection', [ShipmentTransportInspectionController::class, 'createInspection'])->name('container.create-inspection');
 Route::post('/containers/update-inspection/{id}', [ShipmentTransportInspectionController::class, 'updateInspection'])->name('container.update-inspection');
 Route::get('/containers/inspection-details/{id}', [ShipmentTransportInspectionController::class, 'getInspectionDetails'])->name('container.inspection-details');
 Route::post('containers/create-photo', [ShipmentTransportPhotoController::class, 'store'])->name('container.create-photo');
-Route::get('/containers/inspection-answer',[ShipmentTransportInspectionController::class,'showByShipmentTransportId'])->name('container.get-inspection-answer-by-shipment-transport-id');
+Route::get('/containers/inspection-answer', [ShipmentTransportInspectionController::class, 'showByShipmentTransportId'])->name('container.get-inspection-answer-by-shipment-transport-id');
+Route::post('/test', [ShipmentTransportPhotoController::class, 'submitSecurityChecking'])->name('container.create-photo');
 require __DIR__ . '/auth.php';

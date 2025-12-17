@@ -14,21 +14,49 @@ return new class extends Migration
         Schema::create('shipment_transports', function (Blueprint $table) {
             $table->id();
             $table->foreignId('site_id')->constrained('sites')->onDelete('cascade');
-            $table->string('transport_type');          
+
+            // Basic transport info
+            $table->string('transport_type');
             $table->string('transport_number');
             $table->string('sku_number');
             $table->string('model_project');
             $table->string('forwarder');
             $table->string('country');
             $table->string('work_order');
-            //only for container            
+
+            // Extra container-specific fields
             $table->string('hauler')->nullable();
             $table->string('high_security_seal')->nullable();
             $table->string('gps')->nullable();
             $table->string('fork_seal')->nullable();
             $table->string('temporary_seal')->nullable();
             $table->date('date')->nullable();
-            $table->enum('status', ['pending', 'in_transit', 'delivered'])->default('pending');
+
+            /**
+             * Status workflow
+             * - status: high-level state
+             * - stage: current workflow position
+             * - failed_at: which stage failed
+             */
+            $table->enum('status', ['pending', 'in_progress', 'completed', 'failed'])
+                ->default('pending');
+
+            $table->enum('stage', [
+                'container_checking',
+                'container_checking_approval',
+                'container_loading_report',
+                'container_loading_report_approval',
+                'security_checking'
+            ])->default('container_checking');
+
+            $table->enum('failed_at', [
+                'container_checking',
+                'container_checking_approval',
+                'container_loading_report',
+                'container_loading_report_approval',
+                'security_checking'
+            ])->nullable();
+
             $table->string('created_by')->nullable();
             $table->timestamps();
         });

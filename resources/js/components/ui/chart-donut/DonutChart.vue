@@ -26,6 +26,7 @@ const props = defineProps({
   sortFunction: { type: Function, required: false, default: () => undefined },
   valueFormatter: { type: Function, required: false },
   customTooltip: { type: null, required: false },
+  title : { type: String, required:true}
 });
 
 const valueFormatter = props.valueFormatter ?? ((tick) => `${tick}`);
@@ -63,6 +64,7 @@ const totalValue = computed(() =>
       :margin="{ left: 20, right: 20 }"
       :data="data"
     >
+    <div class="text-center mb-6">{{ title }}</div>
       <ChartSingleTooltip
         :selector="Donut.selectors.segment"
         :index="category"

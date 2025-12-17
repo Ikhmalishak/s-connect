@@ -17,9 +17,9 @@ class CheckPasswordExpiry
     {
         if (Auth::check()) {
             $user = Auth::user();
-
             // First-time login → force password update
             if ($user->is_first_time_login) {
+                dd("test");
                 return redirect()->route('password.expired')->with('reason', 'first_time');
             }
 

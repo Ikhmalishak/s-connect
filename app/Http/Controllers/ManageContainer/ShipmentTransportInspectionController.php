@@ -101,22 +101,14 @@ class ShipmentTransportInspectionController extends Controller
 
     public function getInspectionDetails($id)
     {
-        $inspection = ShipmentTransportInspection::with(['answers.question', 'transport'])->where('shipment_transport_id', $id)->firstOrFail();
+        $inspection = ShipmentTransportInspection::with(['answers.question', 'transport.photo'])->where('shipment_transport_id', $id)->firstOrFail();
 
         return response()->json([
             'data' => $inspection
         ]);
     }
 
-    public function showByShipmentTransportId(Request $request)
-    {
-        // $id = $request->shipment_transport_id;
-        $id = 1;
-        $inspection_answer = ShipmentTransportInspection::where('shipment_transport_id', $id)->with(['transport','answers.question'])->get();
-
-        return response()->json([
-            'data' => $inspection_answer,
-            'messages' => 'Successsssss'
-        ]);
+    public function test(Request $request, $id){
+dd($request->all());
     }
 }

@@ -21,6 +21,7 @@ class ShipmentTransport extends Model
         'country',
         'work_order',
         'date',
+        'status',
     ];
 
 public function inspection()

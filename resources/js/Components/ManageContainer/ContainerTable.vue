@@ -19,6 +19,9 @@ const emit = defineEmits([
     "openContainerInspectionModal",
     "openViewInspectionModal",
     "openCreateContainerRecordModal",
+    "openViewContainerRecordModal",
+    "openContainerSecurityCheckingModal",
+    "openViewContainerSecurityCheckingModal"
 ]);
 
 interface Container {
@@ -218,15 +221,46 @@ async function createInspection(containerId) {
                                 >
                                     Create Record
                                 </Button>
-                                <Button v-else class="text-white w-[150px]">
+                                <Button
+                                    v-else
+                                    class="text-white w-[150px]"
+                                    @click="
+                                        $emit(
+                                            'openViewContainerRecordModal',
+                                            container.id
+                                        )
+                                    "
+                                >
                                     View Report
                                 </Button>
                             </td>
 
                             <td class="p-2">
                                 <Button
+                                    v-if="
+                                        container.photo?.some(p => p.label === 'security_checking_photo')
+                                    "
                                     variant="outline"
                                     class="bg-green-600 text-white"
+                                    @click="
+                                        $emit(
+                                            'openViewContainerSecurityCheckingModal',
+                                            container.id
+                                        )
+                                    "
+                                    >Security Checking</Button
+                                >
+
+                                <Button
+                                    v-else
+                                    variant="outline"
+                                    class="bg-red-600 text-white"
+                                    @click="
+                                        $emit(
+                                            'openContainerSecurityCheckingModal',
+                                            container.id
+                                        )
+                                    "
                                     >Security Checking</Button
                                 >
                             </td>
