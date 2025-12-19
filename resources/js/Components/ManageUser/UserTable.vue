@@ -24,7 +24,7 @@ const props = defineProps<{
     user: any;
 }>();
 
-const emit = defineEmits(["update:limit", "search", "openCreateUserModal", "openEditUserModal","openDeleteUserModal"]);
+const emit = defineEmits(["update:limit", "search", "openCreateUserModal", "openEditUserModal","openDeleteUserModal", "openManagePermissionsModal"]);
 
 const searchQuery = ref("");
 
@@ -170,6 +170,16 @@ watch(searchQuery, (newVal) => {
                                     @click="$emit('openEditUserModal', u)"
                                 >
                                     <Pencil class="w-4 h-4" />
+                                </Button>
+
+                                <!-- Permissions button -->
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    class="text-green-500 border-green-300 hover:bg-green-50"
+                                    @click="$emit('openManagePermissionsModal', u)"
+                                >
+                                    <FileLock class="w-4 h-4" />
                                 </Button>
 
                                 <!-- Delete button -->

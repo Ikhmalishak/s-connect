@@ -1,13 +1,24 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import axios from "axios";
 
 const props = defineProps<{ show: boolean; id: number | null }>();
 const emit = defineEmits(["close", "save"]);
 const isLoading = ref(false);
+const errorMessage = ref("");
+const successMessage = ref("");
 
 // Reactive object to hold files
 const formData = ref<Record<string, File | null>>({});
+
+// Clear messages when modal is closed or reopened
+watch(() => props.show, (newVal) => {
+    if (!newVal) {
+        errorMessage.value = "";
+        successMessage.value = "";
+        isLoading.value = false;
+    }
+});
 
 const handleFileUpload = (event: Event) => {
     const target = event.target as HTMLInputElement;
@@ -17,31 +28,36 @@ const handleFileUpload = (event: Event) => {
 
     // File type validation
     if (!file.type.startsWith("image/")) {
-        alert("Only image files allowed!");
+        errorMessage.value = "Only image files allowed!";
         target.value = "";
         return;
     }
 
     // File size limit 5MB
     if (file.size > 5 * 1024 * 1024) {
-        alert("File must be less than 5MB!");
+        errorMessage.value = "File must be less than 5MB!";
         target.value = "";
         return;
     }
-    const key = target.name;
 
+    const key = target.name;
     formData.value[key] = file;
+    errorMessage.value = ""; // Clear error on successful file selection
     console.log(formData.value);
 };
 
 const onSubmit = async () => {
+    // Clear previous messages
+    errorMessage.value = "";
+    successMessage.value = "";
+
     if (Object.values(formData.value).some((f) => !f)) {
-        alert("All photos are required!");
+        errorMessage.value = "All photos are required!";
         return;
     }
 
     if (!props.id) {
-        alert("Container ID is missing!");
+        errorMessage.value = "Container ID is missing!";
         return;
     }
 
@@ -55,14 +71,26 @@ const onSubmit = async () => {
         for (const [key, file] of Object.entries(formData.value)) {
             if (file) data.append(key, file);
         }
-        
-        const res = await axios.post("/test", data, {
+
+        const res = await axios.post("/containers/submit-security-checking", data, {
             headers: { "Content-Type": "multipart/form-data" },
         });
         console.log("Success:", res.data);
-        emit("close");
-    } catch (err) {
+
+        successMessage.value = "Security checking completed successfully!";
+
+        // Auto-close after success
+        setTimeout(() => {
+            emit("close");
+        }, 2000);
+
+    } catch (err: any) {
         console.error("Error:", err);
+        if (err.response?.data?.message) {
+            errorMessage.value = err.response.data.message;
+        } else {
+            errorMessage.value = "Failed to submit security checking. Please try again.";
+        }
     } finally {
         isLoading.value = false;
     }
@@ -91,6 +119,16 @@ const onSubmit = async () => {
                             >
                                 ×
                             </button>
+                        </div>
+
+                        <!-- Error Message -->
+                        <div v-if="errorMessage" class="p-4 bg-red-50 border border-red-200 rounded-md mb-4">
+                            <p class="text-red-800 text-sm">{{ errorMessage }}</p>
+                        </div>
+
+                        <!-- Success Message -->
+                        <div v-if="successMessage" class="p-4 bg-green-50 border border-green-200 rounded-md mb-4">
+                            <p class="text-green-800 text-sm">{{ successMessage }}</p>
                         </div>
 
                         <form @submit.prevent="onSubmit" class="space-y-4">

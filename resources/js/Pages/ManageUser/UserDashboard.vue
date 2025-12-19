@@ -15,6 +15,7 @@ import UserTable from "@/Components/ManageUser/UserTable.vue";
 import CreateUserModal from "@/Components/ManageUser/CreateUserModal.vue";
 import EditUserModal from "@/Components/ManageUser/EditUserModal .vue";
 import DeleteUserModal from "@/Components/ManageUser/DeleteUserModal.vue";
+import ManagePermissionsModal from "@/Components/ManageUser/ManagePermissionsModal.vue";
 
 const limitTable = ref("50");
 const searchQuery = ref("");
@@ -23,8 +24,10 @@ const userList = ref([]);
 const showCreateUserModal = ref(false);
 const showEditUserModal = ref(false);
 const showDeleteUserModal = ref(false);
+const showManagePermissionsModal = ref(false);
 const selectedUser = ref(null);
 const selectedDeleteUser = ref(null);
+const selectedPermissionsUser = ref(null);
 const totalAdmin = ref(0);
 const totalUser = ref(0);
 const totalRecentUser = ref(0);
@@ -51,6 +54,11 @@ function openEditUserModal(user) {
 function openDeleteUserModal(user) {
     selectedDeleteUser.value = user;
     showDeleteUserModal.value = true;
+}
+
+function openManagePermissionsModal(user) {
+    selectedPermissionsUser.value = user;
+    showManagePermissionsModal.value = true;
 }
 
 async function fetchUser(
@@ -126,7 +134,7 @@ watch(searchQuery, (newVal) => {
                 </BreadcrumbList>
             </Breadcrumb>
         </template>
-        <button @click="openDeleteUserModal">open</button>
+
         <Card
             class="shadow-lg shadow-opacity-30 p-2 mb-4 text-2xl font-bold flex items-center justify-between bg-gray-100"
         >
@@ -245,6 +253,7 @@ watch(searchQuery, (newVal) => {
             @open-create-user-modal="showCreateUserModal = true"
             @open-edit-user-modal="openEditUserModal"
             @open-delete-user-modal="openDeleteUserModal"
+            @open-manage-permissions-modal="openManagePermissionsModal"
         />
 
         <CreateUserModal
@@ -277,6 +286,18 @@ watch(searchQuery, (newVal) => {
                     fetchUser();
                 }
             "
+        />
+
+        <ManagePermissionsModal
+            :show="showManagePermissionsModal"
+            :user="selectedPermissionsUser"
+            @close="
+                () => {
+                    showManagePermissionsModal = false;
+                    fetchUser();
+                }
+            "
+            @permissions-updated="fetchUser()"
         />
     </AdminAuthenticatedLayout>
 </template>

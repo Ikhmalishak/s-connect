@@ -4,6 +4,7 @@ namespace App\Http\Controllers\ManageContainer;
 
 use App\Http\Controllers\Controller;
 use App\Models\InspectionAnswer;
+use App\Models\ShipmentTransport;
 use App\Models\ShipmentTransportInspection;
 use Illuminate\Http\Request;
 
@@ -12,6 +13,18 @@ class ShipmentTransportInspectionController extends Controller
     public function createInspection(Request $request)
     {
         $transport_shipment_id = $request->input('shipment_transport_id');
+        $user = auth()->user();
+
+        // Check if shipment transport belongs to user's site (unless superadmin)
+        $container = ShipmentTransport::where('id', $transport_shipment_id);
+        if (!$user->hasPermissionTo('superadmin')) {
+            $container->where('site_id', $user->site_id);
+        }
+        $container = $container->first();
+
+        if (!$container) {
+            return response()->json(['message' => 'Unauthorized access to shipment transport'], 403);
+        }
 
         $transport_shipment_inspection_exist = ShipmentTransportInspection::where('shipment_transport_id', $transport_shipment_id)->first();
 
@@ -29,6 +42,9 @@ class ShipmentTransportInspectionController extends Controller
             'remarks' => 'test',
         ]);
 
+        // Update container status to in_progress when inspection starts
+        $container->update(['status' => 'in_progress']);
+
         return response()->json([
             'message' => 'Inspection created successfully',
             'inspection' => $inspection
@@ -37,6 +53,19 @@ class ShipmentTransportInspectionController extends Controller
 
     public function updateInspection(Request $request, $id)
     {
+        $user = auth()->user();
+
+        // Check if shipment transport belongs to user's site (unless superadmin)
+        $container = ShipmentTransport::where('id', $id);
+        if (!$user->hasPermissionTo('superadmin')) {
+            $container->where('site_id', $user->site_id);
+        }
+        $container = $container->first();
+
+        if (!$container) {
+            return response()->json(['message' => 'Unauthorized access to shipment transport'], 403);
+        }
+
         $inspection = ShipmentTransportInspection::where('shipment_transport_id', $id)->firstOrFail();
 
         // Decode JSON answers
@@ -93,22 +122,83 @@ class ShipmentTransportInspectionController extends Controller
             'inspected_by' => auth()->id(),
         ]);
 
+        // Update container status and send notifications
+        if ($failed) {
+            $container->update([
+                'status' => 'failed',
+                'failed_at' => 'container_checking'
+            ]);
+        } else {
+            $container->update(['stage' => 'container_checking_approval']);
+
+            // Create inspection approval request (department will be determined by approver)
+            $approval = \App\Models\ShipmentTransportApproval::create([
+                'shipment_transport_id' => $container->id,
+                'department' => 'quality',
+                'approval_type' => 'inspection',
+                'approval_status' => 'pending',
+            ]);
+
+            // Broadcast real-time update for inspection submission
+            broadcast(new \App\Events\ContainerStageUpdated($container))->toOthers();
+
+            // Send email to quality department for inspection approval
+            $qualityUsers = \App\Models\User::permission('container.quality_approve')->get();
+            \Illuminate\Support\Facades\Mail::to($qualityUsers)->send(new \App\Mail\ContainerInspectionPassed($container, $approval));
+        }
+
         return response()->json([
             'message' => 'Inspection updated successfully',
             'inspection' => $inspection
         ]);
     }
 
+    public function showByShipmentTransportId(Request $request)
+    {
+        $user = auth()->user();
+        $shipmentTransportId = $request->query('shipment_transport_id');
+
+        if (!$shipmentTransportId) {
+            return response()->json(['message' => 'Shipment transport ID is required'], 400);
+        }
+
+        // Check if shipment transport belongs to user's site (unless superadmin)
+        $container = ShipmentTransport::where('id', $shipmentTransportId);
+        if (!$user->hasPermissionTo('superadmin')) {
+            $container->where('site_id', $user->site_id);
+        }
+        $container = $container->first();
+
+        if (!$container) {
+            return response()->json(['message' => 'Unauthorized access to shipment transport'], 403);
+        }
+
+        $inspections = ShipmentTransportInspection::with(['answers.question', 'transport.photo'])->where('shipment_transport_id', $shipmentTransportId)->get();
+
+        return response()->json([
+            'data' => $inspections
+        ]);
+    }
+
     public function getInspectionDetails($id)
     {
+        $user = auth()->user();
+
+        // Check if shipment transport belongs to user's site (unless superadmin)
+        $container = ShipmentTransport::where('id', $id);
+        if (!$user->hasPermissionTo('superadmin')) {
+            $container->where('site_id', $user->site_id);
+        }
+        $container = $container->first();
+
+        if (!$container) {
+            return response()->json(['message' => 'Unauthorized access to shipment transport'], 403);
+        }
+
         $inspection = ShipmentTransportInspection::with(['answers.question', 'transport.photo'])->where('shipment_transport_id', $id)->firstOrFail();
 
         return response()->json([
             'data' => $inspection
         ]);
-    }
-
-    public function test(Request $request, $id){
-dd($request->all());
     }
 }

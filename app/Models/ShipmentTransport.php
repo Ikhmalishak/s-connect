@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\User;
 
 class ShipmentTransport extends Model
 {
@@ -22,6 +23,9 @@ class ShipmentTransport extends Model
         'work_order',
         'date',
         'status',
+        'stage',
+        'failed_at',
+        'created_by',
     ];
 
 public function inspection()
@@ -32,5 +36,20 @@ public function inspection()
 public function photo()
 {
     return $this->hasMany(ShipmentTransportPhoto::class);
+}
+
+public function approvals()
+{
+    return $this->hasMany(ShipmentTransportApproval::class);
+}
+
+public function createdBy()
+{
+    return $this->belongsTo(User::class, 'created_by');
+}
+
+public function site()
+{
+    return $this->belongsTo(\App\Models\Site::class);
 }
 }

@@ -24,6 +24,9 @@ import { ref, watch } from "vue";
 import axios from "axios";
 
 const transportType = ref<"Truck" | "Container" | "">("");
+const isLoading = ref(false);
+const errorMessage = ref("");
+const successMessage = ref("");
 
 const formSchema = toTypedSchema(
     z.object({
@@ -63,23 +66,48 @@ watch(transportType, (val) => {
     }
 });
 
+// Clear messages when modal is closed or reopened
+watch(() => props.show, (newVal) => {
+    if (!newVal) {
+        errorMessage.value = "";
+        successMessage.value = "";
+        isLoading.value = false;
+    }
+});
+
 // Destructure resetForm from form context
 const { handleSubmit, resetForm } = form;
 
 const onSubmit = handleSubmit(async (values) => {
+    // Clear previous messages
+    errorMessage.value = "";
+    successMessage.value = "";
+
+    isLoading.value = true;
+
     console.log("Form Values:", values);
     try {
         const response = await axios.post("/containers/create", values);
         const data = response.data;
         console.log("Success:", data);
 
-        // Close modal
-        emit("close");
+        successMessage.value = "Container created successfully!";
 
-        // Reset form
-        resetForm(); // <-- use this instead of form.reset()
-    } catch (error) {
+        // Auto-close after success
+        setTimeout(() => {
+            emit("close");
+            resetForm();
+        }, 2000);
+
+    } catch (error: any) {
         console.error("Request failed:", error);
+        if (error.response?.data?.message) {
+            errorMessage.value = error.response.data.message;
+        } else {
+            errorMessage.value = "Failed to create container. Please try again.";
+        }
+    } finally {
+        isLoading.value = false;
     }
 });
 </script>
@@ -105,9 +133,20 @@ const onSubmit = handleSubmit(async (values) => {
                             <button
                                 @click="emit('close')"
                                 class="text-gray-500 hover:text-gray-700 text-xl font-bold"
+                                :disabled="isLoading"
                             >
                                 ×
                             </button>
+                        </div>
+
+                        <!-- Error Message -->
+                        <div v-if="errorMessage" class="p-4 bg-red-50 border border-red-200 rounded-md mb-4">
+                            <p class="text-red-800 text-sm">{{ errorMessage }}</p>
+                        </div>
+
+                        <!-- Success Message -->
+                        <div v-if="successMessage" class="p-4 bg-green-50 border border-green-200 rounded-md mb-4">
+                            <p class="text-green-800 text-sm">{{ successMessage }}</p>
                         </div>
 
                         <form @submit.prevent="onSubmit">
@@ -330,8 +369,15 @@ const onSubmit = handleSubmit(async (values) => {
                             <div
                                 class="flex flex-row justify-between items-center"
                             >
-                                <Button class="mt-4" type="submit">
-                                    Submit
+                                <Button class="mt-4" type="submit" :disabled="isLoading">
+                                    <span v-if="isLoading" class="flex items-center">
+                                        <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        Creating...
+                                    </span>
+                                    <span v-else>Submit</span>
                                 </Button>
                             </div>
                         </form>

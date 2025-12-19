@@ -12,11 +12,13 @@ use App\Http\Controllers\ManageRoomReservation\RoomReservationController;
 use App\Http\Controllers\ManageContainer\ShipmentTransportController;
 use App\Http\Controllers\ManageContainer\ShipmentTransportInspectionController;
 use App\Http\Controllers\ManageContainer\ShipmentTransportPhotoController;
+use App\Http\Controllers\ManageContainer\ShipmentTransportApprovalController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ManageVisitor\VisitorController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\ManageVisitor\VisitorStaffAcknowledgementController;
+use App\Http\Controllers\ContainerShipmentController;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -130,6 +132,11 @@ Route::middleware(['auth', 'can:superadmin', 'password.age'])
         Route::get('/encryption-settings', [EncryptionSettingController::class, 'index']);
         Route::post('/encryption-settings', [EncryptionSettingController::class, 'update']);
         Route::apiResource('sites', SiteController::class);
+
+        // Permission management routes
+        Route::get('/permissions', [UserController::class, 'getAllPermissions']);
+        Route::get('/users/{user}/permissions', [UserController::class, 'getUserPermissions']);
+        Route::post('/users/{user}/permissions', [UserController::class, 'manageUserPermissions']);
     });
 
 Route::middleware(['auth', 'password.age'])->group(function () {
@@ -137,6 +144,14 @@ Route::middleware(['auth', 'password.age'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // User permissions API
+    Route::get('/api/user/permissions', function () {
+        $user = auth()->user();
+        return response()->json([
+            'permissions' => $user->getAllPermissions()->pluck('name')->toArray()
+        ]);
+    });
 });
 
 //api to fetch form by site
@@ -155,16 +170,45 @@ Route::post('/mfa-resend', [MFAController::class, 'resendCode'])->name('mfa.rese
 // manage container module
 Route::middleware(['auth'])->prefix('container')->name('container.')->group(function () {
     Route::get('/dashboard', [ShipmentTransportController::class, 'dashboard'])
+        ->middleware('can:container.access')
         ->name('dashboard');
+    Route::get('/stats', [ShipmentTransportController::class, 'getStats'])
+        ->middleware('can:container.access')
+        ->name('stats');
+    Route::get('/shipments', function () {
+        return Inertia::render('ManageContainer/ContainerShipments');
+    })->middleware('can:container.access')->name('shipments');
+    Route::get('/approvals', function () {
+        return Inertia::render('ManageContainer/ContainerApprovals');
+    })->middleware('can:container.approve')->name('approvals');
 });
 
-Route::post('/containers/create', [ShipmentTransportController::class, 'store'])->name('container.create');
-Route::get('/containers', [ShipmentTransportController::class, 'index'])->name('container.index');
-Route::get('/containers/questions', [InspectionQuestionController::class, 'index'])->name('container.question');
-Route::post('/containers/create-inspection', [ShipmentTransportInspectionController::class, 'createInspection'])->name('container.create-inspection');
-Route::post('/containers/update-inspection/{id}', [ShipmentTransportInspectionController::class, 'updateInspection'])->name('container.update-inspection');
-Route::get('/containers/inspection-details/{id}', [ShipmentTransportInspectionController::class, 'getInspectionDetails'])->name('container.inspection-details');
-Route::post('containers/create-photo', [ShipmentTransportPhotoController::class, 'store'])->name('container.create-photo');
-Route::get('/containers/inspection-answer', [ShipmentTransportInspectionController::class, 'showByShipmentTransportId'])->name('container.get-inspection-answer-by-shipment-transport-id');
-Route::post('/test', [ShipmentTransportPhotoController::class, 'submitSecurityChecking'])->name('container.create-photo');
+// Container shipments API routes
+Route::middleware(['auth'])->prefix('api/container-shipments')->name('container-shipments.')->group(function () {
+    Route::get('/', [ContainerShipmentController::class, 'index'])->name('index');
+    Route::post('/', [ContainerShipmentController::class, 'store'])->name('store');
+    Route::get('/{containerShipment}', [ContainerShipmentController::class, 'show'])->name('show');
+    Route::put('/{containerShipment}', [ContainerShipmentController::class, 'update'])->name('update');
+    Route::delete('/{containerShipment}', [ContainerShipmentController::class, 'destroy'])->name('destroy');
+});
+
+Route::post('/containers/create', [ShipmentTransportController::class, 'store'])->middleware('can:container.access')->name('container.create');
+Route::get('/containers', [ShipmentTransportController::class, 'index'])->middleware('can:container.access')->name('container.index');
+Route::get('/containers/questions', [InspectionQuestionController::class, 'index'])->middleware('can:container.approve')->name('container.question');
+Route::post('/containers/create-inspection', [ShipmentTransportInspectionController::class, 'createInspection'])->middleware('can:container.approve')->name('container.create-inspection');
+Route::post('/containers/update-inspection/{id}', [ShipmentTransportInspectionController::class, 'updateInspection'])->middleware('can:container.approve')->name('container.update-inspection');
+Route::get('/containers/inspection-details/{id}', [ShipmentTransportInspectionController::class, 'getInspectionDetails'])->middleware('can:container.approve')->name('container.inspection-details');
+Route::post('containers/create-photo', [ShipmentTransportPhotoController::class, 'store'])->middleware('can:container.approve')->name('container.create-photo');
+Route::get('/containers/inspection-answer', [ShipmentTransportInspectionController::class, 'showByShipmentTransportId'])->middleware('can:container.approve')->name('container.get-inspection-answer-by-shipment-transport-id');
+Route::post('/containers/submit-security-checking', [ShipmentTransportPhotoController::class, 'submitSecurityChecking'])->middleware('can:container.approve')->name('container.submit-security-checking');
+
+// Container approval routes
+Route::middleware(['auth'])->prefix('container-approvals')->name('container-approvals.')->group(function () {
+    Route::get('/', [ShipmentTransportApprovalController::class, 'index'])->middleware('can:container.approve')->name('index');
+    Route::get('/{approval}/details', [ShipmentTransportApprovalController::class, 'getApprovalDetails'])->middleware('can:container.approve')->name('details');
+    Route::post('/{approval}/approve', [ShipmentTransportApprovalController::class, 'approve'])->middleware('can:container.approve')->name('approve');
+    Route::post('/{approval}/reject', [ShipmentTransportApprovalController::class, 'reject'])->middleware('can:container.approve')->name('reject');
+    Route::get('/{approval}/approve-email', [ShipmentTransportApprovalController::class, 'approveFromEmail'])->middleware('can:container.approve')->name('approve-email');
+});
+
 require __DIR__ . '/auth.php';

@@ -14,6 +14,7 @@ class RolePermissionSeeder extends Seeder
         $modules = [
             'visitor' => ['access', 'report'],
             'room-reservation' => ['access', 'report'],
+            'container' => ['access','approve', 'create', 'inspect', 'upload_photos', 'security_check', 'management_approve', 'warehouse_approve', 'shipping_approve', 'quality_approve', 'security_approve'],
         ];
 
         foreach ($modules as $module => $actions) {
@@ -24,8 +25,8 @@ class RolePermissionSeeder extends Seeder
             }
         }
 
-        Permission::create(['name' => 'public']);
-        Permission::create(['name' => 'superadmin']);
+        Permission::firstOrCreate(['name' => 'public']);
+        Permission::firstOrCreate(['name' => 'superadmin']);
 
         // ===== ROLES =====
         $superadmin = Role::firstOrCreate(['name' => 'superadmin']);

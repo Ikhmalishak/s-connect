@@ -21,6 +21,7 @@ import CreateContainerRecordModal from "@/Components/ManageContainer/CreateConta
 import ViewContainerRecordModal from "@/Components/ManageContainer/ViewContainerRecordModal.vue";
 import CreateContainerSecurityCheckingModal from "@/Components/ManageContainer/CreateContainerSecurityCheckingModal.vue";
 import ViewContainerSecurityCheckingModal from "@/Components/ManageContainer/ViewContainerSecurityCheckingModal.vue";
+import ContainerShipmentTable from "@/Components/ManageContainer/ContainerShipmentTable.vue";
 
 const currentTime = ref(new Date());
 const openCreateContainerModal = ref(false);
@@ -115,6 +116,10 @@ async function fetchContainers() {
     containers.value = res.data.data;
 }
 
+function handleUpdateContainers(updatedContainers) {
+    containers.value = updatedContainers;
+}
+
 onMounted(() => {
     console.log("Mounted VisitorTable.vue");
 
@@ -152,8 +157,18 @@ onMounted(() => {
                 console.error("WebSocket error on guard channel:", error);
             });
 
+        // Listen for container stage updates
+        window.Echo.channel("containers")
+            .listen(".container.stage.updated", (e) => {
+                console.log("Container stage updated event received:", e);
+                fetchContainers(); // Refresh containers when stage changes
+            })
+            .error((error) => {
+                console.error("WebSocket error on containers channel:", error);
+            });
+
         console.log(
-            "Listening for VisitorRegistered and NotifyGuard and GuardScanInAndOut events via Reverb."
+            'Listening for VisitorRegistered, NotifyGuard, GuardScanInAndOut, and ContainerStageUpdated events via Reverb.'
         );
     } else {
         console.error(
@@ -169,8 +184,9 @@ onUnmounted(() => {
     if (window.Echo) {
         window.Echo.leave("visitors");
         window.Echo.leave("guard");
+        window.Echo.leave("containers");
         console.log(
-            'Stopped listening for VisitorRegistered events on "visitors" channel and "guard".'
+            'Stopped listening for events on "visitors", "guard", and "containers" channels.'
         );
     }
 });
@@ -231,6 +247,7 @@ onUnmounted(() => {
             handleOpenContainerSecurityCheckingModal"
             @open-view-container-security-checking-modal="
             handleOpenViewContainerSecurityCheckingModal"
+            @update-containers="handleUpdateContainers"
         />
 
         <CreateContainerFormModal
@@ -318,6 +335,5 @@ onUnmounted(() => {
                 }
             "
         />
-
     </AuthenticatedLayout>
 </template>

@@ -113,4 +113,54 @@ class UserController extends Controller
         return response()->json(['message' => 'User deleted successfully']);
     }
 
+    public function getUserPermissions(User $user)
+    {
+        return response()->json([
+            'permissions' => $user->getAllPermissions()->pluck('name'),
+            'message' => 'User permissions fetched successfully'
+        ]);
+    }
+
+    public function manageUserPermissions(Request $request, User $user)
+    {
+        $request->validate([
+            'permission' => 'required|string',
+            'action' => 'required|in:add,remove'
+        ]);
+
+        $permission = $request->permission;
+        $action = $request->action;
+
+        if ($action === 'add') {
+            $user->givePermissionTo($permission);
+
+            activity()
+                ->causedBy(auth()->user())
+                ->performedOn($user)
+                ->log("Added permission '{$permission}' to user {$user->email}");
+        } else {
+            $user->revokePermissionTo($permission);
+
+            activity()
+                ->causedBy(auth()->user())
+                ->performedOn($user)
+                ->log("Removed permission '{$permission}' from user {$user->email}");
+        }
+
+        return response()->json([
+            'message' => "Permission {$action}ed successfully",
+            'permissions' => $user->getAllPermissions()->pluck('name')
+        ]);
+    }
+
+    public function getAllPermissions()
+    {
+        $permissions = \Spatie\Permission\Models\Permission::orderBy('name')->get()->pluck('name');
+
+        return response()->json([
+            'permissions' => $permissions,
+            'message' => 'All permissions fetched successfully'
+        ]);
+    }
+
 }

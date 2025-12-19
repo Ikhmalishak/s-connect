@@ -31,6 +31,8 @@ const formData = ref<FormData>({
     answers: [],
 });
 const isLoading = ref(false);
+const errorMessage = ref("");
+const successMessage = ref("");
 
 // Props and Emits
 const props = defineProps<{
@@ -75,9 +77,10 @@ async function fetchQuestions() {
         const response = await axios.get("/containers/questions");
         console.log("Questions fetched:", response.data);
         questions.value = response.data;
+        errorMessage.value = ""; // Clear any previous errors
     } catch (error) {
         console.error("Error fetching questions:", error);
-        alert("Failed to load questions. Please try again.");
+        errorMessage.value = "Failed to load questions. Please try again.";
     }
 }
 
@@ -125,19 +128,21 @@ async function fetchInspectionAnswers(containerId: number) {
         console.log("Form pre-filled successfully");
     } catch (error) {
         console.error("Error fetching inspection answers:", error);
-        alert("Failed to load inspection data. Please try again.");
+        errorMessage.value = "Failed to load inspection data. Please try again.";
     } finally {
         isLoading.value = false;
     }
 }
 
 const validateDates = (): boolean => {
+    errorMessage.value = ""; // Clear previous messages
+
     if (!formData.value.received_at) {
-        alert("Received date is required");
+        errorMessage.value = "Received date is required";
         return false;
     }
     if (!formData.value.inspected_at) {
-        alert("Inspected date is required");
+        errorMessage.value = "Inspected date is required";
         return false;
     }
 
@@ -145,7 +150,7 @@ const validateDates = (): boolean => {
     const inspected = new Date(formData.value.inspected_at);
 
     if (inspected < received) {
-        alert("Inspected date cannot be before received date");
+        errorMessage.value = "Inspected date cannot be before received date";
         return false;
     }
 
@@ -154,12 +159,12 @@ const validateDates = (): boolean => {
     minDate.setFullYear(minDate.getFullYear() - 1);
 
     if (received > today || inspected > today) {
-        alert("Dates cannot be in the future");
+        errorMessage.value = "Dates cannot be in the future";
         return false;
     }
 
     if (received < minDate || inspected < minDate) {
-        alert("Dates are too far in the past");
+        errorMessage.value = "Dates are too far in the past";
         return false;
     }
 
@@ -167,13 +172,13 @@ const validateDates = (): boolean => {
 };
 
 const validateForm = (): boolean => {
+    errorMessage.value = ""; // Clear previous messages
+
     if (anyFailed.value) {
         for (let i = 0; i < formData.value.answers.length; i++) {
             const answer = formData.value.answers[i];
             if (answer.passed === false && !answer.remarks?.trim()) {
-                alert(
-                    `Remarks are required for failed question: ${questions.value[i].question}`
-                );
+                errorMessage.value = `Remarks are required for failed question: ${questions.value[i].question}`;
                 return false;
             }
         }
@@ -181,7 +186,7 @@ const validateForm = (): boolean => {
     }
 
     if (unansweredCount.value > 0) {
-        alert(`Please answer all ${unansweredCount.value} remaining questions`);
+        errorMessage.value = `Please answer all ${unansweredCount.value} remaining questions`;
         return false;
     }
 
@@ -194,18 +199,19 @@ const handleFileUpload = (index: number, event: Event) => {
 
     if (file) {
         if (!file.type.startsWith("image/")) {
-            alert("Please upload an image file (JPEG, PNG, etc.)");
+            errorMessage.value = "Please upload an image file (JPEG, PNG, etc.)";
             target.value = "";
             return;
         }
 
         if (file.size > 5 * 1024 * 1024) {
-            alert("File size must be less than 5MB");
+            errorMessage.value = "File size must be less than 5MB";
             target.value = "";
             return;
         }
     }
 
+    errorMessage.value = ""; // Clear error if file is valid
     handleAnswerChange(index, "photo", file);
 };
 
@@ -242,6 +248,10 @@ const handleSelectChange = (index: number, event: Event) => {
     handleAnswerChange(index, "passed", value);
 };
 
+const handleRadioChange = (index: number, value: boolean) => {
+    handleAnswerChange(index, "passed", value);
+};
+
 const handleInputChange = (index: number, event: Event) => {
     const target = event.target as HTMLInputElement;
     handleAnswerChange(index, "remarks", target.value);
@@ -250,9 +260,9 @@ const handleInputChange = (index: number, event: Event) => {
 const handleApiError = (error: any) => {
     if (axios.isAxiosError(error)) {
         const message = error.response?.data?.message || error.message;
-        alert(`Submission failed: ${message}`);
+        errorMessage.value = `Submission failed: ${message}`;
     } else {
-        alert("An unexpected error occurred. Please try again.");
+        errorMessage.value = "An unexpected error occurred. Please try again.";
     }
     console.error("API Error:", error);
 };
@@ -261,6 +271,9 @@ const onSubmit = async (event: Event) => {
     event.preventDefault();
 
     if (isLoading.value) return;
+
+    errorMessage.value = ""; // Clear previous messages
+    successMessage.value = "";
 
     if (!validateDates() || !validateForm()) return;
 
@@ -310,10 +323,13 @@ const onSubmit = async (event: Event) => {
         const data = response.data;
         console.log("Success:", data);
 
-        alert("Inspection submitted successfully!");
+        successMessage.value = "Inspection submitted successfully!";
 
-        emit("close");
-        resetForm();
+        // Auto-close after success
+        setTimeout(() => {
+            emit("close");
+            resetForm();
+        }, 2000);
     } catch (error) {
         handleApiError(error);
     } finally {
@@ -443,6 +459,16 @@ onMounted(() => {
                             </button>
                         </div>
 
+                        <!-- Error Message -->
+                        <div v-if="errorMessage" class="p-4 bg-red-50 border border-red-200 rounded-md mb-4">
+                            <p class="text-red-800 text-sm">{{ errorMessage }}</p>
+                        </div>
+
+                        <!-- Success Message -->
+                        <div v-if="successMessage" class="p-4 bg-green-50 border border-green-200 rounded-md mb-4">
+                            <p class="text-green-800 text-sm">{{ successMessage }}</p>
+                        </div>
+
                         <form @submit="onSubmit" class="space-y-6">
                             <!-- Date Section -->
                             <div
@@ -551,36 +577,35 @@ onMounted(() => {
 
                                     <!-- PASS / FAIL Selection -->
                                     <div class="mb-3">
-                                        <label
-                                            class="sr-only"
-                                            :for="`status-${question.id}`"
-                                        >
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">
                                             Status for {{ question.question }}
                                         </label>
-                                        <select
-                                            :id="`status-${question.id}`"
-                                            :value="
-                                                formData.answers[index]?.passed
-                                            "
-                                            @change="
-                                                handleSelectChange(
-                                                    index,
-                                                    $event
-                                                )
-                                            "
-                                            :disabled="isLoading"
-                                            class="flex h-10 w-full max-w-xs rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
-                                        >
-                                            <option :value="null">
-                                                -- Select --
-                                            </option>
-                                            <option :value="true">
+                                        <div class="flex items-center space-x-4">
+                                            <label class="flex items-center">
+                                                <input
+                                                    type="radio"
+                                                    :name="`status-${question.id}`"
+                                                    :value="true"
+                                                    :checked="formData.answers[index]?.passed === true"
+                                                    @change="handleRadioChange(index, true)"
+                                                    :disabled="isLoading"
+                                                    class="mr-2"
+                                                />
                                                 ✅ Pass
-                                            </option>
-                                            <option :value="false">
+                                            </label>
+                                            <label class="flex items-center">
+                                                <input
+                                                    type="radio"
+                                                    :name="`status-${question.id}`"
+                                                    :value="false"
+                                                    :checked="formData.answers[index]?.passed === false"
+                                                    @change="handleRadioChange(index, false)"
+                                                    :disabled="isLoading"
+                                                    class="mr-2"
+                                                />
                                                 ❌ Fail
-                                            </option>
-                                        </select>
+                                            </label>
+                                        </div>
                                     </div>
 
                                     <!-- REMARKS if failed -->

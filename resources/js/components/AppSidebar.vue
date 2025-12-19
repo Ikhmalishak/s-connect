@@ -43,6 +43,22 @@ const navMain = [
         permission: "public",
     },
     {
+        title: "Container Management System",
+        items: [
+            {
+                title: "Overview",
+                url: "/container/dashboard",
+                permission: "container.access",
+            },
+            {
+                title: "Approvals",
+                url: "/container/approvals",
+                permission: "container.approve",
+            },
+        ],
+        permission: "container.access",
+    },
+    {
         title: "Manage Visitor",
         items: [
             {
