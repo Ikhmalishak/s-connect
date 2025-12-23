@@ -181,6 +181,9 @@ Route::middleware(['auth'])->prefix('container')->name('container.')->group(func
     Route::get('/approvals', function () {
         return Inertia::render('ManageContainer/ContainerApprovals');
     })->middleware('can:container.approve')->name('approvals');
+    Route::get('/shipping-requirements', function () {
+        return Inertia::render('ManageContainer/ShippingRequirements');
+    })->middleware('can:container.access')->name('shipping-requirements');
 });
 
 // Container shipments API routes
@@ -194,6 +197,15 @@ Route::middleware(['auth'])->prefix('api/container-shipments')->name('container-
 
 Route::post('/containers/create', [ShipmentTransportController::class, 'store'])->middleware('can:container.access')->name('container.create');
 Route::get('/containers', [ShipmentTransportController::class, 'index'])->middleware('can:container.access')->name('container.index');
+Route::get('/containers/country-requirements', [ShipmentTransportController::class, 'getCountryRequirements'])->middleware('can:container.access')->name('container.country-requirements');
+
+// Shipping requirements management routes
+Route::middleware(['auth'])->prefix('api/shipping-requirements')->name('shipping-requirements.')->group(function () {
+    Route::get('/', [ShipmentTransportController::class, 'getShippingRequirements'])->name('index');
+    Route::post('/', [ShipmentTransportController::class, 'createShippingRequirement'])->name('store');
+    Route::put('/{shippingRequirement}', [ShipmentTransportController::class, 'updateShippingRequirement'])->name('update');
+    Route::delete('/{shippingRequirement}', [ShipmentTransportController::class, 'deleteShippingRequirement'])->name('destroy');
+});
 Route::get('/containers/questions', [InspectionQuestionController::class, 'index'])->middleware('can:container.approve')->name('container.question');
 Route::post('/containers/create-inspection', [ShipmentTransportInspectionController::class, 'createInspection'])->middleware('can:container.approve')->name('container.create-inspection');
 Route::post('/containers/update-inspection/{id}', [ShipmentTransportInspectionController::class, 'updateInspection'])->middleware('can:container.approve')->name('container.update-inspection');

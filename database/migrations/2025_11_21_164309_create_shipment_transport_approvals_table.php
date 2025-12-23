@@ -11,17 +11,14 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('shipment_transport_id')->constrained('shipment_transports')->onDelete('cascade');
             $table->enum('department', ['shipping', 'quality', 'warehouse', 'security']);
+            $table->enum('approval_type', ['inspection', 'loading'])->default('loading');
             $table->enum('approval_status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->string('approved_by')->nullable();
             $table->string('remarks')->nullable();
             $table->timestamp('approved_at')->nullable();
             $table->timestamps();
 
-            $table->unique(
-                ['shipment_transport_id', 'department'],
-                'st_approvals_transport_dept_unique'
-            );
-
+            $table->unique(['shipment_transport_id', 'department', 'approval_type'], 'st_approvals_transport_dept_type_unique');
         });
     }
 

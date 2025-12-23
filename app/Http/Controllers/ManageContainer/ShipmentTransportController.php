@@ -3,6 +3,7 @@ namespace App\Http\Controllers\ManageContainer;
 
 use App\Http\Controllers\Controller;
 use App\Models\ShipmentTransport;
+use App\Models\ShippingRequirement;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -142,7 +143,9 @@ class ShipmentTransportController extends Controller
     public function store(Request $request)
     {
         $site_id = auth()->user()->site_id;
-        $validated = $request->validate([
+
+        // Get base validation rules
+        $rules = [
             'transport_type' => 'required|string',
             'transport_number' => 'required|string',
             'sku_number' => 'required|string',
@@ -155,7 +158,25 @@ class ShipmentTransportController extends Controller
             'gps' => 'nullable|string',
             'fork_seal' => 'nullable|string',
             'temporary_seal' => 'nullable|string',
-        ]);
+        ];
+
+        // Check if transport type is Container - make high_security_seal required
+        $transportType = $request->input('transport_type');
+        if ($transportType === 'Container') {
+            $rules['high_security_seal'] = 'required|string';
+        }
+
+        // Check if country requires seals
+        $country = $request->input('country');
+        if ($country) {
+            $requirement = ShippingRequirement::where('destination', $country)->first();
+            if ($requirement && $requirement->requires_seals) {
+                $rules['gps'] = 'required|string';
+                $rules['fork_seal'] = 'required|string';
+            }
+        }
+
+        $validated = $request->validate($rules);
 
         $shipment = ShipmentTransport::create(array_merge($validated, [
             'site_id' => $site_id,
@@ -193,6 +214,112 @@ class ShipmentTransportController extends Controller
     public function update(Request $request, ShipmentTransport $shipmentTransport)
     {
         //
+    }
+
+    /**
+     * Get shipping requirements for a country.
+     */
+    public function getCountryRequirements(Request $request)
+    {
+        $country = $request->query('country');
+
+        if (!$country) {
+            return response()->json(['error' => 'Country parameter is required'], 400);
+        }
+
+        $requirement = ShippingRequirement::where('destination', $country)->first();
+
+        if (!$requirement) {
+            return response()->json(['error' => 'Requirements not found for this country'], 404);
+        }
+
+        return response()->json([
+            'data' => $requirement
+        ]);
+    }
+
+    /**
+     * Get all shipping requirements for management page.
+     */
+    public function getShippingRequirements(Request $request)
+    {
+        $query = ShippingRequirement::query();
+
+        // Search functionality
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('region', 'like', "%{$search}%")
+                  ->orWhere('destination', 'like', "%{$search}%")
+                  ->orWhere('risk_level', 'like', "%{$search}%");
+            });
+        }
+
+        // Sorting
+        $sortBy = $request->get('sort_by', 'created_at');
+        $sortDirection = $request->get('sort_direction', 'desc');
+
+        if (in_array($sortBy, ['region', 'destination', 'risk_level', 'strength_mm', 'requires_seals', 'created_at'])) {
+            $query->orderBy($sortBy, $sortDirection);
+        }
+
+        // Pagination
+        $perPage = $request->get('per_page', 50);
+        $requirements = $query->paginate($perPage);
+
+        return response()->json($requirements);
+    }
+
+    /**
+     * Update shipping requirement.
+     */
+    public function updateShippingRequirement(Request $request, ShippingRequirement $shippingRequirement)
+    {
+        $validated = $request->validate([
+            'region' => 'required|string',
+            'destination' => 'required|string',
+            'risk_level' => 'required|string',
+            'strength_mm' => 'required|string',
+            'requires_seals' => 'required|boolean',
+        ]);
+
+        $shippingRequirement->update($validated);
+
+        return response()->json([
+            'message' => 'Shipping requirement updated successfully.',
+            'data' => $shippingRequirement,
+        ]);
+    }
+
+    /**
+     * Delete shipping requirement.
+     */
+    public function deleteShippingRequirement(ShippingRequirement $shippingRequirement)
+    {
+        $shippingRequirement->delete();
+
+        return response()->json(['message' => 'Shipping requirement deleted successfully']);
+    }
+
+    /**
+     * Create new shipping requirement.
+     */
+    public function createShippingRequirement(Request $request)
+    {
+        $validated = $request->validate([
+            'region' => 'required|string',
+            'destination' => 'required|string|unique:shipping_requirements,destination',
+            'risk_level' => 'required|string',
+            'strength_mm' => 'required|string',
+            'requires_seals' => 'required|boolean',
+        ]);
+
+        $requirement = ShippingRequirement::create($validated);
+
+        return response()->json([
+            'message' => 'Shipping requirement created successfully.',
+            'data' => $requirement,
+        ], 201);
     }
 
     /**

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { usePage } from "@inertiajs/vue3";
+import { useToast } from "@/components/ui/toast";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Card } from "@/components/ui/card";
 import axios from "axios";
@@ -21,7 +21,9 @@ import CreateContainerRecordModal from "@/Components/ManageContainer/CreateConta
 import ViewContainerRecordModal from "@/Components/ManageContainer/ViewContainerRecordModal.vue";
 import CreateContainerSecurityCheckingModal from "@/Components/ManageContainer/CreateContainerSecurityCheckingModal.vue";
 import ViewContainerSecurityCheckingModal from "@/Components/ManageContainer/ViewContainerSecurityCheckingModal.vue";
-import ContainerShipmentTable from "@/Components/ManageContainer/ContainerShipmentTable.vue";
+import Button from "@/components/ui/button/Button.vue";
+import { h } from "vue"
+import { ToastAction } from "@/components/ui/toast"
 
 const currentTime = ref(new Date());
 const openCreateContainerModal = ref(false);
@@ -42,6 +44,7 @@ const currentViewContainerSecurityCheckingId = ref<number | null>(null);
 const containers = ref([]);
 
 let intervalId;
+const { toast } = useToast()
 
 const formattedDate = computed(() =>
     currentTime.value.toLocaleDateString("en-GB", {
@@ -227,6 +230,32 @@ onUnmounted(() => {
                 </div>
             </div>
         </Card>
+          <Button
+    variant="outline" @click="() => {
+      toast({
+        title: 'Uh oh! Something went wrong.',
+        description: 'There was a problem with your request.',
+        variant: 'destructive',
+        action: h(ToastAction, {
+          altText: 'Try again',
+        }, {
+          default: () => 'Try again',
+        }),
+      });
+    }"
+  >
+    Show Toast
+  </Button>
+  <Button variant="destructive"
+    @click="() => {
+      toast({
+        title: 'Scheduled: Catch up',
+        description: 'Friday, February 10, 2023 at 5:57 PM',
+                variant: 'destructive',
+
+      });
+    }"
+  >testtt</Button>
 
         <ContainerStatCard />
 
@@ -249,7 +278,6 @@ onUnmounted(() => {
             handleOpenViewContainerSecurityCheckingModal"
             @update-containers="handleUpdateContainers"
         />
-
         <CreateContainerFormModal
             v-model:show="openCreateContainerModal"
             @close="

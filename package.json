@@ -34,7 +34,7 @@
         "dayjs": "^1.11.19",
         "embla-carousel-vue": "^8.6.0",
         "lucide-vue-next": "^0.525.0",
-        "reka-ui": "^2.5.0",
+        "reka-ui": "^2.6.1",
         "tailwind-merge": "^3.3.1",
         "tailwindcss-animate": "^1.0.7",
         "vaul-vue": "^0.4.1",

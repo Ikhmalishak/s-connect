@@ -60,8 +60,17 @@ const failedAnswers = computed(() =>
     formData.value.answers.filter((a) => a.passed === false)
 );
 
-const shouldShowQuestion = (index: number) =>
-    !anyFailed.value || formData.value.answers[index]?.passed === false;
+const shouldShowQuestion = (index: number) => {
+    const firstFailedIndex = formData.value.answers.findIndex(a => a.passed === false);
+    if (firstFailedIndex !== -1) {
+        return index <= firstFailedIndex;
+    }
+    const firstUnansweredIndex = formData.value.answers.findIndex(a => a.passed === null);
+    if (firstUnansweredIndex !== -1) {
+        return index <= firstUnansweredIndex;
+    }
+    return true; // all questions answered
+};
 
 const visibleQuestions = computed(() =>
     questions.value.filter((_, index) => shouldShowQuestion(index))

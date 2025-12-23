@@ -20,13 +20,18 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
 import axios from "axios";
 
 const transportType = ref<"Truck" | "Container" | "">("");
 const isLoading = ref(false);
 const errorMessage = ref("");
 const successMessage = ref("");
+const countryRequirements = ref(null);
+
+const requiresSeals = computed(() => {
+    return countryRequirements.value?.requires_seals === true;
+});
 
 const formSchema = toTypedSchema(
     z.object({
@@ -66,17 +71,41 @@ watch(transportType, (val) => {
     }
 });
 
+// Watch for country changes to fetch requirements
+watch(() => form.values.country, async (newCountry) => {
+    if (newCountry && newCountry.trim()) {
+        try {
+            const response = await axios.get(`/containers/country-requirements?country=${encodeURIComponent(newCountry)}`);
+            countryRequirements.value = response.data.data;
+        } catch (error) {
+            console.error('Failed to fetch country requirements:', error);
+            countryRequirements.value = null;
+        }
+    } else {
+        countryRequirements.value = null;
+    }
+});
+
 // Clear messages when modal is closed or reopened
 watch(() => props.show, (newVal) => {
     if (!newVal) {
         errorMessage.value = "";
         successMessage.value = "";
         isLoading.value = false;
+        countryRequirements.value = null;
+        transportType.value = "";
     }
 });
 
 // Destructure resetForm from form context
 const { handleSubmit, resetForm } = form;
+
+// Custom reset function to reset both form and transport type
+const resetFormWithTransportType = () => {
+    resetForm();
+    transportType.value = "";
+    countryRequirements.value = null;
+};
 
 const onSubmit = handleSubmit(async (values) => {
     // Clear previous messages
@@ -96,7 +125,7 @@ const onSubmit = handleSubmit(async (values) => {
         // Auto-close after success
         setTimeout(() => {
             emit("close");
-            resetForm();
+            resetFormWithTransportType();
         }, 2000);
 
     } catch (error: any) {
@@ -155,7 +184,7 @@ const onSubmit = handleSubmit(async (values) => {
                                 name="transport_type"
                             >
                                 <FormItem>
-                                    <FormLabel>Transport Type</FormLabel>
+                                    <FormLabel>Transport Type <span class="text-red-500">*</span></FormLabel>
                                     <Select
                                         v-bind="componentField"
                                         v-model="transportType"
@@ -182,10 +211,26 @@ const onSubmit = handleSubmit(async (values) => {
 
                             <FormField
                                 v-slot="{ componentField }"
+                                name="country"
+                            >
+                                <FormItem>
+                                    <FormLabel>Country <span class="text-red-500">*</span></FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            type="text"
+                                            v-bind="componentField"
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            </FormField>
+
+                            <FormField
+                                v-slot="{ componentField }"
                                 name="transport_number"
                             >
                                 <FormItem>
-                                    <FormLabel>Transport Number</FormLabel>
+                                    <FormLabel>Transport Number <span class="text-red-500">*</span></FormLabel>
                                     <FormControl>
                                         <Input
                                             type="text"
@@ -200,9 +245,8 @@ const onSubmit = handleSubmit(async (values) => {
                                 v-slot="{ componentField }"
                                 name="sku_number"
                             >
-                                <!--User Name-->
                                 <FormItem>
-                                    <FormLabel>SKU Number</FormLabel>
+                                    <FormLabel>SKU Number <span class="text-red-500">*</span></FormLabel>
                                     <FormControl>
                                         <Input
                                             type="text"
@@ -217,9 +261,8 @@ const onSubmit = handleSubmit(async (values) => {
                                 v-slot="{ componentField }"
                                 name="model_project"
                             >
-                                <!--User Name-->
                                 <FormItem>
-                                    <FormLabel>Model Project</FormLabel>
+                                    <FormLabel>Model Project <span class="text-red-500">*</span></FormLabel>
                                     <FormControl>
                                         <Input
                                             type="text"
@@ -234,9 +277,8 @@ const onSubmit = handleSubmit(async (values) => {
                                 v-slot="{ componentField }"
                                 name="forwarder"
                             >
-                                <!--User Name-->
                                 <FormItem>
-                                    <FormLabel>Forwarder</FormLabel>
+                                    <FormLabel>Forwarder <span class="text-red-500">*</span></FormLabel>
                                     <FormControl>
                                         <Input
                                             type="text"
@@ -251,26 +293,8 @@ const onSubmit = handleSubmit(async (values) => {
                                 v-slot="{ componentField }"
                                 name="hauler"
                             >
-                                <!--User Name-->
                                 <FormItem>
-                                    <FormLabel>Hauler</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="text"
-                                            v-bind="componentField"
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            </FormField>
-
-                            <FormField
-                                v-slot="{ componentField }"
-                                name="country"
-                            >
-                                <!--User Name-->
-                                <FormItem>
-                                    <FormLabel>Country</FormLabel>
+                                    <FormLabel>Hauler <span class="text-red-500">*</span></FormLabel>
                                     <FormControl>
                                         <Input
                                             type="text"
@@ -285,9 +309,8 @@ const onSubmit = handleSubmit(async (values) => {
                                 v-slot="{ componentField }"
                                 name="work_order"
                             >
-                                <!--User Name-->
                                 <FormItem>
-                                    <FormLabel>Work Order </FormLabel>
+                                    <FormLabel>Work Order <span class="text-red-500">*</span></FormLabel>
                                     <FormControl>
                                         <Input
                                             type="text"
@@ -304,7 +327,7 @@ const onSubmit = handleSubmit(async (values) => {
                                 name="high_security_seal"
                             >
                                 <FormItem>
-                                    <FormLabel>High Security Seal</FormLabel>
+                                    <FormLabel>High Security Seal <span class="text-red-500">*</span></FormLabel>
                                     <FormControl>
                                         <Input
                                             type="text"
@@ -321,7 +344,7 @@ const onSubmit = handleSubmit(async (values) => {
                                 name="gps"
                             >
                                 <FormItem>
-                                    <FormLabel>GPS</FormLabel>
+                                    <FormLabel>GPS <span v-if="requiresSeals" class="text-red-500">*</span></FormLabel>
                                     <FormControl>
                                         <Input
                                             type="text"
@@ -338,7 +361,7 @@ const onSubmit = handleSubmit(async (values) => {
                                 name="fork_seal"
                             >
                                 <FormItem>
-                                    <FormLabel>Fork Seal</FormLabel>
+                                    <FormLabel>Fork Seal <span v-if="requiresSeals" class="text-red-500">*</span></FormLabel>
                                     <FormControl>
                                         <Input
                                             type="text"

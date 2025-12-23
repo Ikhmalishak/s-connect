@@ -152,7 +152,6 @@ watch(
                                     </p>
                                     <a
                                         :href="'/storage/' + value.photo_path"
-                                        target="_blank"
                                         rel="noopener noreferrer"
                                         class="block relative overflow-hidden rounded-lg border-2 border-gray-300 hover:border-orange-500 transition-all duration-200"
                                     >
