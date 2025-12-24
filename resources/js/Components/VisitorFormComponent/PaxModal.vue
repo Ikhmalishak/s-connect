@@ -35,12 +35,12 @@ function confirm() {
     >
         <div class="max-w-md w-full bg-white p-6 rounded-xl shadow-xl">
 
-            <img src="/assets/ss2.png" alt="" class="h-20 mx-auto mb-4" />
+            <img src="/assets/ss2.png" alt="" class="h-32 mx-auto mb-4" />
+
+                        <h2 class="text-xl font-semibold mb-2 text-center">{{ t('language.select') }}</h2>
 
             <div class="mb-4 flex justify-center">
-                <div class="scale-90">
-                    <LanguageSelector />
-                </div>
+                <LanguageSelector />
             </div>
 
             <h2 class="text-xl font-semibold mb-2 text-center">{{ t('visitor.paxModal.title') }}</h2>
