@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+
 const props = defineProps<{
     open: boolean;
     message: string;
@@ -19,7 +23,7 @@ const emit = defineEmits<{
     >
         <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
             <h2 class="text-xl font-semibold mb-4 text-center">
-                Acknowledgement Status
+                {{ t('visitor.acknowledgement.modalTitle') }}
             </h2>
 
             <p
@@ -38,14 +42,14 @@ const emit = defineEmits<{
                     @click="$emit('proceed')"
                     class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
                 >
-                    Proceed to Submit
+                    {{ t('visitor.acknowledgement.proceedToSubmit') }}
                 </button>
                 <button
                     v-else
                     @click="$emit('watch-video')"
                     class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
                 >
-                    Go to Video & Guidelines
+                    {{ t('visitor.acknowledgement.goToVideo') }}
                 </button>
             </div>
 

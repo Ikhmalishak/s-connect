@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref, watch, nextTick } from "vue";
 import { CheckCircle } from "lucide-vue-next";
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{
     values: any;
@@ -84,7 +87,7 @@ const handleConfirmChange = (checked: boolean) => {
 
 <template>
     <div>
-        <h3 class="text-lg font-semibold mb-4">Step 4 : Review & Submit</h3>
+        <h3 class="text-lg font-semibold mb-4">{{ t('visitor.review.title') }}</h3>
 
         <div
             ref="securityGuidelinesContainer"
@@ -93,7 +96,7 @@ const handleConfirmChange = (checked: boolean) => {
         >
             <div class="text-center mb-4">
                 <h3 class="text-lg font-semibold text-blue-800">
-                    VISITOR MANAGEMENT POLICY
+                    {{ t('visitor.review.securityGuidelines.title') }}
                 </h3>
                 <!-- <p class="text-sm text-gray-600">Document No: SSOP-SCR-003 | Revision: 00</p> -->
             </div>
@@ -101,66 +104,53 @@ const handleConfirmChange = (checked: boolean) => {
             <!-- Section 1: Purpose -->
             <section class="mb-4">
                 <h4 class="text-md font-semibold text-gray-800 mb-2">
-                    1.0 Purpose
+                    {{ t('visitor.review.securityGuidelines.purpose.title') }}
                 </h4>
                 <p class="text-sm text-gray-700 mb-1">
-                    1.1 This policy establishes standard procedures to control
-                    and monitor the access of all visitors to company premises.
+                    {{ t('visitor.review.securityGuidelines.purpose.content1') }}
                 </p>
                 <p class="text-sm text-gray-700">
-                    1.2 The goal is to protect the safety of personnel,
-                    safeguard assets, and maintain confidentiality by preventing
-                    unauthorized access.
+                    {{ t('visitor.review.securityGuidelines.purpose.content2') }}
                 </p>
             </section>
 
             <!-- Section 2: Scope -->
             <section class="mb-4">
                 <h4 class="text-md font-semibold text-gray-800 mb-2">
-                    2.0 Scope
+                    {{ t('visitor.review.securityGuidelines.scope.title') }}
                 </h4>
                 <p class="text-sm text-gray-700 mb-2">
-                    2.1 This policy applies to all types of visitors, including
-                    but not limited to:
+                    {{ t('visitor.review.securityGuidelines.scope.content1') }}
                 </p>
                 <ul
                     class="list-disc list-inside text-sm text-gray-700 space-y-1 ml-4"
                 >
-                    <li>2.1.1 Contractors</li>
-                    <li>2.1.2 Suppliers</li>
-                    <li>2.1.3 Job applicants</li>
-                    <li>2.1.4 Business partners</li>
-                    <li>2.1.5 Government officials</li>
-                    <li>
-                        2.1.6 Family members or personal guests of employees
-                    </li>
+                    <li>{{ t('visitor.review.securityGuidelines.scope.visitors') }}</li>
+                    <li>{{ t('visitor.review.securityGuidelines.scope.suppliers') }}</li>
+                    <li>{{ t('visitor.review.securityGuidelines.scope.applicants') }}</li>
+                    <li>{{ t('visitor.review.securityGuidelines.scope.partners') }}</li>
+                    <li>{{ t('visitor.review.securityGuidelines.scope.officials') }}</li>
+                    <li>{{ t('visitor.review.securityGuidelines.scope.guests') }}</li>
                 </ul>
                 <p class="text-sm text-gray-700 mt-2">
-                    2.2 The policy applies to all company-controlled facilities,
-                    including factories, warehouses, and office buildings.
+                    {{ t('visitor.review.securityGuidelines.scope.content2') }}
                 </p>
             </section>
 
             <!-- Section 3: Definitions -->
             <section class="mb-4">
                 <h4 class="text-md font-semibold text-gray-800 mb-2">
-                    3.0 Definitions
+                    {{ t('visitor.review.securityGuidelines.definitions.title') }}
                 </h4>
                 <div class="text-sm text-gray-700 space-y-1">
                     <p>
-                        <strong>3.1 Visitor</strong> – Any individual not
-                        employed by the company who enters company premises for
-                        a temporary duration.
+                        <strong>{{ t('visitor.review.securityGuidelines.definitions.visitor').split(' – ')[0] }}</strong> – {{ t('visitor.review.securityGuidelines.definitions.visitor').split(' – ')[1] }}
                     </p>
                     <p>
-                        <strong>3.2 Escort</strong> – A designated employee
-                        responsible for supervising the visitor during their
-                        stay.
+                        <strong>{{ t('visitor.review.securityGuidelines.definitions.escort').split(' – ')[0] }}</strong> – {{ t('visitor.review.securityGuidelines.definitions.escort').split(' – ')[1] }}
                     </p>
                     <p>
-                        <strong>3.3 Restricted Area</strong> – An area that
-                        requires additional access control and special
-                        permission for entry.
+                        <strong>{{ t('visitor.review.securityGuidelines.definitions.restricted').split(' – ')[0] }}</strong> – {{ t('visitor.review.securityGuidelines.definitions.restricted').split(' – ')[1] }}
                     </p>
                 </div>
             </section>
@@ -168,40 +158,22 @@ const handleConfirmChange = (checked: boolean) => {
             <!-- Section 4: Visitor Entry Protocol -->
             <section class="mb-4">
                 <h4 class="text-md font-semibold text-gray-800 mb-2">
-                    4.0 Visitor Entry Protocol
+                    {{ t('visitor.review.securityGuidelines.entryProtocol.title') }}
                 </h4>
                 <div class="text-sm text-gray-700 space-y-1">
-                    <p>
-                        4.1 All visitors must enter through the designated main
-                        security gate or reception.
-                    </p>
-                    <p>
-                        4.2 The visitor must present valid government-issued
-                        identification.
-                    </p>
-                    <p>
-                        4.3 The visitor must state the purpose of the visit and
-                        the name of the host employee.
-                    </p>
-                    <p>
-                        4.4 The host must confirm and approve the visitor before
-                        entry is granted.
-                    </p>
-                    <p>
-                        4.5 All visitors must sign the Visitor Log Book or
-                        digital visitor management system.
-                    </p>
-                    <p>
-                        4.6 Visitors must wear a clearly visible Visitor Pass at
-                        all times.
-                    </p>
-                    <p class="font-medium">4.7 Visitor passes must indicate:</p>
+                    <p>{{ t('visitor.review.securityGuidelines.entryProtocol.content1') }}</p>
+                    <p>{{ t('visitor.review.securityGuidelines.entryProtocol.content2') }}</p>
+                    <p>{{ t('visitor.review.securityGuidelines.entryProtocol.content3') }}</p>
+                    <p>{{ t('visitor.review.securityGuidelines.entryProtocol.content4') }}</p>
+                    <p>{{ t('visitor.review.securityGuidelines.entryProtocol.content5') }}</p>
+                    <p>{{ t('visitor.review.securityGuidelines.entryProtocol.content6') }}</p>
+                    <p class="font-medium">{{ t('visitor.review.securityGuidelines.entryProtocol.passLabel') }}</p>
                     <ul class="list-disc list-inside ml-4 space-y-1">
-                        <li>4.7.1 Visitor name</li>
-                        <li>4.7.2 Host employee</li>
-                        <li>4.7.3 Entry date and time</li>
-                        <li>4.7.4 Expiry time</li>
-                        <li>4.7.5 Access level</li>
+                        <li>{{ t('visitor.review.securityGuidelines.entryProtocol.pass1') }}</li>
+                        <li>{{ t('visitor.review.securityGuidelines.entryProtocol.pass2') }}</li>
+                        <li>{{ t('visitor.review.securityGuidelines.entryProtocol.pass3') }}</li>
+                        <li>{{ t('visitor.review.securityGuidelines.entryProtocol.pass4') }}</li>
+                        <li>{{ t('visitor.review.securityGuidelines.entryProtocol.pass5') }}</li>
                     </ul>
                 </div>
             </section>
@@ -209,59 +181,37 @@ const handleConfirmChange = (checked: boolean) => {
             <!-- Section 5: Escort and Supervision -->
             <section class="mb-4">
                 <h4 class="text-md font-semibold text-gray-800 mb-2">
-                    5.0 Escort and Supervision
+                    {{ t('visitor.review.securityGuidelines.escort.title') }}
                 </h4>
                 <div class="text-sm text-gray-700 space-y-1">
-                    <p>
-                        5.1 All visitors must be escorted by the host or
-                        designated staff at all times.
-                    </p>
-                    <p>
-                        5.2 Escorts must ensure that visitors remain in approved
-                        areas only.
-                    </p>
-                    <p>
-                        5.3 Escorts are responsible for explaining site safety
-                        rules and emergency procedures.
-                    </p>
+                    <p>{{ t('visitor.review.securityGuidelines.escort.content1') }}</p>
+                    <p>{{ t('visitor.review.securityGuidelines.escort.content2') }}</p>
+                    <p>{{ t('visitor.review.securityGuidelines.escort.content3') }}</p>
                 </div>
             </section>
 
             <!-- Section 6: Prohibited Items and Behavior -->
             <section class="mb-4">
                 <h4 class="text-md font-semibold text-gray-800 mb-2">
-                    6.0 Prohibited Items and Behavior
+                    {{ t('visitor.review.securityGuidelines.prohibited.title') }}
                 </h4>
                 <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3">
                     <p class="text-sm font-medium text-yellow-800 mb-2">
-                        6.1 Visitors are prohibited from carrying:
+                        {{ t('visitor.review.securityGuidelines.prohibited.warning') }}
                     </p>
-                    <ul
-                        class="list-disc list-inside text-sm text-yellow-800 space-y-1 ml-4"
-                    >
-                        <li>6.1.1 Weapons</li>
-                        <li>6.1.2 Drugs or alcohol</li>
-                        <li>
-                            6.1.3 Unauthorized photography or recording
-                            equipment
-                        </li>
-                        <li>
-                            6.1.4 Flammable or hazardous materials (unless
-                            approved)
-                        </li>
+                    <ul class="list-disc list-inside text-sm text-yellow-800 space-y-1 ml-4">
+                        <li>{{ t('visitor.review.securityGuidelines.prohibited.weapons') }}</li>
+                        <li>{{ t('visitor.review.securityGuidelines.prohibited.drugs') }}</li>
+                        <li>{{ t('visitor.review.securityGuidelines.prohibited.recording') }}</li>
+                        <li>{{ t('visitor.review.securityGuidelines.prohibited.materials') }}</li>
                     </ul>
                     <p class="text-sm font-medium text-yellow-800 mt-2 mb-1">
-                        6.2 Visitors must not engage in:
+                        {{ t('visitor.review.securityGuidelines.prohibited.behavior') }}
                     </p>
-                    <ul
-                        class="list-disc list-inside text-sm text-yellow-800 space-y-1 ml-4"
-                    >
-                        <li>6.2.1 Unattended roaming</li>
-                        <li>6.2.2 Tampering with equipment or machinery</li>
-                        <li>
-                            6.2.3 Interfering with employees or ongoing
-                            operations
-                        </li>
+                    <ul class="list-disc list-inside text-sm text-yellow-800 space-y-1 ml-4">
+                        <li>{{ t('visitor.review.securityGuidelines.prohibited.roaming') }}</li>
+                        <li>{{ t('visitor.review.securityGuidelines.prohibited.tampering') }}</li>
+                        <li>{{ t('visitor.review.securityGuidelines.prohibited.interfering') }}</li>
                     </ul>
                 </div>
             </section>
@@ -269,37 +219,20 @@ const handleConfirmChange = (checked: boolean) => {
             <!-- Section 7: Visitor Access to Restricted Areas -->
             <section class="mb-4">
                 <h4 class="text-md font-semibold text-gray-800 mb-2">
-                    7.0 Visitor Access to Restricted Areas
+                    {{ t('visitor.review.securityGuidelines.restrictedAreas.title') }}
                 </h4>
                 <div class="text-sm text-gray-700 space-y-1">
-                    <p>
-                        7.1 Entry to Restricted Areas is allowed only with prior
-                        written approval from the Security Manager or Department
-                        Head.
-                    </p>
-                    <p>
-                        7.2 Visitors must be always accompanied by a
-                        senior-level escort.
-                    </p>
-                    <p>
-                        7.3 Additional PPE (personal protective equipment) may
-                        be required and must be always worn in these areas.
-                    </p>
+                    <p>{{ t('visitor.review.securityGuidelines.restrictedAreas.content1') }}</p>
+                    <p>{{ t('visitor.review.securityGuidelines.restrictedAreas.content2') }}</p>
+                    <p>{{ t('visitor.review.securityGuidelines.restrictedAreas.content3') }}</p>
                 </div>
 
                 <div class="bg-red-50 border-l-4 border-red-400 p-3 mt-3">
                     <p class="text-sm font-bold text-red-800 mb-2">
-                        📷 Strict Prohibition on Photography and Recording in
-                        the Factory Premises
+                        {{ t('visitor.review.securityGuidelines.restrictedAreas.photography') }}
                     </p>
                     <p class="text-sm text-red-800">
-                        The taking of photos, videos, or any form of recording
-                        (whether by camera, smartphone, or any other electronic
-                        device) within the factory premises, particularly in the
-                        production line is strictly prohibited. This applies to
-                        all employees, contractors, visitors and any third
-                        parties, without prior written approval from the
-                        Security Department or authorized personnel.
+                        {{ t('visitor.review.securityGuidelines.restrictedAreas.photographyContent') }}
                     </p>
                 </div>
             </section>
@@ -307,53 +240,32 @@ const handleConfirmChange = (checked: boolean) => {
             <!-- Section 8: Departure and Exit Protocol -->
             <section class="mb-4">
                 <h4 class="text-md font-semibold text-gray-800 mb-2">
-                    8.0 Departure and Exit Protocol
+                    {{ t('visitor.review.securityGuidelines.departure.title') }}
                 </h4>
                 <div class="text-sm text-gray-700 space-y-1">
-                    <p class="font-medium">
-                        8.1 Upon completion of their visit, the visitor must:
-                    </p>
+                    <p class="font-medium">{{ t('visitor.review.securityGuidelines.departure.content1') }}</p>
                     <ul class="list-disc list-inside ml-4 space-y-1">
-                        <li>
-                            8.1.1 Return the Visitor Pass to the security desk
-                        </li>
-                        <li>8.1.2 Sign the exit log</li>
-                        <li>
-                            8.1.3 Be escorted out of the premises by their host
-                            or security
-                        </li>
+                        <li>{{ t('visitor.review.securityGuidelines.departure.step1') }}</li>
+                        <li>{{ t('visitor.review.securityGuidelines.departure.step2') }}</li>
+                        <li>{{ t('visitor.review.securityGuidelines.departure.step3') }}</li>
                     </ul>
-                    <p class="mt-2">
-                        8.2 Security must verify that no company assets,
-                        documents, or data are removed without approval.
-                    </p>
+                    <p class="mt-2">{{ t('visitor.review.securityGuidelines.departure.content2') }}</p>
                 </div>
             </section>
 
             <!-- Section 9: Emergency Situations -->
             <section class="mb-4">
                 <h4 class="text-md font-semibold text-gray-800 mb-2">
-                    9.0 Emergency Situations
+                    {{ t('visitor.review.securityGuidelines.emergency.title') }}
                 </h4>
                 <div class="bg-red-50 border-l-4 border-red-400 p-3">
                     <p class="text-sm font-medium text-red-800 mb-2">
-                        🚨 9.1 In the event of a fire, evacuation, or lockdown:
+                        {{ t('visitor.review.securityGuidelines.emergency.warning') }}
                     </p>
-                    <ul
-                        class="list-disc list-inside text-sm text-red-800 space-y-1 ml-4"
-                    >
-                        <li>
-                            9.1.1 Visitors must follow all instructions from
-                            emergency marshals or security personnel.
-                        </li>
-                        <li>
-                            9.1.2 The host is responsible for the safe
-                            evacuation of their visitor.
-                        </li>
-                        <li>
-                            9.1.3 A visitor roll-call must be performed at the
-                            assembly point.
-                        </li>
+                    <ul class="list-disc list-inside text-sm text-red-800 space-y-1 ml-4">
+                        <li>{{ t('visitor.review.securityGuidelines.emergency.fire1') }}</li>
+                        <li>{{ t('visitor.review.securityGuidelines.emergency.fire2') }}</li>
+                        <li>{{ t('visitor.review.securityGuidelines.emergency.fire3') }}</li>
                     </ul>
                 </div>
             </section>
@@ -361,61 +273,39 @@ const handleConfirmChange = (checked: boolean) => {
             <!-- Section 10: Training and Awareness -->
             <section class="mb-4">
                 <h4 class="text-md font-semibold text-gray-800 mb-2">
-                    10.0 Training and Awareness
+                    {{ t('visitor.review.securityGuidelines.training.title') }}
                 </h4>
                 <div class="text-sm text-gray-700 space-y-1">
-                    <p>
-                        10.1 Security personnel must be trained in proper
-                        visitor screening, documentation, and emergency
-                        procedures.
-                    </p>
-                    <p>
-                        10.2 All employees must be reminded of their
-                        responsibilities when hosting visitors through periodic
-                        awareness briefings.
-                    </p>
+                    <p>{{ t('visitor.review.securityGuidelines.training.content1') }}</p>
+                    <p>{{ t('visitor.review.securityGuidelines.training.content2') }}</p>
                 </div>
             </section>
 
             <!-- Section 11: Compliance and Violations -->
             <section class="mb-4">
                 <h4 class="text-md font-semibold text-gray-800 mb-2">
-                    11.0 Compliance and Violations
+                    {{ t('visitor.review.securityGuidelines.compliance.title') }}
                 </h4>
                 <div class="text-sm text-gray-700 space-y-1">
-                    <p>
-                        11.1 All visitors are subject to company rules and
-                        regulations while on-site.
-                    </p>
-                    <p class="font-medium">
-                        11.2 Violations of this policy may result in:
-                    </p>
+                    <p>{{ t('visitor.review.securityGuidelines.compliance.content1') }}</p>
+                    <p class="font-medium">{{ t('visitor.review.securityGuidelines.compliance.violations') }}</p>
                     <ul class="list-disc list-inside ml-4 space-y-1">
-                        <li>11.2.1 Immediate removal from premises</li>
-                        <li>11.2.2 Reporting to authorities</li>
-                        <li>11.2.3 Banning from future visits</li>
+                        <li>{{ t('visitor.review.securityGuidelines.compliance.violation1') }}</li>
+                        <li>{{ t('visitor.review.securityGuidelines.compliance.violation2') }}</li>
+                        <li>{{ t('visitor.review.securityGuidelines.compliance.violation3') }}</li>
                     </ul>
-                    <p class="mt-2">
-                        11.3 Employees who violate this policy may face
-                        disciplinary action.
-                    </p>
+                    <p class="mt-2">{{ t('visitor.review.securityGuidelines.compliance.content2') }}</p>
                 </div>
             </section>
 
             <!-- Section 12: Review and Maintenance -->
             <section class="mb-4">
                 <h4 class="text-md font-semibold text-gray-800 mb-2">
-                    12.0 Review and Maintenance
+                    {{ t('visitor.review.securityGuidelines.review.title') }}
                 </h4>
                 <div class="text-sm text-gray-700 space-y-1">
-                    <p>
-                        12.1 This policy shall be reviewed annually or following
-                        a security breach.
-                    </p>
-                    <p>
-                        12.2 Updates shall be made to reflect changes in legal,
-                        operational, or safety requirements.
-                    </p>
+                    <p>{{ t('visitor.review.securityGuidelines.review.content1') }}</p>
+                    <p>{{ t('visitor.review.securityGuidelines.review.content2') }}</p>
                 </div>
             </section>
         </div>
@@ -1094,12 +984,12 @@ const handleConfirmChange = (checked: boolean) => {
                         class="w-5 h-5"
                     />
                     <label for="confirm" class="text-sm">
-                        I have read and understood the security guidelines.
+                        {{ t('visitor.review.readGuidelines') }}
                     </label>
                 </div>
 
                 <div class="flex flex-row text-sm">
-                    <div>Visitor Name:</div>
+                    <div>{{ t('visitor.result.visitorName') }}:</div>
                     <div>
                         <span
                             v-for="(v, index) in values.visitors"
@@ -1115,7 +1005,7 @@ const handleConfirmChange = (checked: boolean) => {
 
         <div v-if="videoEnded" class="flex items-center gap-2 text-green-600">
             <CheckCircle class="h-5 w-5" />
-            <span>Security video completed</span>
+            <span>{{ t('visitor.review.videoCompleted') }}</span>
         </div>
     </div>
 </template>

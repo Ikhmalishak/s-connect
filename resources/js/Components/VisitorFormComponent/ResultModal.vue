@@ -1,4 +1,8 @@
 <script setup>
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+
 defineProps({
     open: Boolean,
     result: {
@@ -20,7 +24,7 @@ function closeModal() {
         class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
     >
         <div class="bg-white p-6 rounded shadow text-center w-96">
-            <h2 class="text-lg font-bold mb-4">Thank you! Your form has been sent successfully.</h2>
+            <h2 class="text-lg font-bold mb-4">{{ t('visitor.result.thankYou') }}</h2>
 
             <!-- Successfully Registered -->
             <div v-if="result?.created?.length" class="mb-6">
@@ -43,7 +47,7 @@ function closeModal() {
                         </svg>
                     </div>
                     <h3 class="text-lg font-semibold text-green-700">
-                        Successfully Registered
+                        {{ t('visitor.result.successfullyRegistered') }}
                     </h3>
                 </div>
                 <div class="space-y-3">
@@ -58,7 +62,7 @@ function closeModal() {
                         <span
                             class="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium"
                         >
-                            Pass: {{ visitor.pass_number }}
+                            {{ t('visitor.result.pass') }}: {{ visitor.pass_number }}
                         </span>
                     </div>
                 </div>
@@ -85,7 +89,7 @@ function closeModal() {
                         </svg>
                     </div>
                     <h3 class="text-lg font-semibold text-red-700">
-                        Failed to Register
+                        {{ t('visitor.result.failedToRegister') }}
                     </h3>
                 </div>
                 <div class="space-y-3">
@@ -106,7 +110,7 @@ function closeModal() {
                 class="mt-6 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
                 @click="closeModal"
             >
-                Close
+                {{ t('visitor.result.close') }}
             </button>
         </div>
     </div>

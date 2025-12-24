@@ -12,10 +12,13 @@ import VisitorFormHeader from "@/Components/VisitorFormHeader.vue";
 import ResultModal from "../../../Components/VisitorFormComponent/ResultModal.vue";
 import AcknowledgementModal from "@/Components/AcknowledgementModal.vue";
 import LoadingOverlay from "@/Components/LoadingOverlay.vue";
+import LanguageSelector from "@/Components/LanguageSelector.vue";
 import { usePage } from "@inertiajs/vue3";
 import axios from "axios";
 import { PageProps as InertiaPageProps } from "@inertiajs/core";
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const page = usePage<PageProps>();
 const site = computed(() => page.props.site);
 
@@ -141,7 +144,7 @@ watch(visitorType, (newVal) => {
 
 function handleReset() {
     if (!navigator.onLine) {
-        alert("⚠️ No internet connection. Please reconnect first!");
+        alert(t('visitor.form.messages.noInternet'));
         return;
     }
 
@@ -213,12 +216,12 @@ const isStep2Valid = computed(() => {
 
 async function nextStep() {
     if (currentStep.value === 1 && !isStep1Valid.value) {
-        alert("Please fill all required visitor information.");
+        alert(t('visitor.form.messages.fillVisitorInfo'));
         return;
     }
 
     if (currentStep.value === 2 && !isStep2Valid.value) {
-        alert("Please complete visit details before proceeding.");
+        alert(t('visitor.form.messages.completeVisitDetails'));
         return;
     }
 
@@ -243,8 +246,8 @@ async function nextStep() {
 
             isAcknowledged.value = allAcknowledged;
             acknowledgementMessage.value = allAcknowledged
-                ? "✅ You are already acknowledged. You can directly submit the form."
-                : "⚠️ You need to watch the safety video and read the guidelines before you can submit.";
+                ? t('visitor.acknowledgement.alreadyAcknowledged')
+                : t('visitor.acknowledgement.needVideo');
             acknowledgementModalOpen.value = true;
 
             if (allAcknowledged) {
@@ -261,7 +264,7 @@ async function nextStep() {
     }
 
     if (currentStep.value === 3 && !videoEnded.value) {
-        alert("Please watch the security briefing video before proceeding.");
+        alert(t('visitor.form.messages.watchVideo'));
         return;
     }
 
@@ -306,7 +309,7 @@ const onSubmit = handleSubmit(async (formValues) => {
         resultModalOpen.value = true;
     } catch (error) {
         console.error("Submission error:", error);
-        alert("An error occurred while submitting the form.");
+        alert(t('visitor.form.messages.error'));
     } finally {
         submitting.value = false;
     }
@@ -346,18 +349,18 @@ watch(currentStep, async (newStep) => {
     }
 });
 
-const stepTitles = {
-    1: "Visitor Details",
-    2: "Visit Details",
-    3: "Safety & Security",
-    4: "Review & Submit",
-};
+const stepTitles = computed(() => ({
+    1: t('visitor.form.stepTitles.1'),
+    2: t('visitor.form.stepTitles.2'),
+    3: t('visitor.form.stepTitles.3'),
+    4: t('visitor.form.stepTitles.4'),
+}))
 </script>
 
 <template>
     <LoadingOverlay
         :visible="checkingAcknowledgement"
-        message="Verifying visitor details, please wait..."
+        :message="t('visitor.acknowledgement.checking')"
     />
 
     <PaxModal
@@ -389,7 +392,7 @@ const stepTitles = {
     />
 
     <div class="relative container mx-auto px-4 py-8 max-w-6xl">
-        <VisitorFormHeader title="Visitor Registration Form" />
+        <VisitorFormHeader :title="t('visitor.form.title')" />
         <Card class="relative z-0 mt-4 mx-auto max-w-3xl w-full shadow-2xl">
             <div class="absolute -top-4 -right-2 z-10">
                 <div
@@ -492,7 +495,7 @@ const stepTitles = {
                             @click="handleReset"
                             :disabled="checkingAcknowledgement"
                         >
-                            Reset
+                            {{ t('visitor.form.buttons.reset') }}
                         </Button>
                         <Button
                             v-if="currentStep != 1"
@@ -503,7 +506,7 @@ const stepTitles = {
                                 currentStep === 1 || checkingAcknowledgement
                             "
                         >
-                            Back
+                            {{ t('visitor.form.buttons.back') }}
                         </Button>
                     </div>
 
@@ -515,8 +518,7 @@ const stepTitles = {
                             "
                             class="text-red-500 text-sm mt-2 text-center"
                         >
-                            ⚠️ Please fill in all required fields before
-                            proceeding.
+                            {{ t('visitor.form.messages.fillRequired') }}
                         </p>
 
                         <Button
@@ -554,14 +556,14 @@ const stepTitles = {
                                         d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
                                     ></path>
                                 </svg>
-                                Checking Acknowledgement...
+                                {{ t('visitor.form.buttons.checking') }}
                             </span>
 
                             <span v-else>
                                 {{
                                     currentStep === 3 && !videoEnded
-                                        ? "Watch Video First"
-                                        : "Next"
+                                        ? t('visitor.form.buttons.watchVideo')
+                                        : t('visitor.form.buttons.next')
                                 }}
                             </span>
                         </Button>
@@ -577,8 +579,8 @@ const stepTitles = {
                         >
                             {{
                                 submitting
-                                    ? "Submitting..."
-                                    : "Submit Registration"
+                                    ? t('visitor.form.buttons.submitting')
+                                    : t('visitor.form.buttons.submit')
                             }}
                         </Button>
                     </div>

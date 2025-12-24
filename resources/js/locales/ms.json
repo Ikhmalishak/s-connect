@@ -1,0 +1,262 @@
+{
+  "visitor": {
+    "form": {
+      "title": "Borang Pendaftaran Pelawat",
+      "stepTitles": {
+        "1": "Butiran Pelawat",
+        "2": "Butiran Lawatan",
+        "3": "Keselamatan & Keselamatan",
+        "4": "Semak & Hantar"
+      },
+      "buttons": {
+        "next": "Seterusnya",
+        "back": "Kembali",
+        "reset": "Tetapkan Semula",
+        "submit": "Hantar Pendaftaran",
+        "watchVideo": "Tonton Video Dahulu",
+        "checking": "Memeriksa Pengakuan...",
+        "submitting": "Menghantar..."
+      },
+      "messages": {
+        "fillRequired": "⚠️ Sila isi semua medan yang diperlukan sebelum meneruskan.",
+        "noInternet": "⚠️ Tiada sambungan internet. Sila sambung semula dahulu!",
+        "error": "Ralat berlaku semasa menghantar borang.",
+        "fillVisitorInfo": "Sila isi semua maklumat pelawat yang diperlukan.",
+        "completeVisitDetails": "Sila lengkapkan butiran lawatan sebelum meneruskan.",
+        "watchVideo": "Sila tonton video taklimat keselamatan sebelum meneruskan."
+      }
+    },
+    "personalInfo": {
+      "title": "Langkah 1: Butiran Pelawat",
+      "visitorName": "Nama",
+      "idType": "Jenis ID",
+      "idNumber": "Nombor ID",
+      "phoneNumber": "Nombor Telefon",
+      "identificationCard": "Kad Pengenalan",
+      "passport": "Pasport",
+      "fullNamePlaceholder": "Sila isi nama penuh seperti yang dinyatakan dalam IC/Pasport.",
+      "icPlaceholder": "XXXXXX-XX-XXXX",
+      "passportPlaceholder": "Nombor Pasport",
+      "phonePlaceholder": "01X-XXX XXXX",
+      "required": "Diperlukan",
+      "validation": {
+        "nameRequired": "Nama diperlukan",
+        "nameInvalid": "Nama hanya boleh mengandungi huruf, ruang, tanda petik dan sengkang",
+        "nameTooShort": "Nama mestilah sekurang-kurangnya 2 aksara",
+        "nameTooLong": "Nama tidak boleh melebihi 100 aksara",
+        "phoneRequired": "Nombor telefon diperlukan",
+        "phoneInvalid": "Nombor telefon hanya boleh mengandungi nombor, ruang, sengkang, tanda tambah dan kurungan",
+        "phoneLength": "Nombor telefon mestilah antara 10-15 digit",
+        "phoneMalaysian": "Sila masukkan nombor telefon Malaysia yang sah",
+        "idRequired": "Nombor ID diperlukan",
+        "icInvalid": "Nombor IC mestilah dalam format YYMMDD-PB-###G atau 12 digit",
+        "icMonth": "Bulan tidak sah dalam nombor IC",
+        "icDay": "Hari tidak sah dalam nombor IC",
+        "passportInvalid": "Nombor pasport mestilah 6-15 aksara alfanumerik"
+      }
+    },
+    "visitDetails": {
+      "title": "Langkah 2: Butiran Lawatan",
+      "vehicleNumber": "Nombor Plat Kenderaan",
+      "visitorCompany": "Syarikat Pelawat",
+      "purpose": "Tujuan",
+      "personToMeet": "Orang Yang Akan Dijumpai",
+      "statePurpose": "Nyatakan Tujuan",
+      "remarks": "Catatan",
+      "vehiclePlaceholder": "ABC1234",
+      "companyPlaceholder": "Masukkan nama syarikat",
+      "personPlaceholder": "Masukkan nama orang",
+      "purposePlaceholder": "Pilih Tujuan",
+      "remarksPlaceholder": "Catatan tambahan atau keperluan khas...",
+      "purposes": {
+        "meeting": "Mesyuarat",
+        "delivery": "Penghantaran",
+        "service": "Perkhidmatan/Pemasangan/Penyelenggaraan",
+        "sorting": "Pengasingan/Penyusunan Semula",
+        "interview": "Temuduga",
+        "training": "Latihan",
+        "shippingInbound": "Penghantaran - Masuk",
+        "shippingOutbound": "Penghantaran - Keluar",
+        "other": "Lain-lain"
+      },
+      "validation": {
+        "companyRequired": "Nama syarikat diperlukan",
+        "companyInvalid": "Nama syarikat mengandungi aksara tidak sah",
+        "companyTooShort": "Nama syarikat mestilah sekurang-kurangnya 2 aksara",
+        "companyTooLong": "Nama syarikat tidak boleh melebihi 100 aksara",
+        "purposeRequired": "Tujuan diperlukan",
+        "personRequired": "Orang yang akan dijumpai diperlukan untuk mesyuarat",
+        "personInvalid": "Nama orang hanya boleh mengandungi huruf, ruang, tanda petik dan sengkang",
+        "personTooShort": "Nama orang mestilah sekurang-kurangnya 2 aksara",
+        "personTooLong": "Nama orang tidak boleh melebihi 100 aksara",
+        "reasonRequired": "Sebab diperlukan",
+        "reasonTooShort": "Sebab mestilah sekurang-kurangnya 2 aksara",
+        "reasonTooLong": "Sebab tidak boleh melebihi 100 aksara",
+        "vehicleInvalid": "Sila masukkan nombor kenderaan Malaysia yang sah (contoh: ABC1234, AB1234C)",
+        "vehicleLength": "Nombor kenderaan mestilah antara 4-8 aksara",
+        "remarksInvalid": "Catatan mengandungi kandungan yang tidak sesuai atau tidak sah",
+        "remarksTooLong": "Catatan tidak boleh melebihi 500 aksara"
+      }
+    },
+    "paxModal": {
+      "title": "Jenis Pelawat",
+      "numberOfVisitors": "Bilangan Pelawat",
+      "selectVisitorType": "Sila Pilih Jenis Pelawat",
+      "visitor": "Pelawat",
+      "contractor": "Kontraktor",
+      "inboundShipment": "Penghantaran Masuk/Pemindahan",
+      "outboundShipment": "Penghantaran Keluar/Pemindahan",
+      "pax": "Orang",
+      "confirm": "Sah",
+      "compliance": "Sistem Pengurusan Pelawat (VMS) kami mematuhi sepenuhnya standard keselamatan maklumat ISO 27001 dan Akta Perlindungan Data Peribadi (PDPA). Semua data peribadi dienkripsi dan dikendalikan hanya untuk tujuan keselamatan dan operasi, memastikan ia disimpan, diproses dan dilindungi mengikut keperluan undang-undang dan amalan terbaik industri."
+    },
+    "acknowledgement": {
+      "checking": "Mengesahkan butiran pelawat, sila tunggu...",
+      "alreadyAcknowledged": "✅ Anda sudah diakui. Anda boleh menghantar borang secara langsung.",
+      "needVideo": "⚠️ Anda perlu menonton video keselamatan dan membaca garis panduan sebelum boleh menghantar.",
+      "close": "Tutup",
+      "proceed": "Teruskan",
+      "watchVideo": "Tonton Video",
+      "modalTitle": "Status Pengakuan",
+      "proceedToSubmit": "Teruskan Penghantaran",
+      "goToVideo": "Pergi ke Video & Garis Panduan"
+    },
+    "result": {
+      "thankYou": "Terima kasih! Borang anda telah berjaya dihantar.",
+      "successfullyRegistered": "Berjaya Didaftarkan",
+      "failedToRegister": "Gagal Didaftarkan",
+      "pass": "Laluan",
+      "close": "Tutup",
+      "visitorName": "Nama Pelawat"
+    },
+    "review": {
+      "title": "Langkah 4 : Semak & Hantar",
+      "readGuidelines": "Saya telah membaca dan memahami garis panduan keselamatan.",
+      "videoCompleted": "Video keselamatan selesai",
+      "securityGuidelines": {
+        "title": "DASAR PENGURUSAN PELAWAT",
+        "purpose": {
+          "title": "1.0 Tujuan",
+          "content1": "1.1 Dasar ini menetapkan prosedur standard untuk mengawal dan memantau akses semua pelawat ke premis syarikat.",
+          "content2": "1.2 Matlamatnya adalah untuk melindungi keselamatan kakitangan, menjaga aset, dan mengekalkan kerahsiaan dengan mencegah akses yang tidak dibenarkan."
+        },
+        "scope": {
+          "title": "2.0 Skop",
+          "content1": "2.1 Dasar ini terpakai kepada semua jenis pelawat, termasuk tetapi tidak terhad kepada:",
+          "visitors": "2.1.1 Kontraktor",
+          "suppliers": "2.1.2 Pembekal",
+          "applicants": "2.1.3 Pemohon kerja",
+          "partners": "2.1.4 Rakan kongsi perniagaan",
+          "officials": "2.1.5 Pegawai kerajaan",
+          "guests": "2.1.6 Ahli keluarga atau tetamu peribadi pekerja",
+          "content2": "2.2 Dasar ini terpakai kepada semua kemudahan terkawal syarikat, termasuk kilang, gudang, dan bangunan pejabat."
+        },
+        "definitions": {
+          "title": "3.0 Takrifan",
+          "visitor": "3.1 Pelawat – Mana-mana individu yang bukan pekerja syarikat yang memasuki premis syarikat untuk tempoh sementara.",
+          "escort": "3.2 Pengiring – Pekerja yang dilantik bertanggungjawab untuk mengawasi pelawat semasa lawatan mereka.",
+          "restricted": "3.3 Kawasan Terhad – Kawasan yang memerlukan kawalan akses tambahan dan kebenaran khas untuk masuk."
+        },
+        "entryProtocol": {
+          "title": "4.0 Protokol Kemasukan Pelawat",
+          "content1": "4.1 Semua pelawat mesti masuk melalui pintu keselamatan utama atau kaunter reaksi yang ditetapkan.",
+          "content2": "4.2 Pelawat mesti membentangkan pengenalan yang dikeluarkan oleh kerajaan yang sah.",
+          "content3": "4.3 Pelawat mesti menyatakan tujuan lawatan dan nama tuan rumah pekerja.",
+          "content4": "4.4 Tuan rumah mesti mengesahkan dan meluluskan pelawat sebelum kemasukan dibenarkan.",
+          "content5": "4.5 Semua pelawat mesti menandatangani Buku Log Pelawat atau sistem pengurusan pelawat digital.",
+          "content6": "4.6 Pelawat mesti memakai Lencana Pelawat yang jelas kelihatan pada setiap masa.",
+          "passLabel": "4.7 Lencana laluan pelawat mesti menunjukkan:",
+          "pass1": "4.7.1 Nama pelawat",
+          "pass2": "4.7.2 Pekerja tuan rumah",
+          "pass3": "4.7.3 Tarikh dan masa kemasukan",
+          "pass4": "4.7.4 Masa tamat",
+          "pass5": "4.7.5 Tahap akses"
+        },
+        "escort": {
+          "title": "5.0 Pengiring dan Pengawasan",
+          "content1": "5.1 Semua pelawat mesti diiringi oleh tuan rumah atau kakitangan yang dilantik pada setiap masa.",
+          "content2": "5.2 Pengiring mesti memastikan pelawat kekal di kawasan yang diluluskan sahaja.",
+          "content3": "5.3 Pengiring bertanggungjawab untuk menerangkan peraturan keselamatan tapak dan prosedur kecemasan."
+        },
+        "prohibited": {
+          "title": "6.0 Barangan dan Kelakuan Dilarang",
+          "warning": "6.1 Pelawat dilarang membawa:",
+          "weapons": "6.1.1 Senjata",
+          "drugs": "6.1.2 Dadah atau alkohol",
+          "recording": "6.1.3 Peralatan fotografi atau rakaman yang tidak dibenarkan",
+          "materials": "6.1.4 Bahan api atau berbahaya (melainkan diluluskan)",
+          "behavior": "6.2 Pelawat tidak boleh terlibat dalam:",
+          "roaming": "6.2.1 Pengembaraan tanpa pengawasan",
+          "tampering": "6.2.2 Mengganggu peralatan atau mesin",
+          "interfering": "6.2.3 Mengganggu kakitangan atau operasi berjalan"
+        },
+        "restrictedAreas": {
+          "title": "7.0 Akses Pelawat ke Kawasan Terhad",
+          "content1": "7.1 Kemasukan ke Kawasan Terhad dibenarkan hanya dengan kelulusan bertulis dari Pengurus Keselamatan atau Ketua Jabatan.",
+          "content2": "7.2 Pelawat mesti sentiasa diiringi oleh pengiring tahap kanan.",
+          "content3": "7.3 PPE (peralatan pelindung peribadi) tambahan mungkin diperlukan dan mesti sentiasa dipakai di kawasan ini.",
+          "photography": "📷 Larangan Fotografi dan Rakaman yang Ketat di Premis Kilang",
+          "photographyContent": "Pengambilan foto, video, atau sebarang bentuk rakaman (sama ada oleh kamera, telefon pintar, atau sebarang peranti elektronik lain) di premis kilang, khususnya di garis pengeluaran adalah dilarang sama sekali. Ini terpakai kepada semua pekerja, kontraktor, pelawat dan pihak ketiga, tanpa kelulusan bertulis dari Jabatan Keselamatan atau pegawai yang diberi kuasa."
+        },
+        "departure": {
+          "title": "8.0 Protokol Keluar dan Keluar",
+          "content1": "8.1 Apabila selesai lawatan, pelawat mesti:",
+          "step1": "8.1.1 Pulangkan Lencana Pelawat ke kaunter keselamatan",
+          "step2": "8.1.2 Tandatangani log keluar",
+          "step3": "8.1.3 Diiringi keluar dari premis oleh tuan rumah atau keselamatan",
+          "content2": "8.2 Keselamatan mesti mengesahkan bahawa tiada aset syarikat, dokumen, atau data dikeluarkan tanpa kelulusan."
+        },
+        "emergency": {
+          "title": "9.0 Situasi Kecemasan",
+          "warning": "🚨 9.1 Dalam keadaan kebakaran, pengungsian, atau penguncian:",
+          "fire1": "9.1.1 Pelawat mesti mengikut semua arahan dari marshal kecemasan atau pegawai keselamatan.",
+          "fire2": "9.1.2 Tuan rumah bertanggungjawab untuk pengungsian pelawat mereka yang selamat.",
+          "fire3": "9.1.3 Pemanggilan nama pelawat mesti dilakukan di tempat pemasangan."
+        },
+        "training": {
+          "title": "10.0 Latihan dan Kesedaran",
+          "content1": "10.1 Kakitangan keselamatan mesti dilatih dalam penyaringan pelawat yang betul, dokumentasi, dan prosedur kecemasan.",
+          "content2": "10.2 Semua pekerja mesti diingatkan tentang tanggungjawab mereka semasa menjadi tuan rumah pelawat melalui taklimat kesedaran berkala."
+        },
+        "compliance": {
+          "title": "11.0 Pematuhan dan Pelanggaran",
+          "content1": "11.1 Semua pelawat tertakluk kepada peraturan dan peraturan syarikat semasa di tapak.",
+          "violations": "11.2 Pelanggaran dasar ini boleh mengakibatkan:",
+          "violation1": "11.2.1 Penyingkiran segera dari premis",
+          "violation2": "11.2.2 Melaporkan kepada pihak berkuasa",
+          "violation3": "11.2.3 Larangan lawatan masa depan",
+          "content2": "11.3 Pekerja yang melanggar dasar ini boleh menghadapi tindakan disiplin."
+        },
+        "review": {
+          "title": "12.0 Semakan dan Penyelenggaraan",
+          "content1": "12.1 Dasar ini akan disemak setiap tahun atau selepas pelanggaran keselamatan.",
+          "content2": "12.2 Kemaskini akan dibuat untuk mencerminkan perubahan dalam keperluan undang-undang, operasi, atau keselamatan."
+        }
+      }
+    },
+    "video": {
+      "title": "Langkah 3 : Taklimat Keselamatan & Garis Panduan Keselamatan",
+      "completeFormFirst": "Sila lengkapkan semua medan yang diperlukan dalam langkah sebelumnya sebelum menonton video",
+      "videoTitle": "Video Garis Panduan Keselamatan SKP",
+      "completeForm": "Lengkapkan borang dahulu",
+      "fillFields": "Isi semua medan yang diperlukan untuk membuka kunci video",
+      "playing": "Sedang dimainkan...",
+      "completed": "Selesai",
+      "videoCompleted": "Video berjaya diselesaikan!",
+      "clickPlay": "Klik butang main untuk memulakan video taklimat keselamatan",
+      "mustWatch": "Anda mesti menonton video lengkap sebelum meneruskan ke langkah seterusnya"
+    }
+  },
+  "language": {
+    "english": "English",
+    "chinese": "中文",
+    "malay": "Bahasa Melayu",
+    "select": "Pilih Bahasa"
+  },
+  "visitorTypes": {
+    "visitor": "Pelawat",
+    "contractor": "Kontraktor",
+    "inbound-shipment/transfer": "Penghantaran Masuk/Pemindahan",
+    "outbound-shipment/transfer": "Penghantaran Keluar/Pemindahan"
+  }
+}

@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import LanguageSelector from "@/Components/LanguageSelector.vue";
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+
 const props = defineProps<{
     open: boolean;
     paxInput: string;
@@ -15,7 +20,7 @@ const emit = defineEmits<{
 function confirm() {
     const count = parseInt(props.paxInput, 10);
     if (isNaN(count) || count <= 0) {
-        alert("Please enter a valid number greater than 0.");
+        alert(t('visitor.paxModal.numberOfVisitors') + " must be greater than 0.");
         return;
     }
     emit("confirm", count);
@@ -30,9 +35,15 @@ function confirm() {
     >
         <div class="max-w-md w-full bg-white p-6 rounded-xl shadow-xl">
 
-            <img src="/assets/ss2.png" alt="" />
+            <img src="/assets/ss2.png" alt="" class="h-20 mx-auto mb-4" />
 
-            <h2 class="text-xl font-semibold mb-2 text-center">Visitor Type</h2>
+            <div class="mb-4 flex justify-center">
+                <div class="scale-90">
+                    <LanguageSelector />
+                </div>
+            </div>
+
+            <h2 class="text-xl font-semibold mb-2 text-center">{{ t('visitor.paxModal.title') }}</h2>
 
             <div class="flex justify-center items-center gap-3">
                 <select
@@ -46,15 +57,15 @@ function confirm() {
                     "
                 >
                     <option value="" disabled selected hidden>
-                        Please Select Visitor Type
+                        {{ t('visitor.paxModal.selectVisitorType') }}
                     </option>
-                    <option value="visitor">Visitor</option>
-                    <option value="contractor">Contractor</option>
+                    <option value="visitor">{{ t('visitor.paxModal.visitor') }}</option>
+                    <option value="contractor">{{ t('visitor.paxModal.contractor') }}</option>
                     <option value="inbound-shipment/transfer">
-                        Inbound Shipment/Transfer
+                        {{ t('visitor.paxModal.inboundShipment') }}
                     </option>
                     <option value="outbound-shipment/transfer">
-                        Outbound Shipment/Transfer
+                        {{ t('visitor.paxModal.outboundShipment') }}
                     </option>
                 </select>
             </div>
@@ -62,7 +73,7 @@ function confirm() {
             <hr class="border-t border-gray-300 my-4 mt-8" />
 
             <h2 class="text-xl font-semibold mt-10 mb-2 text-center">
-                Number of Visitors
+                {{ t('visitor.paxModal.numberOfVisitors') }}
             </h2>
 
             <div class="flex justify-center items-center gap-3">
@@ -80,7 +91,7 @@ function confirm() {
                     class="border border-gray-300 p-3 rounded-md w-24 text-center text-2xl"
                     placeholder="1-5"
                 />
-                <span class="text-black text-2xl font-medium">Pax</span>
+                <span class="text-black text-2xl font-medium">{{ t('visitor.paxModal.pax') }}</span>
             </div>
 
             <div class="mt-6 flex justify-center">
@@ -94,19 +105,14 @@ function confirm() {
                             : 'bg-blue-600 hover:bg-blue-700'
                     "
                 >
-                    Confirm
+                    {{ t('visitor.paxModal.confirm') }}
                 </button>
             </div>
 
             <hr class="border-t border-gray-300 my-4 mt-8" />
 
             <div class="text-xs text-center">
-                Our Visitor Management System (VMS) is fully compliant with ISO
-                27001 information security standards and the Personal Data
-                Protection Act (PDPA). All personal data is encrypted and
-                handled solely for security and operational purposes, ensuring
-                it is stored, processed, and protected according to legal
-                requirements and industry best practices.
+                {{ t('visitor.paxModal.compliance') }}
             </div>
         </div>
     </div>

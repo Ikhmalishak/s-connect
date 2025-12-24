@@ -7,8 +7,26 @@ import { createApp, h } from "vue";
 import { ZiggyVue } from "../../vendor/tightenco/ziggy";
 import Toaster from "./components/ui/toast/Toaster.vue";
 import Countdown from 'vue3-flip-countdown'
+import { createI18n } from 'vue-i18n'
+import en from './locales/en.json'
+import zh from './locales/zh.json'
+import ms from './locales/ms.json'
 
 const appName = import.meta.env.VITE_APP_NAME || "S-CONNECT";
+
+// Get saved language from localStorage or default to English
+const savedLanguage = localStorage.getItem('visitor-language') || 'en'
+
+const i18n = createI18n({
+    legacy: false,
+    locale: savedLanguage,
+    fallbackLocale: 'en',
+    messages: {
+        en,
+        zh,
+        ms
+    }
+})
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
@@ -24,6 +42,7 @@ createInertiaApp({
             .use(plugin)
             .use(ZiggyVue)
             .use(Countdown)
+            .use(i18n)
             .mount(el);
     },
     progress: {

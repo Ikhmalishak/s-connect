@@ -17,6 +17,27 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { ref, watch } from "vue";
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+
+// Function to get the correct translation key for purposes
+const getPurposeTranslation = (purpose: string): string => {
+    const purposeMap: { [key: string]: string } = {
+        "Meeting": "meeting",
+        "Delivery": "delivery",
+        "Service/Installation/Maintenance": "service",
+        "Sorting/Rework": "sorting",
+        "Interview": "interview",
+        "Training": "training",
+        "Shipping - Inbound": "shippingInbound",
+        "Shipping - Outbound": "shippingOutbound",
+        "Other": "other"
+    };
+
+    const key = purposeMap[purpose] || purpose.toLowerCase().replace(/\s+/g, '').replace('/', '').replace('-', '');
+    return t(`visitor.visitDetails.purposes.${key}`);
+};
 
 interface FormValues {
     vehicle_number?: string;
@@ -54,11 +75,11 @@ const validateVehicleNumber = (vehicleNumber: string): string => {
     const isValidFormat = patterns.some((pattern) => pattern.test(cleanNumber));
 
     if (!isValidFormat) {
-        return "Please enter a valid Malaysian vehicle number (e.g., ABC1234, AB1234C)";
+        return t('visitor.visitDetails.validation.vehicleInvalid');
     }
 
     if (cleanNumber.length < 4 || cleanNumber.length > 8) {
-        return "Vehicle number must be between 4-8 characters";
+        return t('visitor.visitDetails.validation.vehicleLength');
     }
 
     return "";
@@ -68,15 +89,15 @@ const validateCompanyName = (company: string): string => {
     if (!company?.trim()) return " ";
 
     if (!/^[a-zA-Z0-9\s&.,()'-]+$/.test(company.trim())) {
-        return "Company name contains invalid characters";
+        return t('visitor.visitDetails.validation.companyInvalid');
     }
 
     if (company.trim().length < 2) {
-        return "Company name must be at least 2 characters long";
+        return t('visitor.visitDetails.validation.companyTooShort');
     }
 
     if (company.trim().length > 100) {
-        return "Company name cannot exceed 100 characters";
+        return t('visitor.visitDetails.validation.companyTooLong');
     }
 
     return "";
@@ -84,18 +105,18 @@ const validateCompanyName = (company: string): string => {
 
 const validatePersonToMeet = (person: string, purpose: string): string => {
     if (purpose === "Meeting") {
-        if (!person?.trim()) return "Person to meet is required for meetings";
+        if (!person?.trim()) return t('visitor.visitDetails.validation.personRequired');
 
         if (!/^[a-zA-Z\s'-]+$/.test(person.trim())) {
-            return "Person name can only contain letters, spaces, apostrophes, and hyphens";
+            return t('visitor.visitDetails.validation.personInvalid');
         }
 
         if (person.trim().length < 2) {
-            return "Person name must be at least 2 characters long";
+            return t('visitor.visitDetails.validation.personTooShort');
         }
 
         if (person.trim().length > 100) {
-            return "Person name cannot exceed 100 characters";
+            return t('visitor.visitDetails.validation.personTooLong');
         }
     }
 
@@ -104,14 +125,14 @@ const validatePersonToMeet = (person: string, purpose: string): string => {
 
 const validateOtherReason = (reason: string, purpose: string): string => {
     if (purpose === "Meeting") {
-        if (!reason?.trim()) return "Reason is required";
+        if (!reason?.trim()) return t('visitor.visitDetails.validation.reasonRequired');
 
         if (reason.trim().length < 2) {
-            return "Reason must be at least 2 characters long";
+            return t('visitor.visitDetails.validation.reasonTooShort');
         }
 
         if (reason.trim().length > 100) {
-            return "Reason cannot exceed 100 characters";
+            return t('visitor.visitDetails.validation.reasonTooLong');
         }
     }
 
@@ -123,7 +144,7 @@ const validateRemarks = (remarks: string): string => {
     if (!remarks) return "";
 
     if (remarks.length > 500) {
-        return "Remarks cannot exceed 500 characters";
+        return t('visitor.visitDetails.validation.remarksTooLong');
     }
 
     const inappropriatePatterns = [
@@ -133,7 +154,7 @@ const validateRemarks = (remarks: string): string => {
     ];
 
     if (inappropriatePatterns.some((pattern) => pattern.test(remarks))) {
-        return "Remarks contain inappropriate or invalid content";
+        return t('visitor.visitDetails.validation.remarksInvalid');
     }
 
     return "";
@@ -296,18 +317,18 @@ defineExpose({
 </script>
 <template>
     <div class="space-y-6">
-        <h2 class="text-xl font-semibold">Step 2: Visit Details</h2>
+        <h2 class="text-xl font-semibold">{{ t('visitor.visitDetails.title') }}</h2>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <!-- Vehicle Number Field -->
             <FormField v-slot="{ componentField }" name="vehicle_number">
                 <FormItem>
-                    <FormLabel>Vehicle Number</FormLabel>
+                    <FormLabel>{{ t('visitor.visitDetails.vehicleNumber') }}</FormLabel>
                     <FormControl>
                         <Input
                             type="text"
                             v-bind="componentField"
-                            placeholder="ABC1234"
+                            :placeholder="t('visitor.visitDetails.vehiclePlaceholder')"
                             @input="handleVehicleNumberInput"
                             :class="
                                 validationErrors['vehicle_number']
@@ -329,12 +350,12 @@ defineExpose({
             <!-- Company Name Field -->
             <FormField v-slot="{ componentField }" name="visitor_company">
                 <FormItem>
-                    <FormLabel>Visitor Company</FormLabel>
+                    <FormLabel>{{ t('visitor.visitDetails.visitorCompany') }}</FormLabel>
                     <FormControl>
                         <Input
                             type="text"
                             v-bind="componentField"
-                            placeholder="Enter company name"
+                            :placeholder="t('visitor.visitDetails.companyPlaceholder')"
                             @input="handleCompanyInput"
                             :class="
                                 validationErrors['visitor_company']
@@ -358,13 +379,13 @@ defineExpose({
             <!-- Purpose Field -->
             <FormField v-slot="{ componentField }" name="purpose">
                 <FormItem>
-                    <FormLabel
-                        >Purpose <span class="text-red-500">*</span></FormLabel
-                    >
+                    <FormLabel>
+                        {{ t('visitor.visitDetails.purpose') }} <span class="text-red-500">*</span>
+                    </FormLabel>
                     <Select v-bind="componentField">
                         <FormControl>
                             <SelectTrigger>
-                                <SelectValue placeholder="Select Purpose" />
+                                <SelectValue :placeholder="t('visitor.visitDetails.purposePlaceholder')" />
                             </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -374,7 +395,7 @@ defineExpose({
                                     :key="p"
                                     :value="p"
                                 >
-                                    {{ p }}
+                                    {{ getPurposeTranslation(p) }}
                                 </SelectItem>
                             </SelectGroup>
                         </SelectContent>
@@ -390,15 +411,15 @@ defineExpose({
                 name="person_to_meet"
             >
                 <FormItem>
-                    <FormLabel
-                        >Person to Meet
-                        <span class="text-red-500">*</span></FormLabel
-                    >
+                    <FormLabel>
+                        {{ t('visitor.visitDetails.personToMeet') }}
+                        <span class="text-red-500">*</span>
+                    </FormLabel>
                     <FormControl>
                         <Input
                             type="text"
                             v-bind="componentField"
-                            placeholder="Enter person's name"
+                            :placeholder="t('visitor.visitDetails.personPlaceholder')"
                             @input="handlePersonToMeetInput"
                             :class="
                                 validationErrors['person_to_meet']
@@ -424,15 +445,15 @@ defineExpose({
                 name="other_reason"
             >
                 <FormItem>
-                    <FormLabel
-                        >State Purpose
-                        <span class="text-red-500">*</span></FormLabel
-                    >
+                    <FormLabel>
+                        {{ t('visitor.visitDetails.statePurpose') }}
+                        <span class="text-red-500">*</span>
+                    </FormLabel>
                     <FormControl>
                         <Input
                             type="text"
                             v-bind="componentField"
-                            placeholder="Enter purpose"
+                            :placeholder="t('visitor.visitDetails.statePurpose')"
                             @input="handleOtherReasonInput"
                             :class="
                                 validationErrors['other_reasons']
@@ -456,7 +477,7 @@ defineExpose({
         <FormField v-slot="{ componentField }" name="remarks">
             <FormItem>
                 <FormLabel>
-                    Remarks
+                    {{ t('visitor.visitDetails.remarks') }}
                     <span class="text-gray-500 text-sm"
                         >({{ values.remarks?.length || 0 }}/500)</span
                     >
@@ -465,7 +486,7 @@ defineExpose({
                     <Textarea
                         v-bind="componentField"
                         class="h-[100px]"
-                        placeholder="Additional notes or special requirements..."
+                        :placeholder="t('visitor.visitDetails.remarksPlaceholder')"
                         @input="handleRemarksInput"
                         :class="
                             validationErrors['remarks'] ? 'border-red-500' : ''

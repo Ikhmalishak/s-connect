@@ -3,6 +3,9 @@ import { ref, onMounted, computed, watch } from "vue";
 import { Play, CheckCircle, Clock } from "lucide-vue-next";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{
     isFormValid: boolean;
@@ -103,7 +106,7 @@ onMounted(() => {
 
 <template>
     <div class="space-y-2">
-            <h3 class="text-lg font-semibold mb-4">Step 3 : Safety Briefing & Security Guideline</h3>
+            <h3 class="text-lg font-semibold mb-4">{{ t('visitor.video.title') }}</h3>
 
         <div
             v-if="!isFormValid"
@@ -111,8 +114,7 @@ onMounted(() => {
         >
             <Clock class="h-5 w-5 text-amber-600" />
             <span class="text-amber-800">
-                Please complete all required fields in the previous steps before
-                watching the video
+                {{ t('visitor.video.completeFormFirst') }}
             </span>
         </div>
 
@@ -120,7 +122,7 @@ onMounted(() => {
             <div class="px-6 py-4 border-b">
                 <h3 class="text-lg font-semibold flex items-center gap-2">
                     <Play class="h-5 w-5" />
-                    SKP Security Guidelines Video
+                    {{ t('visitor.video.videoTitle') }}
                 </h3>
             </div>
             <div class="p-6">
@@ -147,11 +149,10 @@ onMounted(() => {
                             <div class="text-center text-white">
                                 <Clock class="h-12 w-12 mx-auto mb-2" />
                                 <p class="text-lg font-semibold">
-                                    Complete form first
+                                    {{ t('visitor.video.completeForm') }}
                                 </p>
                                 <p class="text-sm">
-                                    Fill in all required fields to unlock the
-                                    video
+                                    {{ t('visitor.video.fillFields') }}
                                 </p>
                             </div>
                         </div>
@@ -175,14 +176,14 @@ onMounted(() => {
                             <span
                                 v-if="isPlaying"
                                 class="text-blue-600 font-medium"
-                                >Playing...</span
+                                >{{ t('visitor.video.playing') }}</span
                             >
                             <span
                                 v-else-if="videoEnded"
                                 class="text-green-600 font-medium flex items-center gap-1"
                             >
                                 <CheckCircle class="h-4 w-4" />
-                                Completed
+                                {{ t('visitor.video.completed') }}
                             </span>
                         </div>
                     </div>
@@ -209,7 +210,7 @@ onMounted(() => {
                     <div class="flex items-center gap-2 text-green-600">
                         <CheckCircle class="h-6 w-6" />
                         <span class="font-semibold"
-                            >Video completed successfully!</span
+                            >{{ t('visitor.video.videoCompleted') }}</span
                         >
                     </div>
                 </div>
@@ -220,13 +221,12 @@ onMounted(() => {
             <div class="flex items-center justify-center gap-2">
                 <Play class="h-4 w-4 text-gray-600" />
                 <span class="text-sm text-gray-600">
-                    Click the play button to start the security briefing video
+                    {{ t('visitor.video.clickPlay') }}
                 </span>
             </div>
 
             <p class="text-xs text-gray-500">
-                You must watch the complete video before proceeding to the next
-                step
+                {{ t('visitor.video.mustWatch') }}
             </p>
         </div>
     </div>

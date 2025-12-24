@@ -16,6 +16,9 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { ref, watch } from "vue";
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 interface Visitor {
     visitor_name: string;
@@ -38,18 +41,18 @@ const validationErrors = ref<{ [key: string]: string }>({});
 
 // Validation functions
 const validatePhoneNumber = (phone: string): string => {
-    if (!phone) return "Phone number is required";
+    if (!phone) return t('visitor.personalInfo.validation.phoneRequired');
 
     if (phone === "0000000000") return "";
 
     if (!/^[\d\s\-\+\(\)]+$/.test(phone)) {
-        return "Phone number can only contain numbers, spaces, dashes, plus signs, and parentheses";
+        return t('visitor.personalInfo.validation.phoneInvalid');
     }
 
     const digitsOnly = phone.replace(/\D/g, "");
 
     if (digitsOnly.length < 10 || digitsOnly.length > 15) {
-        return "Phone number must be between 10-15 digits";
+        return t('visitor.personalInfo.validation.phoneLength');
     }
 
     if (
@@ -57,21 +60,21 @@ const validatePhoneNumber = (phone: string): string => {
         !digitsOnly.startsWith("6") &&
         digitsOnly.length < 12
     ) {
-        return "Please enter a valid Malaysian phone number";
+        return t('visitor.personalInfo.validation.phoneMalaysian');
     }
 
     return "";
 };
 
 const validateIdNumber = (idNumber: string, idType: string): string => {
-    if (!idNumber) return "ID number is required";
+    if (!idNumber) return t('visitor.personalInfo.validation.idRequired');
 
     if (idType === "IC") {
         const icPattern = /^\d{6}-?\d{2}-?\d{4}$/;
         const digitsOnly = idNumber.replace(/\D/g, "");
 
         if (!icPattern.test(idNumber) && digitsOnly.length !== 12) {
-            return "IC number must be in format YYMMDD-PB-###G or 12 digits";
+            return t('visitor.personalInfo.validation.icInvalid');
         }
 
         if (digitsOnly.length === 12) {
@@ -80,15 +83,15 @@ const validateIdNumber = (idNumber: string, idType: string): string => {
             const day = parseInt(digitsOnly.substring(4, 6));
 
             if (month < 1 || month > 12) {
-                return "Invalid month in IC number";
+                return t('visitor.personalInfo.validation.icMonth');
             }
             if (day < 1 || day > 31) {
-                return "Invalid day in IC number";
+                return t('visitor.personalInfo.validation.icDay');
             }
         }
     } else if (idType === "Passport") {
         if (!/^[A-Z0-9]{6,15}$/i.test(idNumber)) {
-            return "Passport number must be 6-15 alphanumeric characters";
+            return t('visitor.personalInfo.validation.passportInvalid');
         }
     }
 
@@ -96,18 +99,18 @@ const validateIdNumber = (idNumber: string, idType: string): string => {
 };
 
 const validateName = (name: string): string => {
-    if (!name?.trim()) return "Name is required";
+    if (!name?.trim()) return t('visitor.personalInfo.validation.nameRequired');
 
     if (!/^[a-zA-Z\s'-]+$/.test(name.trim())) {
-        return "Name can only contain letters, spaces, apostrophes, and hyphens";
+        return t('visitor.personalInfo.validation.nameInvalid');
     }
 
     if (name.trim().length < 2) {
-        return "Name must be at least 2 characters long";
+        return t('visitor.personalInfo.validation.nameTooShort');
     }
 
     if (name.trim().length > 100) {
-        return "Name cannot exceed 100 characters";
+        return t('visitor.personalInfo.validation.nameTooLong');
     }
 
     return "";
@@ -244,7 +247,7 @@ defineExpose({
 
 <template>
     <div class="space-y-6">
-        <h2 class="text-xl font-semibold">Step 1: Visitor Details</h2>
+        <h2 class="text-xl font-semibold">{{ t('visitor.personalInfo.title') }}</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
             <div
                 v-for="(visitor, i) in visitors"
@@ -252,11 +255,7 @@ defineExpose({
                 class="border p-4 rounded-md bg-gray-50"
             >
                 <h3 class="font-semibold text-gray-700 mb-2">
-                    {{
-                        visitor.visitor_type
-                            .replace("-", " ")
-                            .replace(/\b\w/g, (char) => char.toUpperCase())
-                    }}
+                    {{ t(`visitorTypes.${visitor.visitor_type}`) }}
                     #{{ i + 1 }}
                 </h3>
 
@@ -266,20 +265,14 @@ defineExpose({
                 >
                     <FormItem>
                         <FormLabel>
-                            {{
-                                visitor.visitor_type
-                                    .replace("-", " ")
-                                    .replace(/\b\w/g, (char) =>
-                                        char.toUpperCase()
-                                    )
-                            }}
-                            Name <span class="text-red-500">*</span>
+                            {{ t(`visitorTypes.${visitor.visitor_type}`) }}
+                            {{ t('visitor.personalInfo.visitorName') }} <span class="text-red-500">*</span>
                         </FormLabel>
                         <FormControl>
                             <Input
                                 v-bind="componentField"
                                 @input="handleNameInput(i, $event)"
-                                placeholder="Please fill in your full name as stated in IC/Passport."
+                                :placeholder="t('visitor.personalInfo.fullNamePlaceholder')"
                                 class="w-full p-2 placeholder:text-xs resize-none"
                                 :class="
                                     validationErrors[
@@ -310,22 +303,22 @@ defineExpose({
                 >
                     <FormItem>
                         <FormLabel>
-                            ID Type <span class="text-red-500">*</span>
+                            {{ t('visitor.personalInfo.idType') }} <span class="text-red-500">*</span>
                         </FormLabel>
                         <Select v-bind="componentField">
                             <FormControl>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Select ID Type" />
+                                    <SelectValue :placeholder="t('visitor.personalInfo.idType')" />
                                 </SelectTrigger>
                             </FormControl>
                             <SelectContent>
                                 <SelectGroup>
-                                    <SelectItem value="IC"
-                                        >Identification Card</SelectItem
-                                    >
-                                    <SelectItem value="Passport"
-                                        >Passport</SelectItem
-                                    >
+                                    <SelectItem value="IC">
+                                        {{ t('visitor.personalInfo.identificationCard') }}
+                                    </SelectItem>
+                                    <SelectItem value="Passport">
+                                        {{ t('visitor.personalInfo.passport') }}
+                                    </SelectItem>
                                 </SelectGroup>
                             </SelectContent>
                         </Select>
@@ -339,7 +332,7 @@ defineExpose({
                 >
                     <FormItem>
                         <FormLabel>
-                            ID Number <span class="text-red-500">*</span>
+                            {{ t('visitor.personalInfo.idNumber') }} <span class="text-red-500">*</span>
                         </FormLabel>
                         <FormControl>
                             <Input
@@ -347,8 +340,8 @@ defineExpose({
                                 @input="handleIdNumberInput(i, $event)"
                                 :placeholder="
                                     visitor.id_type === 'IC'
-                                        ? 'XXXXXX-XX-XXXX'
-                                        : 'Passport Number'
+                                        ? t('visitor.personalInfo.icPlaceholder')
+                                        : t('visitor.personalInfo.passportPlaceholder')
                                 "
                                 :class="
                                     validationErrors[`visitors[${i}].id_number`]
@@ -373,13 +366,13 @@ defineExpose({
                 >
                     <FormItem>
                         <FormLabel>
-                            Phone Number <span class="text-red-500">*</span>
+                            {{ t('visitor.personalInfo.phoneNumber') }} <span class="text-red-500">*</span>
                         </FormLabel>
                         <FormControl>
                             <Input
                                 v-bind="componentField"
                                 @input="handlePhoneInput(i, $event)"
-                                placeholder="01X-XXX XXXX"
+                                :placeholder="t('visitor.personalInfo.phonePlaceholder')"
                                 :class="
                                     validationErrors[
                                         `visitors[${i}].phone_number`

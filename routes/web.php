@@ -223,4 +223,12 @@ Route::middleware(['auth'])->prefix('container-approvals')->name('container-appr
     Route::get('/{approval}/approve-email', [ShipmentTransportApprovalController::class, 'approveFromEmail'])->middleware('can:container.approve')->name('approve-email');
 });
 
+use App\Http\Controllers\ApprovalController;
+
+// Route::post('/approvals', [ApprovalController::class, 'create']);
+Route::get('/test-approval', [ApprovalController::class, 'create']);
+Route::post('/approvals/{id}/approve', [ApprovalController::class, 'approve']);
+Route::post('/approvals/{id}/reject', [ApprovalController::class, 'reject']);
+Route::get('/approvals/{id}', [ApprovalController::class, 'status']);
+
 require __DIR__ . '/auth.php';
