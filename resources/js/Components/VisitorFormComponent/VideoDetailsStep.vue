@@ -5,7 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useI18n } from 'vue-i18n'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
+
+// Computed video source based on language
+const videoSource = computed(() => {
+    const langMap = {
+        'en': '/assets/new.mp4',
+        'ms': '/assets/malay.mp4',
+        'zh': '/assets/chinese.mp4'
+    };
+    return langMap[locale.value] || '/assets/short.mp4';
+});
 
 const props = defineProps<{
     isFormValid: boolean;
@@ -137,8 +147,9 @@ onMounted(() => {
                             preload="metadata"
                             @play="isPlaying = true"
                             @pause="isPlaying = false"
+                            :key="videoSource"
                         >
-                            <source src="/assets/short.mp4" type="video/mp4" />
+                            <source :src="videoSource" type="video/mp4" />
                             Your browser does not support the video tag.
                         </video>
 

@@ -1,19 +1,13 @@
 <template>
-    <div class="flex items-center gap-2">
-        <label for="language-select" class="text-sm font-medium text-gray-700">
-            {{ $t('language.select') }}:
-        </label>
-        <select
-            id="language-select"
-            :value="currentLanguage"
-            @change="changeLanguage"
-            class="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        >
-            <option value="en">{{ $t('language.english') }}</option>
-            <option value="zh">{{ $t('language.chinese') }}</option>
-            <option value="ms">{{ $t('language.malay') }}</option>
-        </select>
-    </div>
+    <select
+        :value="currentLanguage"
+        @change="changeLanguage"
+        class="border border-gray-300 p-2 rounded-md max-w-xs w-full text-center text-lg"
+    >
+        <option value="en">{{ $t('language.english') }}</option>
+        <option value="zh">{{ $t('language.chinese') }}</option>
+        <option value="ms">{{ $t('language.malay') }}</option>
+    </select>
 </template>
 
 <script setup lang="ts">
@@ -32,6 +26,7 @@ const changeLanguage = (event: Event) => {
 }
 
 onMounted(() => {
-    currentLanguage.value = locale.value
+    locale.value = 'en'
+    currentLanguage.value = 'en'
 })
 </script>

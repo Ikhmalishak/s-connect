@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted } from "vue";
+import { ref, watch, onMounted, onUnmounted, computed } from "vue";
+import { useI18n } from 'vue-i18n'
+
+const { locale } = useI18n()
 
 interface Props {
   visible: boolean;
@@ -11,6 +14,16 @@ const emit = defineEmits<{
 }>();
 
 const videoPlayer = ref<HTMLVideoElement | null>(null);
+
+// Computed video source based on language
+const videoSource = computed(() => {
+    const langMap = {
+        'en': '/assets/short.mp4',
+        'ms': '/assets/malay.mp4',
+        'zh': '/assets/chinese.mp4'
+    };
+    return langMap[locale.value] || '/assets/short.mp4';
+});
 
 watch(() => props.visible, (visible) => {
   if (!visible && videoPlayer.value) {
@@ -42,8 +55,9 @@ function handleEnded() {
         controls
         @ended="handleEnded"
         class="w-full h-auto"
+        :key="videoSource"
       >
-        <source src="/assets/short.mp4" type="video/mp4" />
+        <source :src="videoSource" type="video/mp4" />
         Your browser does not support the video tag.
       </video>
     </div>
