@@ -129,6 +129,18 @@
       "close": "Close",
       "visitorName": "Visitor Name"
     },
+    "video": {
+      "title": "Step 3: Safety & Security Video",
+      "videoTitle": "Security Briefing Video",
+      "completeFormFirst": "Please complete the form first",
+      "completeForm": "Complete Form First",
+      "fillFields": "Please fill in all required fields before watching the video.",
+      "playing": "Playing...",
+      "completed": "Completed",
+      "videoCompleted": "Video Completed",
+      "clickPlay": "Click play to start the video",
+      "mustWatch": "You must watch the complete video before proceeding."
+    },
     "review": {
       "title": "Step 4 : Review & Submit",
       "readGuidelines": "I have read and understood the security guidelines.",
