@@ -32,7 +32,9 @@ const isPlaying = ref(false);
 const currentTime = ref(0);
 const duration = ref(0);
 const hasStarted = ref(false);
+// Track video completion locally
 const showConfirmation = ref(false);
+const isVideoCompleted = computed(() => props.videoEnded || showConfirmation.value);
 
 // Watch for reset trigger
 watch(
@@ -62,7 +64,7 @@ const progress = computed(() => {
 
 const formattedTime = computed(() => {
     const current = formatTime(currentTime.value);
-    const total = formatTime(duration.value);
+    const total = duration.value > 0 ? formatTime(duration.value) : "0:00";
     return `${current} / ${total}`;
 });
 
@@ -190,7 +192,7 @@ onMounted(() => {
                                 >{{ t('visitor.video.playing') }}</span
                             >
                             <span
-                                v-else-if="videoEnded"
+                                v-else-if="videoEnded || showConfirmation"
                                 class="text-green-600 font-medium flex items-center gap-1"
                             >
                                 <CheckCircle class="h-4 w-4" />
