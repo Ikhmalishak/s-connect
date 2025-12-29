@@ -1,15 +1,21 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import axios from "axios";
+import CameraCaptureModal from "@/Components/ManageContainer/CameraCaptureModal.vue";
 
 const props = defineProps<{ show: boolean; id: number | null }>();
 const emit = defineEmits(["close", "save"]);
 const isLoading = ref(false);
 const errorMessage = ref("");
 const successMessage = ref("");
+const selectedPhoto = ref("");
+const showCameraModal = ref(false);
 
 // Reactive object to hold files
 const formData = ref<Record<string, File | null>>({});
+
+// File input ref
+const fileInputRef = ref<HTMLInputElement | null>(null);
 
 // Clear messages when modal is closed or reopened
 watch(() => props.show, (newVal) => {
@@ -42,8 +48,34 @@ const handleFileUpload = (event: Event) => {
 
     const key = target.name;
     formData.value[key] = file;
+    selectedPhoto.value = URL.createObjectURL(file);
     errorMessage.value = ""; // Clear error on successful file selection
     console.log(formData.value);
+};
+
+const takePhoto = () => {
+    showCameraModal.value = true;
+};
+
+const handleCameraCapture = (imageData: string) => {
+    // Convert base64 to File object
+    const byteString = atob(imageData.split(',')[1]);
+    const mimeString = imageData.split(',')[0].split(':')[1].split(';')[0];
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+    }
+    const blob = new Blob([ab], { type: mimeString });
+    const file = new File([blob], `security_check_${Date.now()}.jpg`, { type: mimeString });
+
+    formData.value['security_checking_photo'] = file;
+    selectedPhoto.value = URL.createObjectURL(file);
+    showCameraModal.value = false;
+};
+
+const closeCameraModal = () => {
+    showCameraModal.value = false;
 };
 
 const onSubmit = async () => {
@@ -133,21 +165,53 @@ const onSubmit = async () => {
 
                         <form @submit.prevent="onSubmit" class="space-y-4">
                             <div class="flex flex-col gap-2">
-                                <label class="font-medium text-black"></label>
-                                <input
-                                    type="file"
-                                    name="security_checking_photo"
-                                    accept="image/*"
-                                    :disabled="isLoading"
-                                    @change="handleFileUpload($event)"
-                                    class="file:border-0 file:bg-blue-50 file:text-blue-700 file:font-medium file:px-4 file:py-2 file:rounded-md hover:file:bg-blue-100"
-                                />
+                                <label class="font-medium text-black">Security Check Photo</label>
+
+                                <!-- Photo Upload Options -->
+                                <div class="flex gap-3 mb-3">
+                                    <button
+                                        type="button"
+                                        @click="takePhoto"
+                                        :disabled="isLoading"
+                                        class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white text-xs font-medium rounded transition-colors"
+                                    >
+                                        Take Photo
+                                    </button>
+
+                                    <div class="relative">
+                                        <input
+                                            ref="fileInputRef"
+                                            type="file"
+                                            name="security_checking_photo"
+                                            accept="image/*"
+                                            :disabled="isLoading"
+                                            @change="handleFileUpload($event)"
+                                            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                        />
+                                        <button
+                                            type="button"
+                                            :disabled="isLoading"
+                                            class="px-3 py-1.5 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white text-xs font-medium rounded transition-colors"
+                                        >
+                                            Upload
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Photo Preview -->
+                                <div v-if="selectedPhoto" class="mt-3">
+                                    <img :src="selectedPhoto" class="max-h-40 mx-auto rounded border" />
+                                </div>
+
+                                <p class="text-xs text-gray-600">
+                                    Take a photo with your camera or upload from gallery. Max size: 5MB
+                                </p>
                             </div>
 
                             <div class="flex justify-end mt-4">
                                 <button
                                     type="submit"
-                                    :disabled="isLoading"
+                                    :disabled="isLoading || !selectedPhoto"
                                     class="bg-red-700 text-white px-6 py-2 rounded-md hover:bg-red-800 disabled:opacity-50"
                                 >
                                     {{
@@ -162,6 +226,13 @@ const onSubmit = async () => {
                 </Transition>
             </div>
         </Transition>
+
+        <!-- Camera Capture Modal -->
+        <CameraCaptureModal
+            :show="showCameraModal"
+            @close="closeCameraModal"
+            @capture="handleCameraCapture"
+        />
     </Teleport>
 </template>
 

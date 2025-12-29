@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from "vue";
 import axios from "axios";
+import CameraCaptureModal from "@/Components/ManageContainer/CameraCaptureModal.vue";
 
 // Interfaces for type safety
 interface Question {
@@ -33,6 +34,8 @@ const formData = ref<FormData>({
 const isLoading = ref(false);
 const errorMessage = ref("");
 const successMessage = ref("");
+const showCameraModal = ref(false);
+const currentQuestionIndex = ref<number | null>(null);
 
 // Props and Emits
 const props = defineProps<{
@@ -264,6 +267,35 @@ const handleRadioChange = (index: number, value: boolean) => {
 const handleInputChange = (index: number, event: Event) => {
     const target = event.target as HTMLInputElement;
     handleAnswerChange(index, "remarks", target.value);
+};
+
+const openCameraModal = (index: number) => {
+    currentQuestionIndex.value = index;
+    showCameraModal.value = true;
+};
+
+const handleCameraCapture = (imageData: string) => {
+    if (currentQuestionIndex.value !== null) {
+        // Convert base64 to File object
+        const byteString = atob(imageData.split(',')[1]);
+        const mimeString = imageData.split(',')[0].split(':')[1].split(';')[0];
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
+        for (let i = 0; i < byteString.length; i++) {
+            ia[i] = byteString.charCodeAt(i);
+        }
+        const blob = new Blob([ab], { type: mimeString });
+        const file = new File([blob], `camera_capture_${Date.now()}.jpg`, { type: mimeString });
+
+        handleAnswerChange(currentQuestionIndex.value, "photo", file);
+    }
+    showCameraModal.value = false;
+    currentQuestionIndex.value = null;
+};
+
+const closeCameraModal = () => {
+    showCameraModal.value = false;
+    currentQuestionIndex.value = null;
 };
 
 const handleApiError = (error: any) => {
@@ -656,25 +688,49 @@ onMounted(() => {
                                         class="transition-all duration-200"
                                     >
                                         <label
-                                            :for="`photo-${question.id}`"
                                             class="block text-sm font-medium text-red-700 mb-2"
                                         >
                                             Upload Photo Evidence
                                         </label>
-                                        <input
-                                            :id="`photo-${question.id}`"
-                                            :data-question-index="index"
-                                            type="file"
-                                            @change="
-                                                handleFileUpload(index, $event)
-                                            "
-                                            accept="image/*"
-                                            :disabled="isLoading"
-                                            class="flex h-10 w-full rounded-md border border-red-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors file:border-0 file:bg-red-50 file:text-red-700 file:font-medium file:text-sm file:px-4 file:py-2 file:mr-4 file:rounded-md hover:file:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
-                                        />
-                                        <p class="text-xs text-gray-500 mt-1">
-                                            Accepted: JPEG, PNG, GIF. Max size:
-                                            5MB
+
+                                        <!-- Photo Upload Options -->
+                                        <div class="flex gap-2 mb-3">
+                                            <button
+                                                type="button"
+                                                @click="openCameraModal(index)"
+                                                :disabled="isLoading"
+                                                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white text-sm font-medium rounded-md transition-colors"
+                                            >
+                                                Take Photo
+                                            </button>
+
+                                            <div class="relative">
+                                                <input
+                                                    :id="`photo-${question.id}`"
+                                                    :data-question-index="index"
+                                                    type="file"
+                                                    @change="handleFileUpload(index, $event)"
+                                                    accept="image/*"
+                                                    :disabled="isLoading"
+                                                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    :disabled="isLoading"
+                                                    class="px-4 py-2 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white text-sm font-medium rounded-md transition-colors"
+                                                >
+                                                    Upload from Gallery
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Selected file display -->
+                                        <div v-if="formData.answers[index]?.photo" class="text-sm text-gray-600 mb-2">
+                                            Selected: {{ formData.answers[index]?.photo.name }}
+                                        </div>
+
+                                        <p class="text-xs text-gray-500">
+                                            Take a photo with your camera or upload from gallery. Max size: 5MB
                                         </p>
                                     </div>
                                 </div>
@@ -736,6 +792,13 @@ onMounted(() => {
                 </Transition>
             </div>
         </Transition>
+
+        <!-- Camera Capture Modal -->
+        <CameraCaptureModal
+            :show="showCameraModal"
+            @close="closeCameraModal"
+            @capture="handleCameraCapture"
+        />
     </Teleport>
 </template>
 

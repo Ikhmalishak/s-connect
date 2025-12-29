@@ -339,12 +339,12 @@ const onSubmit = handleSubmit(async (values) => {
                             </FormField>
 
                             <FormField
-                                v-if="transportType === 'Container'"
+                                v-if="transportType === 'Container' && requiresSeals"
                                 v-slot="{ componentField }"
                                 name="gps"
                             >
                                 <FormItem>
-                                    <FormLabel>GPS <span v-if="requiresSeals" class="text-red-500">*</span></FormLabel>
+                                    <FormLabel>GPS <span class="text-red-500">*</span></FormLabel>
                                     <FormControl>
                                         <Input
                                             type="text"
@@ -356,12 +356,12 @@ const onSubmit = handleSubmit(async (values) => {
                             </FormField>
 
                             <FormField
-                                v-if="transportType === 'Container'"
+                                v-if="transportType === 'Container' && requiresSeals"
                                 v-slot="{ componentField }"
                                 name="fork_seal"
                             >
                                 <FormItem>
-                                    <FormLabel>Fork Seal <span v-if="requiresSeals" class="text-red-500">*</span></FormLabel>
+                                    <FormLabel>Fork Seal <span class="text-red-500">*</span></FormLabel>
                                     <FormControl>
                                         <Input
                                             type="text"
