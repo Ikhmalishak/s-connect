@@ -19,6 +19,8 @@
 /storage/*.key
 /storage/pail
 /vendor
+# Microsoft Graph SDK (too many files, causes file watcher limits)
+vendor/microsoft/
 Homestead.json
 Homestead.yaml
 Thumbs.db

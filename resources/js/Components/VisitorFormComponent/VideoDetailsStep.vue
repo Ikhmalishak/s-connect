@@ -7,6 +7,11 @@ import { useI18n } from 'vue-i18n'
 
 const { t, locale } = useI18n()
 
+// Video key for forcing reloads
+const videoKey = ref(Date.now());
+const isVideoLoading = ref(false);
+const videoError = ref(false);
+
 // Computed video source based on language
 const videoSource = computed(() => {
     const langMap = {
@@ -14,7 +19,7 @@ const videoSource = computed(() => {
         'ms': '/assets/malay.mp4',
         'zh': '/assets/chinese.mp4'
     };
-    return langMap[locale.value] || '/assets/short.mp4';
+    return langMap[locale.value] || '/assets/test.mp4';
 });
 
 const props = defineProps<{
@@ -35,6 +40,13 @@ const hasStarted = ref(false);
 // Track video completion locally
 const showConfirmation = ref(false);
 const isVideoCompleted = computed(() => props.videoEnded || showConfirmation.value);
+
+// Watch for language changes and force video reload
+watch(locale, (newLang, oldLang) => {
+    if (newLang !== oldLang) {
+        forceVideoReload();
+    }
+});
 
 // Watch for reset trigger
 watch(
@@ -105,14 +117,48 @@ function handleLoadedMetadata() {
     if (videoRef.value) {
         duration.value = videoRef.value.duration;
     }
+    isVideoLoading.value = false;
+    videoError.value = false;
 }
 
-onMounted(() => {
+function handleVideoError() {
+    videoError.value = true;
+    isVideoLoading.value = false;
+}
+
+function forceVideoReload() {
+    // Reset all video states
+    currentTime.value = 0;
+    duration.value = 0;
+    hasStarted.value = false;
+    showConfirmation.value = false;
+    isPlaying.value = false;
+    isVideoLoading.value = true;
+    videoError.value = false;
+
+    // Force video element recreation by changing key
+    videoKey.value = Date.now();
+
+    // Clear and re-add event listeners after a short delay
+    setTimeout(() => {
+        if (videoRef.value) {
+            videoRef.value.load(); // Force reload metadata
+            addVideoEventListeners();
+        }
+    }, 100);
+}
+
+function addVideoEventListeners() {
     if (videoRef.value) {
         videoRef.value.addEventListener("timeupdate", handleTimeUpdate);
         videoRef.value.addEventListener("loadedmetadata", handleLoadedMetadata);
         videoRef.value.addEventListener("ended", handleVideoEnded);
+        videoRef.value.addEventListener("error", handleVideoError);
     }
+}
+
+onMounted(() => {
+    addVideoEventListeners();
 });
 </script>
 
@@ -149,11 +195,35 @@ onMounted(() => {
                             preload="metadata"
                             @play="isPlaying = true"
                             @pause="isPlaying = false"
-                            :key="videoSource"
+                            :key="videoKey"
                         >
                             <source :src="videoSource" type="video/mp4" />
                             Your browser does not support the video tag.
                         </video>
+
+                        <!-- Loading overlay -->
+                        <div
+                            v-if="isVideoLoading"
+                            class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+                        >
+                            <div class="text-center text-white">
+                                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-2"></div>
+                                <p>Loading video...</p>
+                            </div>
+                        </div>
+
+                        <!-- Error overlay -->
+                        <div
+                            v-if="videoError"
+                            class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+                        >
+                            <div class="text-center text-white">
+                                <p class="mb-2">Video failed to load</p>
+                                <Button @click="forceVideoReload" size="sm" variant="outline">
+                                    Retry
+                                </Button>
+                            </div>
+                        </div>
 
                         <div
                             v-if="!isFormValid"
