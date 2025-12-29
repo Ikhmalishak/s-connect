@@ -45,6 +45,8 @@ const formSchema = toTypedSchema(
         country: z.string().min(1, "Country is required"),
         work_order: z.string().min(1, "Work Order is required"),
         hauler: z.string().min(1, "Hauler is required"),
+        driver_name: z.string().optional(),
+        driver_id: z.string().optional(),
         high_security_seal: z.string().optional(),
         gps: z.string().optional(),
         fork_seal: z.string().optional(),
@@ -299,6 +301,40 @@ const onSubmit = handleSubmit(async (values) => {
                                         <Input
                                             type="text"
                                             v-bind="componentField"
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            </FormField>
+
+                            <FormField
+                                v-slot="{ componentField }"
+                                name="driver_name"
+                            >
+                                <FormItem>
+                                    <FormLabel>Driver Name</FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            type="text"
+                                            v-bind="componentField"
+                                            placeholder="Enter driver name"
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            </FormField>
+
+                            <FormField
+                                v-slot="{ componentField }"
+                                name="driver_id"
+                            >
+                                <FormItem>
+                                    <FormLabel>Driver ID</FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            type="text"
+                                            v-bind="componentField"
+                                            placeholder="Enter driver ID"
                                         />
                                     </FormControl>
                                     <FormMessage />

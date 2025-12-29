@@ -210,6 +210,34 @@
                                         >
                                     </div>
 
+                                    <!-- Driver Name -->
+                                    <div
+                                        v-if="container.driver_name"
+                                        class="flex justify-between p-4"
+                                    >
+                                        <span class="text-gray-700 text-sm"
+                                            >Driver Name:</span
+                                        >
+                                        <span
+                                            class="text-gray-900 text-sm font-semibold"
+                                            >{{ container.driver_name }}</span
+                                        >
+                                    </div>
+
+                                    <!-- Driver ID -->
+                                    <div
+                                        v-if="container.driver_id"
+                                        class="flex justify-between p-4"
+                                    >
+                                        <span class="text-gray-700 text-sm"
+                                            >Driver ID:</span
+                                        >
+                                        <span
+                                            class="text-gray-900 text-sm font-semibold"
+                                            >{{ container.driver_id }}</span
+                                        >
+                                    </div>
+
                                     <!-- SKU Number -->
                                     <div
                                         v-if="container.sku_number"
@@ -348,6 +376,29 @@
                                             {{ container.status.toUpperCase() }}
                                         </span>
                                     </div>
+
+                                    <!-- Hold Status -->
+                                    <div
+                                        v-if="container.is_on_hold"
+                                        class="p-4 bg-orange-50 border-l-4 border-orange-400"
+                                    >
+                                        <div class="flex justify-between items-start">
+                                            <div class="flex-1">
+                                                <span class="text-orange-800 text-sm font-semibold"
+                                                    >🚫 CONTAINER ON HOLD</span
+                                                >
+                                                <p class="text-orange-700 text-sm mt-1">
+                                                    <strong>Reason:</strong> {{ container.hold_reason }}
+                                                </p>
+                                                <p v-if="container.hold_at" class="text-orange-600 text-xs mt-1">
+                                                    Held on: {{ formatDate(container.hold_at) }}
+                                                </p>
+                                                <p v-if="container.hold_by_name" class="text-orange-600 text-xs">
+                                                    Held by: {{ container.hold_by_name }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -386,6 +437,8 @@ interface Container {
     country?: string;
     forwarder?: string;
     hauler?: string;
+    driver_name?: string;
+    driver_id?: string;
     sku_number?: string;
     container_size?: string;
     model?: string;
@@ -400,6 +453,10 @@ interface Container {
     stage: string;
     created_at?: string;
     updated_at?: string;
+    is_on_hold?: boolean;
+    hold_reason?: string;
+    hold_at?: string;
+    hold_by_name?: string;
 }
 
 const props = defineProps<{

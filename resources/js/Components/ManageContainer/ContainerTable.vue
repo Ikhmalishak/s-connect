@@ -43,6 +43,8 @@ interface Container {
     stage: string;
     created_at?: string;
     shipment_date?: string;
+    is_on_hold?: boolean;
+    hold_reason?: string;
 }
 
 const props = defineProps<{
@@ -59,6 +61,7 @@ const canDoInspection = computed(() => userPermissions.value.includes('container
 const canCreateRecord = computed(() => userPermissions.value.includes('container.warehouse_approve'));
 const canDoSecurityCheck = computed(() => userPermissions.value.includes('container.security_approve'));
 const canCreateContainer = computed(() => userPermissions.value.includes('container.shipping_approve'));
+const canHoldContainer = computed(() => userPermissions.value.includes('container.quality_approve'));
 
 // Filter reactive variables
 const searchQuery = ref("");
@@ -68,7 +71,10 @@ let searchTimeout: any = null;
 
 // Modal state
 const showContainerDetailsModal = ref(false);
+const showHoldModal = ref(false);
 const selectedContainer = ref(null);
+const holdReason = ref("");
+const holdContainerId = ref(null);
 
 async function createInspection(containerId) {
     console.log("Create Inspection clicked", containerId);
@@ -134,6 +140,44 @@ function formatDate(dateString) {
 function openContainerDetails(container) {
     selectedContainer.value = container;
     showContainerDetailsModal.value = true;
+}
+
+function openHoldModal(container) {
+    holdContainerId.value = container.id;
+    holdReason.value = "";
+    showHoldModal.value = true;
+}
+
+async function holdContainer() {
+    if (!holdReason.value.trim()) return;
+
+    try {
+        await axios.post(`/containers/${holdContainerId.value}/hold`, {
+            hold_reason: holdReason.value.trim(),
+        });
+
+        showHoldModal.value = false;
+        holdContainerId.value = null;
+        holdReason.value = "";
+
+        // Refresh the container list
+        fetchFilteredContainers();
+    } catch (error) {
+        console.error("Error holding container:", error);
+        alert("Failed to hold container. Please try again.");
+    }
+}
+
+async function releaseContainer(containerId) {
+    try {
+        await axios.post(`/containers/${containerId}/release`);
+
+        // Refresh the container list
+        fetchFilteredContainers();
+    } catch (error) {
+        console.error("Error releasing container:", error);
+        alert("Failed to release container. Please try again.");
+    }
 }
 
 </script>
@@ -272,6 +316,11 @@ function openContainerDetails(container) {
                             >
                                 Stage
                             </th>
+                            <th
+                                class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
+                            >
+                                Hold Actions
+                            </th>
                         </tr>
                     </thead>
                     <tbody
@@ -282,9 +331,10 @@ function openContainerDetails(container) {
                             :key="container.id"
                             class="text-center text-sm border border-gray-300 divide-x divide-gray-300 p-2"
                             :class="{
-                                'bg-blue-50': container.status === 'in_progress',
-                                'bg-red-50': container.status === 'failed',
-                                'bg-green-200': container.status === 'completed'
+                                'bg-orange-50': container.is_on_hold,
+                                'bg-blue-50': container.status === 'in_progress' && !container.is_on_hold,
+                                'bg-red-50': container.status === 'failed' && !container.is_on_hold,
+                                'bg-green-200': container.status === 'completed' && !container.is_on_hold
                             }"
                         >
                             <td class="p-2">{{ index + 1 }}</td>
@@ -319,8 +369,8 @@ function openContainerDetails(container) {
                                                 ? 'bg-blue-600 hover:bg-blue-700'
                                                 : 'bg-gray-400 cursor-not-allowed'
                                         ]"
-                                        :disabled="!canDoInspection"
-                                        @click="canDoInspection ? createInspection(container.id) : null"
+                                        :disabled="!canDoInspection || container.is_on_hold"
+                                        @click="canDoInspection && !container.is_on_hold ? createInspection(container.id) : null"
                                     >
                                         {{ canDoInspection ? 'Start Inspection' : 'Inspection (Quality Only)' }}
                                     </Button>
@@ -364,9 +414,9 @@ function openContainerDetails(container) {
                                                 ? 'bg-green-600 hover:bg-green-700'
                                                 : 'bg-gray-400 cursor-not-allowed',
                                         ]"
-                                        :disabled="container.stage !== 'container_loading_report' || !canCreateRecord"
+                                        :disabled="container.stage !== 'container_loading_report' || !canCreateRecord || container.is_on_hold"
                                         @click="
-                                            container.stage === 'container_loading_report' && canCreateRecord
+                                            container.stage === 'container_loading_report' && canCreateRecord && !container.is_on_hold
                                                 ? $emit('openCreateContainerRecordModal', container.id)
                                                 : null
                                         "
@@ -416,8 +466,8 @@ function openContainerDetails(container) {
                                                 ? 'bg-blue-600 hover:bg-blue-700'
                                                 : 'bg-gray-400 cursor-not-allowed'
                                         ]"
-                                        :disabled="!canDoSecurityCheck"
-                                        @click="canDoSecurityCheck ? $emit('openContainerSecurityCheckingModal', container.id) : null"
+                                        :disabled="!canDoSecurityCheck || container.is_on_hold"
+                                        @click="canDoSecurityCheck && !container.is_on_hold ? $emit('openContainerSecurityCheckingModal', container.id) : null"
                                     >
                                         {{ canDoSecurityCheck ? 'Complete Onboarding' : 'Security Check (Security Only)' }}
                                     </Button>
@@ -432,8 +482,51 @@ function openContainerDetails(container) {
                                     Security Checking
                                 </Button>
                             </td>
-                            <td class="p-2">{{ capitalizeFirstLetter(container.status.replace(/_/g," ")) }}</td>
+                            <td class="p-2">
+                                <span v-if="container.is_on_hold" class="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-medium">
+                                    ON HOLD
+                                </span>
+                                <span v-else>
+                                    {{ capitalizeFirstLetter(container.status.replace(/_/g," ")) }}
+                                </span>
+                            </td>
                             <td class="p-2">{{ capitalizeFirstLetter(container.stage.replace(/_/g," ")) }}</td>
+                            <td class="p-2">
+                                <div v-if="canHoldContainer" class="flex gap-1 justify-center">
+                                    <CustomTooltip
+                                        v-if="!container.is_on_hold && container.status === 'in_progress'"
+                                        text="Hold container - requires reason"
+                                        position="top"
+                                    >
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            class="bg-orange-600 hover:bg-orange-700 text-white text-xs"
+                                            @click="openHoldModal(container)"
+                                        >
+                                            Hold
+                                        </Button>
+                                    </CustomTooltip>
+                                    <CustomTooltip
+                                        v-else-if="container.is_on_hold"
+                                        text="Release container from hold"
+                                        position="top"
+                                    >
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            class="bg-green-600 hover:bg-green-700 text-white text-xs"
+                                            @click="releaseContainer(container.id)"
+                                        >
+                                            Release
+                                        </Button>
+                                    </CustomTooltip>
+                                    <span v-else-if="container.status !== 'in_progress'" class="text-gray-400 text-xs">
+                                        Completed
+                                    </span>
+                                </div>
+                                <span v-else class="text-gray-400 text-xs">Quality Only</span>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
@@ -446,5 +539,69 @@ function openContainerDetails(container) {
             :container="selectedContainer"
             @close="showContainerDetailsModal = false"
         />
+
+        <!-- Hold Reason Modal -->
+        <Teleport to="body">
+            <Transition name="modal-fade">
+                <div
+                    v-if="showHoldModal"
+                    class="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center z-[9999]"
+                    @click.self="showHoldModal = false"
+                >
+                    <Transition name="modal-scale" appear>
+                        <div
+                            v-if="showHoldModal"
+                            class="bg-white p-6 rounded-lg shadow-[0_4px_20px_rgba(255,255,255,0.6)] w-[80%] max-w-md"
+                        >
+                            <div class="flex justify-between items-center mb-4">
+                                <h2 class="text-xl font-bold text-red-700">
+                                    Hold Container
+                                </h2>
+                                <button
+                                    @click="showHoldModal = false"
+                                    class="text-gray-500 hover:text-gray-700 text-xl font-bold"
+                                >
+                                    ×
+                                </button>
+                            </div>
+
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Reason for holding container <span class="text-red-500">*</span>
+                                    </label>
+                                    <textarea
+                                        v-model="holdReason"
+                                        rows="4"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
+                                        placeholder="Please provide a detailed reason for holding this container..."
+                                        maxlength="1000"
+                                    ></textarea>
+                                    <p class="text-xs text-gray-500 mt-1">
+                                        {{ holdReason.length }}/1000 characters
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-end space-x-3 mt-6">
+                                <button
+                                    @click="showHoldModal = false"
+                                    class="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md text-sm font-medium transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    @click="holdContainer"
+                                    :disabled="!holdReason.trim()"
+                                    class="px-4 py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 text-white rounded-md text-sm font-medium transition-colors"
+                                >
+                                    Hold Container
+                                </button>
+                            </div>
+                        </div>
+                    </Transition>
+                </div>
+            </Transition>
+        </Teleport>
     </div>
 </template>

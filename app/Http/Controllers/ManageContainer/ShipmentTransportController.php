@@ -4,7 +4,10 @@ namespace App\Http\Controllers\ManageContainer;
 use App\Http\Controllers\Controller;
 use App\Models\ShipmentTransport;
 use App\Models\ShippingRequirement;
+use App\Mail\ContainerOnHold;
+use App\Mail\ContainerReleased;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 
 class ShipmentTransportController extends Controller
@@ -108,7 +111,7 @@ class ShipmentTransportController extends Controller
         $search = $request->input('search');
         $status = $request->input('status');
 
-        $query = ShipmentTransport::with(['inspection', 'photo']);
+        $query = ShipmentTransport::with(['inspection', 'photo', 'holdBy']);
 
         // Apply site filter unless user is superadmin
         if (!$user->hasPermissionTo('superadmin')) {
@@ -154,6 +157,8 @@ class ShipmentTransportController extends Controller
             'country' => 'required|string',
             'work_order' => 'required|string',
             'hauler' => 'required|string',
+            'driver_name' => 'nullable|string',
+            'driver_id' => 'nullable|string',
             'high_security_seal' => 'nullable|string',
             'gps' => 'nullable|string',
             'fork_seal' => 'nullable|string',
@@ -320,6 +325,152 @@ class ShipmentTransportController extends Controller
             'message' => 'Shipping requirement created successfully.',
             'data' => $requirement,
         ], 201);
+    }
+
+    /**
+     * Hold a container with reason.
+     */
+    public function hold(Request $request, ShipmentTransport $shipmentTransport)
+    {
+        $user = auth()->user();
+
+        // Check if user has quality permissions
+        if (!$user->hasPermissionTo('container.quality_approve')) {
+            return response()->json(['message' => 'Unauthorized. Quality department access required.'], 403);
+        }
+
+        // Check if shipment transport belongs to user's site (unless superadmin)
+        if (!$user->hasPermissionTo('superadmin') && $shipmentTransport->site_id !== $user->site_id) {
+            return response()->json(['message' => 'Unauthorized access to shipment transport'], 403);
+        }
+
+        // Check if container status allows holding
+        if ($shipmentTransport->status !== 'in_progress') {
+            return response()->json(['message' => 'Only containers that are in progress can be put on hold'], 400);
+        }
+
+        // Check if already on hold
+        if ($shipmentTransport->is_on_hold) {
+            return response()->json(['message' => 'Container is already on hold'], 400);
+        }
+
+        $validated = $request->validate([
+            'hold_reason' => 'required|string|max:1000',
+        ]);
+
+        $shipmentTransport->update([
+            'is_on_hold' => true,
+            'hold_reason' => $validated['hold_reason'],
+            'hold_by' => $user->id,
+            'hold_at' => now(),
+        ]);
+
+        // Send email notifications
+        $this->sendHoldNotifications($shipmentTransport, $user);
+
+        return response()->json([
+            'message' => 'Container has been put on hold successfully',
+            'data' => $shipmentTransport->fresh()
+        ]);
+    }
+
+    /**
+     * Release a container from hold.
+     */
+    public function release(Request $request, ShipmentTransport $shipmentTransport)
+    {
+        $user = auth()->user();
+
+        // Check if user has quality permissions
+        if (!$user->hasPermissionTo('container.quality_approve')) {
+            return response()->json(['message' => 'Unauthorized. Quality department access required.'], 403);
+        }
+
+        // Check if shipment transport belongs to user's site (unless superadmin)
+        if (!$user->hasPermissionTo('superadmin') && $shipmentTransport->site_id !== $user->site_id) {
+            return response()->json(['message' => 'Unauthorized access to shipment transport'], 403);
+        }
+
+        // Check if not on hold
+        if (!$shipmentTransport->is_on_hold) {
+            return response()->json(['message' => 'Container is not on hold'], 400);
+        }
+
+        $shipmentTransport->update([
+            'is_on_hold' => false,
+            'hold_reason' => null,
+            'hold_by' => null,
+            'hold_at' => null,
+        ]);
+
+        // Send email notifications
+        $this->sendReleaseNotifications($shipmentTransport, $user);
+
+        return response()->json([
+            'message' => 'Container has been released from hold successfully',
+            'data' => $shipmentTransport->fresh()
+        ]);
+    }
+
+    /**
+     * Send email notifications when container is put on hold.
+     */
+    private function sendHoldNotifications(ShipmentTransport $container, $user)
+    {
+        // Send email to container creator
+        try {
+            Mail::to($container->createdBy->email)->send(new ContainerOnHold($container, $user));
+        } catch (\Exception $e) {
+            \Log::error("Failed to send hold notification to container creator: " . $e->getMessage());
+        }
+
+        // Send email to department users who might be affected
+        $departmentsToNotify = ['warehouse', 'shipping', 'security'];
+        foreach ($departmentsToNotify as $department) {
+            $users = $this->getDepartmentUsers($department);
+            if ($users->isNotEmpty()) {
+                try {
+                    Mail::to($users)->send(new ContainerOnHold($container, $user));
+                } catch (\Exception $e) {
+                    \Log::error("Failed to send hold notification to {$department} department: " . $e->getMessage());
+                }
+            }
+        }
+    }
+
+    /**
+     * Send email notifications when container is released from hold.
+     */
+    private function sendReleaseNotifications(ShipmentTransport $container, $user)
+    {
+        // Send email to container creator
+        try {
+            Mail::to($container->createdBy->email)->send(new ContainerReleased($container, $user));
+        } catch (\Exception $e) {
+            \Log::error("Failed to send release notification to container creator: " . $e->getMessage());
+        }
+
+        // Send email to department users who might be affected
+        $departmentsToNotify = ['warehouse', 'shipping', 'security'];
+        foreach ($departmentsToNotify as $department) {
+            $users = $this->getDepartmentUsers($department);
+            if ($users->isNotEmpty()) {
+                try {
+                    Mail::to($users)->send(new ContainerReleased($container, $user));
+                } catch (\Exception $e) {
+                    \Log::error("Failed to send release notification to {$department} department: " . $e->getMessage());
+                }
+            }
+        }
+    }
+
+    /**
+     * Get users for a specific department.
+     */
+    private function getDepartmentUsers($department)
+    {
+        // Return users with the specific permission
+        return \App\Models\User::permission("container.{$department}_approve")->get();
     }
 
     /**

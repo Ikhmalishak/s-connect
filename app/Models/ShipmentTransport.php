@@ -15,6 +15,8 @@ class ShipmentTransport extends Model
         'model_project',
         'forwarder',
         'hauler',
+        'driver_name',
+        'driver_id',
         'high_security_seal',
         'gps',
         'fork_seal',
@@ -26,9 +28,18 @@ class ShipmentTransport extends Model
         'stage',
         'failed_at',
         'created_by',
+        'is_on_hold',
+        'hold_reason',
+        'hold_by',
+        'hold_at',
     ];
 
-public function inspection()
+    protected $casts = [
+        'is_on_hold' => 'boolean',
+        'hold_at' => 'datetime',
+    ];
+
+    public function inspection()
 {
     return $this->hasOne(ShipmentTransportInspection::class);
 }
@@ -46,6 +57,11 @@ public function approvals()
 public function createdBy()
 {
     return $this->belongsTo(User::class, 'created_by');
+}
+
+public function holdBy()
+{
+    return $this->belongsTo(User::class, 'hold_by');
 }
 
 public function site()

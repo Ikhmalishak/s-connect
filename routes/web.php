@@ -198,6 +198,8 @@ Route::middleware(['auth'])->prefix('api/container-shipments')->name('container-
 Route::post('/containers/create', [ShipmentTransportController::class, 'store'])->middleware('can:container.access')->name('container.create');
 Route::get('/containers', [ShipmentTransportController::class, 'index'])->middleware('can:container.access')->name('container.index');
 Route::get('/containers/country-requirements', [ShipmentTransportController::class, 'getCountryRequirements'])->middleware('can:container.access')->name('container.country-requirements');
+Route::post('/containers/{shipmentTransport}/hold', [ShipmentTransportController::class, 'hold'])->middleware('can:container.quality_approve')->name('container.hold');
+Route::post('/containers/{shipmentTransport}/release', [ShipmentTransportController::class, 'release'])->middleware('can:container.quality_approve')->name('container.release');
 
 // Shipping requirements management routes
 Route::middleware(['auth'])->prefix('api/shipping-requirements')->name('shipping-requirements.')->group(function () {
