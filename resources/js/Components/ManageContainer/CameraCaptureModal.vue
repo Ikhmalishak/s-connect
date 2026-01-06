@@ -9,7 +9,7 @@
                 <Transition name="modal-scale" appear>
                     <div
                         v-if="show"
-                        class="bg-white rounded-lg shadow-2xl w-full max-w-md mx-4 overflow-hidden"
+                        class="bg-white rounded-lg shadow-2xl w-full max-w-lg mx-4 overflow-hidden"
                     >
                         <!-- Header -->
                         <div class="flex justify-between items-center p-4 border-b bg-gray-50">
@@ -28,7 +28,7 @@
                         <div class="p-4">
                             <!-- Camera Feed -->
                             <div v-if="!error && !capturedImage" class="space-y-4">
-                                <div class="relative bg-black rounded-lg overflow-hidden aspect-video">
+                                <div class="relative bg-black rounded-lg overflow-hidden aspect-[3/4]">
                                     <video
                                         ref="videoRef"
                                         autoplay
@@ -71,7 +71,7 @@
 
                             <!-- Captured Image Preview -->
                             <div v-if="capturedImage && !error" class="space-y-4">
-                                <div class="relative bg-gray-100 rounded-lg overflow-hidden aspect-video">
+                                <div class="relative bg-gray-100 rounded-lg overflow-hidden aspect-[3/4]">
                                     <img
                                         :src="capturedImage"
                                         alt="Captured photo"

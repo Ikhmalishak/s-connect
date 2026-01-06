@@ -618,9 +618,6 @@ onMounted(() => {
 
                                     <!-- PASS / FAIL Selection -->
                                     <div class="mb-3">
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                                            Status for {{ question.question }}
-                                        </label>
                                         <div class="flex items-center space-x-4">
                                             <label class="flex items-center">
                                                 <input

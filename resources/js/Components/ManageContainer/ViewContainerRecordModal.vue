@@ -17,6 +17,9 @@ async function fetchInspectionDetails(id: number) {
 const emit = defineEmits(["close", "save"]);
 const inspectionDetails = ref(null);
 const excludeLabels = ["security_checking_photo"];
+const showImagePreview = ref(false);
+const selectedImage = ref(null);
+const selectedImageIndex = ref(0);
 
 const filteredPhotos = computed(() => {
     return (
@@ -25,6 +28,32 @@ const filteredPhotos = computed(() => {
         ) || []
     );
 });
+
+function openImagePreview(image: any, index: number) {
+    selectedImage.value = image;
+    selectedImageIndex.value = index;
+    showImagePreview.value = true;
+}
+
+function closeImagePreview() {
+    showImagePreview.value = false;
+    selectedImage.value = null;
+    selectedImageIndex.value = 0;
+}
+
+function nextImage() {
+    if (selectedImageIndex.value < filteredPhotos.value.length - 1) {
+        selectedImageIndex.value++;
+        selectedImage.value = filteredPhotos.value[selectedImageIndex.value];
+    }
+}
+
+function prevImage() {
+    if (selectedImageIndex.value > 0) {
+        selectedImageIndex.value--;
+        selectedImage.value = filteredPhotos.value[selectedImageIndex.value];
+    }
+}
 
 watch(
     () => props.id,
@@ -145,10 +174,9 @@ watch(
                                         :key="index"
                                         class="group relative"
                                     >
-                                        <a
-                                            :href="'/storage/' + value.photo_path"
-                                            rel="noopener noreferrer"
-                                            class="block relative overflow-hidden rounded-lg border-2 border-gray-300 hover:border-orange-500 transition-all duration-200"
+                                        <button
+                                            @click="openImagePreview(value, Number(index))"
+                                            class="block relative overflow-hidden rounded-lg border-2 border-gray-300 hover:border-orange-500 transition-all duration-200 w-full"
                                         >
                                             <img
                                                 :src="
@@ -174,7 +202,7 @@ watch(
                                                     />
                                                 </svg>
                                             </div>
-                                        </a>
+                                        </button>
                                         <p
                                             class="text-xs font-medium text-gray-600 mt-2 text-center truncate"
                                             :title="value.label.replace(/_/g, ' ')"
@@ -186,6 +214,82 @@ watch(
                                             }}
                                         </p>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </Transition>
+            </div>
+        </Transition>
+
+        <!-- Image Preview Modal -->
+        <Transition name="modal-fade">
+            <div
+                v-if="showImagePreview"
+                class="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[10000]"
+                @click.self="closeImagePreview"
+            >
+                <Transition name="modal-scale" appear>
+                    <div
+                        v-if="showImagePreview"
+                        class="relative max-w-4xl max-h-[90vh] mx-4"
+                    >
+                        <!-- Close button -->
+                        <button
+                            @click="closeImagePreview"
+                            class="absolute -top-12 right-0 text-white hover:text-gray-300 text-2xl font-bold w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors z-10"
+                        >
+                            ×
+                        </button>
+
+                        <!-- Navigation buttons -->
+                        <button
+                            v-if="selectedImageIndex > 0"
+                            @click="prevImage"
+                            class="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 bg-black/50 hover:bg-black/70 rounded-full w-12 h-12 flex items-center justify-center transition-colors z-10"
+                        >
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                        </button>
+
+                        <button
+                            v-if="selectedImageIndex < filteredPhotos.length - 1"
+                            @click="nextImage"
+                            class="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 bg-black/50 hover:bg-black/70 rounded-full w-12 h-12 flex items-center justify-center transition-colors z-10"
+                        >
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+
+                        <!-- Image container -->
+                        <div class="relative">
+                            <img
+                                :src="'/storage/' + selectedImage?.photo_path"
+                                :alt="selectedImage?.label"
+                                class="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
+                            />
+
+                            <!-- Image info -->
+                            <div class="absolute bottom-0 left-0 right-0 bg-black/70 text-white p-4 rounded-b-lg">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h3 class="font-semibold text-lg">
+                                            {{ selectedImage?.label.replace(/_/g, ' ').toUpperCase() }}
+                                        </h3>
+                                        <p class="text-sm text-gray-300">
+                                            Image {{ selectedImageIndex + 1 }} of {{ filteredPhotos.length }}
+                                        </p>
+                                    </div>
+                                    <a
+                                        :href="'/storage/' + selectedImage?.photo_path"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="text-blue-400 hover:text-blue-300 text-sm underline"
+                                    >
+                                        Open full size
+                                    </a>
                                 </div>
                             </div>
                         </div>
