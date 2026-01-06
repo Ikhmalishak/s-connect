@@ -135,51 +135,57 @@ watch(
                                     <h3 class="font-bold text-gray-800 text-lg">
                                         Container Photos
                                     </h3>
+                                    <span class="text-sm text-gray-500">
+                                        ({{ filteredPhotos.length }} photos)
+                                    </span>
                                 </div>
-                                <div
-                                    v-for="(value, index) in filteredPhotos"
-                                    :key="index"
-                                    class="group mt-4"
-                                >
-                                    <p
-                                        class="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2"
+                                <div class="grid grid-cols-3 gap-4">
+                                    <div
+                                        v-for="(value, index) in filteredPhotos"
+                                        :key="index"
+                                        class="group relative"
                                     >
-                                        {{
-                                            value.label
-                                                .replace(/_/g, " ")
-                                                .toUpperCase()
-                                        }}
-                                    </p>
-                                    <a
-                                        :href="'/storage/' + value.photo_path"
-                                        rel="noopener noreferrer"
-                                        class="block relative overflow-hidden rounded-lg border-2 border-gray-300 hover:border-orange-500 transition-all duration-200"
-                                    >
-                                        <img
-                                            :src="
-                                                '/storage/' + value.photo_path
-                                            "
-                                            :alt="value.label"
-                                            class="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-200"
-                                        />
-                                        <div
-                                            class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center"
+                                        <a
+                                            :href="'/storage/' + value.photo_path"
+                                            rel="noopener noreferrer"
+                                            class="block relative overflow-hidden rounded-lg border-2 border-gray-300 hover:border-orange-500 transition-all duration-200"
                                         >
-                                            <svg
-                                                class="w-10 h-10 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
+                                            <img
+                                                :src="
+                                                    '/storage/' + value.photo_path
+                                                "
+                                                :alt="value.label"
+                                                class="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-200"
+                                            />
+                                            <div
+                                                class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center"
                                             >
-                                                <path
-                                                    stroke-linecap="round"
-                                                    stroke-linejoin="round"
-                                                    stroke-width="2"
-                                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
-                                                />
-                                            </svg>
-                                        </div>
-                                    </a>
+                                                <svg
+                                                    class="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
+                                                    />
+                                                </svg>
+                                            </div>
+                                        </a>
+                                        <p
+                                            class="text-xs font-medium text-gray-600 mt-2 text-center truncate"
+                                            :title="value.label.replace(/_/g, ' ')"
+                                        >
+                                            {{
+                                                value.label
+                                                    .replace(/_/g, " ")
+                                                    .toUpperCase()
+                                            }}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>

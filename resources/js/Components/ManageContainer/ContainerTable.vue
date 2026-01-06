@@ -72,9 +72,11 @@ let searchTimeout: any = null;
 // Modal state
 const showContainerDetailsModal = ref(false);
 const showHoldModal = ref(false);
+const showReleaseModal = ref(false);
 const selectedContainer = ref(null);
 const holdReason = ref("");
 const holdContainerId = ref(null);
+const releaseContainerId = ref(null);
 
 async function createInspection(containerId) {
     console.log("Create Inspection clicked", containerId);
@@ -134,7 +136,11 @@ function capitalizeFirstLetter(string) {
 
 function formatDate(dateString) {
     if (!dateString) return '';
-    return new Date(dateString).toLocaleDateString();
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
 }
 
 function openContainerDetails(container) {
@@ -168,9 +174,19 @@ async function holdContainer() {
     }
 }
 
-async function releaseContainer(containerId) {
+function releaseContainer(containerId) {
+    releaseContainerId.value = containerId;
+    showReleaseModal.value = true;
+}
+
+async function confirmReleaseContainer() {
+    if (!releaseContainerId.value) return;
+
     try {
-        await axios.post(`/containers/${containerId}/release`);
+        await axios.post(`/containers/${releaseContainerId.value}/release`);
+
+        showReleaseModal.value = false;
+        releaseContainerId.value = null;
 
         // Refresh the container list
         fetchFilteredContainers();
@@ -178,6 +194,11 @@ async function releaseContainer(containerId) {
         console.error("Error releasing container:", error);
         alert("Failed to release container. Please try again.");
     }
+}
+
+function cancelReleaseContainer() {
+    showReleaseModal.value = false;
+    releaseContainerId.value = null;
 }
 
 </script>
@@ -279,7 +300,7 @@ async function releaseContainer(containerId) {
                             <th
                                 class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
                             >
-                                Transport Type
+                                Type
                             </th>
                             <th
                                 class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
@@ -331,13 +352,13 @@ async function releaseContainer(containerId) {
                             :key="container.id"
                             class="text-center text-sm border border-gray-300 divide-x divide-gray-300 p-2"
                             :class="{
-                                'bg-gray-100': container.is_on_hold,
-                                'bg-gray-50': (container.status === 'in_progress' || container.status === 'completed') && !container.is_on_hold,
-                                'bg-red-50': container.status === 'failed' && !container.is_on_hold
+                                'bg-orange-600': container.is_on_hold,
+                                'bg-green-100': (container.status === 'in_progress' || container.status === 'completed') && !container.is_on_hold,
+                                'text-white bg-red-400': container.status === 'failed' && !container.is_on_hold
                             }"
                         >
                             <td class="p-2">{{ index + 1 }}</td>
-                            <td class="p-2">{{ container.transport_type === 'truck' ? 'T' : container.transport_type === 'container' ? 'C' : container.transport_type }}</td>
+                            <td class="p-2">{{ container.transport_type === 'Truck' ? 'T' : container.transport_type === 'Container' ? 'C' : container.transport_type }}</td>
                             <td class="p-2">
                                 <button
                                     @click="openContainerDetails(container)"
@@ -520,9 +541,15 @@ async function releaseContainer(containerId) {
                                             Release
                                         </Button>
                                     </CustomTooltip>
-                                    <span v-else-if="container.status !== 'in_progress'" class="text-gray-400 text-xs">
+                                    <Button
+                                        v-else-if="container.status !== 'in_progress'"
+                                        variant="outline"
+                                        size="sm"
+                                        class="bg-gray-400 text-white text-xs cursor-not-allowed"
+                                        disabled
+                                    >
                                         Completed
-                                    </span>
+                                    </Button>
                                 </div>
                                 <span v-else class="text-gray-400 text-xs">Quality Only</span>
                             </td>
@@ -595,6 +622,62 @@ async function releaseContainer(containerId) {
                                     class="px-4 py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 text-white rounded-md text-sm font-medium transition-colors"
                                 >
                                     Hold Container
+                                </button>
+                            </div>
+                        </div>
+                    </Transition>
+                </div>
+            </Transition>
+        </Teleport>
+
+        <!-- Release Confirmation Modal -->
+        <Teleport to="body">
+            <Transition name="modal-fade">
+                <div
+                    v-if="showReleaseModal"
+                    class="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center z-[9999]"
+                    @click.self="showReleaseModal = false"
+                >
+                    <Transition name="modal-scale" appear>
+                        <div
+                            v-if="showReleaseModal"
+                            class="bg-white p-6 rounded-lg shadow-[0_4px_20px_rgba(255,255,255,0.6)] w-[80%] max-w-md"
+                        >
+                            <div class="flex justify-between items-center mb-4">
+                                <h2 class="text-xl font-bold text-blue-700">
+                                    Confirm Release
+                                </h2>
+                                <button
+                                    @click="cancelReleaseContainer"
+                                    class="text-gray-500 hover:text-gray-700 text-xl font-bold"
+                                >
+                                    ×
+                                </button>
+                            </div>
+
+                            <div class="space-y-4">
+                                <div class="text-center">
+                                    <p class="text-gray-700 text-lg">
+                                        Are you sure you want to release this container?
+                                    </p>
+                                    <p class="text-gray-500 text-sm mt-2">
+                                        This action cannot be undone.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-end space-x-3 mt-6">
+                                <button
+                                    @click="cancelReleaseContainer"
+                                    class="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md text-sm font-medium transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    @click="confirmReleaseContainer"
+                                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium transition-colors"
+                                >
+                                    Release Container
                                 </button>
                             </div>
                         </div>
