@@ -230,33 +230,6 @@ onUnmounted(() => {
                 </div>
             </div>
         </Card>
-          <Button
-    variant="outline" @click="() => {
-      toast({
-        title: 'Uh oh! Something went wrong.',
-        description: 'There was a problem with your request.',
-        variant: 'destructive',
-        action: h(ToastAction, {
-          altText: 'Try again',
-        }, {
-          default: () => 'Try again',
-        }),
-      });
-    }"
-  >
-    Show Toast
-  </Button>
-  <Button variant="destructive"
-    @click="() => {
-      toast({
-        title: 'Scheduled: Catch up',
-        description: 'Friday, February 10, 2023 at 5:57 PM',
-                variant: 'destructive',
-
-      });
-    }"
-  >testtt</Button>
-
         <ContainerStatCard />
 
         <ContainerTable

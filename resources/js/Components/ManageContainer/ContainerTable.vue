@@ -331,14 +331,13 @@ async function releaseContainer(containerId) {
                             :key="container.id"
                             class="text-center text-sm border border-gray-300 divide-x divide-gray-300 p-2"
                             :class="{
-                                'bg-orange-50': container.is_on_hold,
-                                'bg-blue-50': container.status === 'in_progress' && !container.is_on_hold,
-                                'bg-red-50': container.status === 'failed' && !container.is_on_hold,
-                                'bg-green-200': container.status === 'completed' && !container.is_on_hold
+                                'bg-gray-100': container.is_on_hold,
+                                'bg-gray-50': (container.status === 'in_progress' || container.status === 'completed') && !container.is_on_hold,
+                                'bg-red-50': container.status === 'failed' && !container.is_on_hold
                             }"
                         >
                             <td class="p-2">{{ index + 1 }}</td>
-                            <td class="p-2">{{ container.transport_type }}</td>
+                            <td class="p-2">{{ container.transport_type === 'truck' ? 'T' : container.transport_type === 'container' ? 'C' : container.transport_type }}</td>
                             <td class="p-2">
                                 <button
                                     @click="openContainerDetails(container)"
@@ -384,7 +383,7 @@ async function releaseContainer(containerId) {
                                         )
                                     "
                                     variant="outline"
-                                    class="bg-yellow-500 text-white"
+                                    class="bg-blue-600 hover:bg-blue-700 text-white"
                                     @click="
                                         $emit(
                                             'openViewInspectionModal',
@@ -411,7 +410,7 @@ async function releaseContainer(containerId) {
                                         :class="[
                                             'text-white w-[150px]',
                                             container.stage === 'container_loading_report' && canCreateRecord
-                                                ? 'bg-green-600 hover:bg-green-700'
+                                                ? 'bg-blue-600 hover:bg-blue-700'
                                                 : 'bg-gray-400 cursor-not-allowed',
                                         ]"
                                         :disabled="container.stage !== 'container_loading_report' || !canCreateRecord || container.is_on_hold"
@@ -442,7 +441,7 @@ async function releaseContainer(containerId) {
                                 <Button
                                     v-if="container.status === 'completed'"
                                     variant="outline"
-                                    class="bg-green-600 text-white"
+                                    class="bg-blue-600 hover:bg-blue-700 text-white"
                                     @click="
                                         $emit(
                                             'openViewContainerSecurityCheckingModal',
@@ -501,7 +500,7 @@ async function releaseContainer(containerId) {
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            class="bg-orange-600 hover:bg-orange-700 text-white text-xs"
+                                            class="bg-blue-600 hover:bg-blue-700 text-white text-xs"
                                             @click="openHoldModal(container)"
                                         >
                                             Hold
@@ -515,7 +514,7 @@ async function releaseContainer(containerId) {
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            class="bg-green-600 hover:bg-green-700 text-white text-xs"
+                                            class="bg-blue-600 hover:bg-blue-700 text-white text-xs"
                                             @click="releaseContainer(container.id)"
                                         >
                                             Release

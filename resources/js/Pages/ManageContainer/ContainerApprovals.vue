@@ -36,7 +36,7 @@
             </div>
         </Card>
 
-        <ContainerStatCard />
+        <ApprovalStatsCard :approvals="approvals" />
 
         <div class="relative">
             <!-- Badge -->
@@ -109,111 +109,112 @@
                         ></div>
                     </div>
 
-                    <!-- Approvals List -->
-                    <div v-else-if="approvals.length > 0" class="space-y-2 p-2">
-                        <div
-                            v-for="approval in approvals"
-                            :key="approval.id"
-                            class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-white cursor-pointer"
-                            @click="openApprovalDetails(approval)"
-                        >
-                            <div class="flex justify-between items-start mb-3">
-                                <div class="flex-1">
-                                    <h3
-                                        class="text-lg font-semibold text-gray-900"
-                                    >
-                                        Container #{{
-                                            approval.shipment_transport
-                                                .transport_number
-                                        }}
-                                    </h3>
-                                    <p class="text-sm text-gray-600">
-                                        SKU:
-                                        {{
-                                            approval.shipment_transport
-                                                .sku_number
-                                        }}
-                                    </p>
-                                    <p class="text-sm text-gray-600">
-                                        Forwarder:
-                                        {{
-                                            approval.shipment_transport
-                                                .forwarder
-                                        }}
-                                    </p>
-                                </div>
-                                <div class="text-right ml-4">
-                                    <span
-                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mb-2 block"
-                                        :class="{
-                                            'bg-yellow-100 text-yellow-800':
-                                                approval.approval_status ===
-                                                'pending',
-                                            'bg-green-100 text-green-800':
-                                                approval.approval_status ===
-                                                'approved',
-                                            'bg-red-100 text-red-800':
-                                                approval.approval_status ===
-                                                'rejected',
-                                        }"
-                                    >
-                                        {{
-                                            approval.approval_status
-                                                .charAt(0)
-                                                .toUpperCase() +
-                                            approval.approval_status.slice(1)
-                                        }}
-                                    </span>
-                                    <p class="text-xs text-gray-500">
-                                        Department:
-                                        {{
-                                            approval.department
-                                                .charAt(0)
-                                                .toUpperCase() +
-                                            approval.department.slice(1)
-                                        }}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div
-                                class="flex justify-end space-x-3"
-                                v-if="approval.approval_status === 'pending'"
-                            >
-                                <button
-                                    @click.stop="rejectApproval(approval)"
-                                    class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                    <!-- Approvals Table -->
+                    <div v-else-if="approvals.length > 0" class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+                        <Table>
+                            <TableHeader class="bg-gradient-to-r from-gray-50 to-gray-100">
+                                <TableRow class="border-b border-gray-200">
+                                    <TableHead class="w-[180px] font-semibold text-gray-700 py-4">Container Number</TableHead>
+                                    <TableHead class="w-[130px] font-semibold text-gray-700 py-4">Department</TableHead>
+                                    <TableHead class="w-[130px] font-semibold text-gray-700 py-4">Status</TableHead>
+                                    <TableHead class="w-[220px] font-semibold text-gray-700 py-4">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                <TableRow
+                                    v-for="approval in approvals"
+                                    :key="approval.id"
+                                    class="hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-200 border-b border-gray-50"
                                 >
-                                    Reject
-                                </button>
-                                <button
-                                    @click.stop="approveApproval(approval)"
-                                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
-                                >
-                                    Approve
-                                </button>
-                            </div>
-
-                            <div
-                                v-if="approval.approval_status !== 'pending'"
-                                class="mt-3 p-3 bg-gray-50 rounded-md"
-                            >
-                                <p class="text-sm text-gray-600">
-                                    <strong>Processed by:</strong>
-                                    {{ approval.approved_by_name || "System" }}
-                                </p>
-                                <p
-                                    v-if="approval.remarks"
-                                    class="text-sm text-gray-600 mt-1"
-                                >
-                                    <strong>Remarks:</strong>
-                                    {{ approval.remarks }}
-                                </p>
-                                <p class="text-xs text-gray-500 mt-1">
-                                    {{ formatDate(approval.approved_at) }}
-                                </p>
-                            </div>
-                        </div>
+                                    <TableCell class="py-4">
+                                        <span
+                                            class="text-blue-600 hover:text-blue-800 font-bold text-lg cursor-pointer hover:underline transition-colors"
+                                            @click="openApprovalDetails(approval)"
+                                        >
+                                            {{ approval.shipment_transport.transport_number }}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell class="py-4">
+                                        <span
+                                            class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold"
+                                            :class="{
+                                                'bg-blue-100 text-blue-800': approval.department === 'warehouse',
+                                                'bg-purple-100 text-purple-800': approval.department === 'shipping',
+                                                'bg-green-100 text-green-800': approval.department === 'quality',
+                                                'bg-orange-100 text-orange-800': approval.department === 'security',
+                                                'bg-indigo-100 text-indigo-800': approval.department === 'management',
+                                            }"
+                                        >
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                            </svg>
+                                            {{ approval.department.charAt(0).toUpperCase() + approval.department.slice(1) }}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell class="py-4">
+                                        <span
+                                            class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold shadow-sm"
+                                            :class="{
+                                                'bg-yellow-100 text-yellow-800 border border-yellow-200': approval.approval_status === 'pending',
+                                                'bg-green-100 text-green-800 border border-green-200': approval.approval_status === 'approved',
+                                                'bg-red-100 text-red-800 border border-red-200': approval.approval_status === 'rejected',
+                                            }"
+                                        >
+                                            <svg v-if="approval.approval_status === 'pending'" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                            <svg v-else-if="approval.approval_status === 'approved'" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                            <svg v-else-if="approval.approval_status === 'rejected'" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                            </svg>
+                                            {{ approval.approval_status.charAt(0).toUpperCase() + approval.approval_status.slice(1) }}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell class="py-4">
+                                        <div
+                                            v-if="approval.approval_status === 'pending'"
+                                            class="flex gap-2"
+                                            @click.stop
+                                        >
+                                            <button
+                                                @click="rejectApproval(approval)"
+                                                class="inline-flex items-center gap-1 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                                            >
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                </svg>
+                                                Reject
+                                            </button>
+                                            <button
+                                                @click="approveApproval(approval)"
+                                                class="inline-flex items-center gap-1 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                                            >
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                </svg>
+                                                Approve
+                                            </button>
+                                        </div>
+                                        <div v-else class="space-y-1">
+                                            <div class="flex items-center gap-2 text-xs text-gray-600">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                                </svg>
+                                                <span class="font-medium">{{ approval.approved_by_name || "System" }}</span>
+                                            </div>
+                                            <div class="flex items-center gap-2 text-xs text-gray-500">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                </svg>
+                                                <span>{{ formatDate(approval.approved_at) }}</span>
+                                            </div>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            </TableBody>
+                        </Table>
                     </div>
 
                     <!-- Empty State -->
@@ -294,7 +295,15 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
-import ContainerStatCard from "@/Components/ManageContainer/ContainerStatCard.vue";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import ApprovalStatsCard from "@/Components/ManageContainer/ApprovalStatsCard.vue";
 import InspectionApprovalDetailModal from "@/Components/ManageContainer/InspectionApprovalDetailModal.vue";
 import LoadingPhotosModal from "@/Components/ManageContainer/LoadingPhotosModal.vue";
 import {
