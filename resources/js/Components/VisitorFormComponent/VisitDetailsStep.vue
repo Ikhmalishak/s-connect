@@ -16,8 +16,9 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { ref, watch } from "vue";
+import { ref, watch, onMounted } from "vue";
 import { useI18n } from 'vue-i18n'
+import axios from 'axios'
 
 const { t } = useI18n()
 
@@ -46,18 +47,61 @@ interface FormValues {
     person_to_meet?: string;
     other_reasons?: string;
     remarks?: string;
+    visitor_type?: string;
+    shipment_transport_id?: string;
+}
+
+interface ShipmentTransport {
+    id: number;
+    transport_number: string;
+    sku_number: string;
+    model_project: string;
 }
 
 const props = defineProps<{
     values: FormValues;
     errors: any;
     purposes: string[];
+    siteId?: number;
 }>();
 
 const emit = defineEmits(["update"]);
 
 // Custom validation errors
 const validationErrors = ref<{ [key: string]: string }>({});
+
+// Shipment transports data
+const shipmentTransports = ref<ShipmentTransport[]>([]);
+const loadingShipments = ref(false);
+
+// Fetch shipment transports for the site
+const fetchShipmentTransports = async () => {
+    if (!props.siteId) return;
+
+    loadingShipments.value = true;
+    try {
+        const response = await axios.get(`/containers/for-visitor?site_id=${props.siteId}`);
+        shipmentTransports.value = response.data.data || [];
+    } catch (error) {
+        console.error('Failed to fetch shipment transports:', error);
+        shipmentTransports.value = [];
+    } finally {
+        loadingShipments.value = false;
+    }
+};
+
+// Fetch shipments when component mounts or siteId changes
+onMounted(() => {
+    if (props.siteId) {
+        fetchShipmentTransports();
+    }
+});
+
+watch(() => props.siteId, (newSiteId) => {
+    if (newSiteId) {
+        fetchShipmentTransports();
+    }
+});
 
 // Validation functions
 const validateVehicleNumber = (vehicleNumber: string): string => {
@@ -139,6 +183,22 @@ const validateOtherReason = (reason: string, purpose: string): string => {
     return "";
 };
 
+
+const validateContainerNumber = (containerNumber: string, visitorType: string): string => {
+    if (visitorType === "shipping") {
+        if (!containerNumber?.trim()) {
+            return t('visitor.visitDetails.validation.containerNumberRequired');
+        }
+
+        // Basic container number validation (ISO 6346 format)
+        const containerPattern = /^[A-Z]{4}\d{7}$/;
+        if (!containerPattern.test(containerNumber.trim().toUpperCase())) {
+            return t('visitor.visitDetails.validation.containerNumberInvalid');
+        }
+    }
+
+    return "";
+};
 
 const validateRemarks = (remarks: string): string => {
     if (!remarks) return "";
@@ -233,6 +293,25 @@ const handleOtherReasonInput = (event: Event) => {
 
     const error = validateOtherReason(value, props.values?.purpose);
     const errorKey = "other_reasons";
+
+    if (error) {
+        validationErrors.value[errorKey] = error;
+    } else {
+        delete validationErrors.value[errorKey];
+    }
+};
+
+const handleContainerNumberInput = (event: Event) => {
+    const target = event.target as HTMLInputElement;
+    const value = target.value.toUpperCase();
+
+    emit("update", {
+        field: "container_number",
+        value,
+    });
+
+    const error = validateContainerNumber(value, props.values?.visitor_type);
+    const errorKey = "container_number";
 
     if (error) {
         validationErrors.value[errorKey] = error;
@@ -468,6 +547,45 @@ defineExpose({
                     >
                         {{ validationErrors["other_reasons"] }}
                     </div>
+                    <FormMessage />
+                </FormItem>
+            </FormField>
+
+            <!-- Shipment Transport Selection (conditional for shipping visitors) -->
+            <FormField
+                v-if="values.visitor_type === 'shipping'"
+                v-slot="{ componentField }"
+                name="shipment_transport_id"
+            >
+                <FormItem>
+                    <FormLabel>
+                        {{ t('visitor.visitDetails.selectShipment') }}
+                        <span class="text-red-500">*</span>
+                    </FormLabel>
+                    <Select v-bind="componentField">
+                        <FormControl>
+                            <SelectTrigger>
+                                <SelectValue :placeholder="t('visitor.visitDetails.shipmentPlaceholder')" />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            <SelectGroup>
+                                <SelectItem
+                                    v-for="shipment in shipmentTransports"
+                                    :key="shipment.id"
+                                    :value="shipment.id.toString()"
+                                >
+                                    {{ shipment.transport_number }}
+                                </SelectItem>
+                                <div v-if="loadingShipments" class="p-2 text-center text-sm text-gray-500">
+                                    Loading shipments...
+                                </div>
+                                <div v-else-if="shipmentTransports.length === 0" class="p-2 text-center text-sm text-gray-500">
+                                    No shipments available
+                                </div>
+                            </SelectGroup>
+                        </SelectContent>
+                    </Select>
                     <FormMessage />
                 </FormItem>
             </FormField>

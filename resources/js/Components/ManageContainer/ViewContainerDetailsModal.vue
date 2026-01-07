@@ -210,33 +210,7 @@
                                         >
                                     </div>
 
-                                    <!-- Driver Name -->
-                                    <div
-                                        v-if="container.driver_name"
-                                        class="flex justify-between p-4"
-                                    >
-                                        <span class="text-gray-700 text-sm"
-                                            >Driver Name:</span
-                                        >
-                                        <span
-                                            class="text-gray-900 text-sm font-semibold"
-                                            >{{ container.driver_name }}</span
-                                        >
-                                    </div>
 
-                                    <!-- Driver ID -->
-                                    <div
-                                        v-if="container.driver_id"
-                                        class="flex justify-between p-4"
-                                    >
-                                        <span class="text-gray-700 text-sm"
-                                            >Driver ID:</span
-                                        >
-                                        <span
-                                            class="text-gray-900 text-sm font-semibold"
-                                            >{{ container.driver_id }}</span
-                                        >
-                                    </div>
 
                                     <!-- SKU Number -->
                                     <div
@@ -282,6 +256,37 @@
                                                 container.container_number
                                             }}</span
                                         >
+                                    </div>
+
+                                    <!-- Linked Driver Information -->
+                                    <div
+                                        v-if="container.linked_driver"
+                                        class="p-4 bg-blue-50 border-l-4 border-blue-400"
+                                    >
+                                        <div class="flex justify-between items-start">
+                                            <div class="flex-1">
+                                                <span class="text-blue-800 text-sm font-semibold"
+                                                    >👤 LINKED DRIVER INFORMATION</span
+                                                >
+                                                <div class="mt-2 space-y-1">
+                                                    <p class="text-blue-700 text-sm">
+                                                        <strong>Name:</strong> {{ container.linked_driver.driver_name || 'Not Available' }}
+                                                    </p>
+                                                    <p class="text-blue-700 text-sm">
+                                                        <strong>ID:</strong> {{ container.linked_driver.driver_id || 'Not Available' }}
+                                                    </p>
+                                                    <p class="text-blue-700 text-sm">
+                                                        <strong>Vehicle:</strong> {{ container.linked_driver.vehicle_number || 'Not Available' }}
+                                                    </p>
+                                                    <p class="text-blue-700 text-sm">
+                                                        <strong>Visitor Type:</strong> {{ container.linked_driver.visitor_type || 'Not Available' }}
+                                                    </p>
+                                                    <p class="text-blue-700 text-sm">
+                                                        <strong>Registration Date:</strong> {{ container.linked_driver.created_at ? formatDate(container.linked_driver.created_at) : 'Not Available' }}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <!-- Container Size -->
@@ -457,6 +462,13 @@ interface Container {
     hold_reason?: string;
     hold_at?: string;
     hold_by_name?: string;
+    linked_driver?: {
+        driver_name?: string;
+        driver_id?: string;
+        vehicle_number?: string;
+        visitor_type?: string;
+        created_at?: string;
+    };
 }
 
 const props = defineProps<{

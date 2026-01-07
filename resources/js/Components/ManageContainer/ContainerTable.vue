@@ -73,12 +73,10 @@ let searchTimeout: any = null;
 const showContainerDetailsModal = ref(false);
 const showHoldModal = ref(false);
 const showReleaseModal = ref(false);
-const showOnboardingConfirmModal = ref(false);
 const selectedContainer = ref(null);
 const holdReason = ref("");
 const holdContainerId = ref(null);
 const releaseContainerId = ref(null);
-const onboardingContainerId = ref(null);
 
 async function createInspection(containerId) {
     console.log("Create Inspection clicked", containerId);
@@ -206,21 +204,7 @@ function cancelReleaseContainer() {
 
 
 function completeOnboarding(containerId) {
-    onboardingContainerId.value = containerId;
-    showOnboardingConfirmModal.value = true;
-}
-
-function confirmCompleteOnboarding() {
-    if (!onboardingContainerId.value) return;
-
-    emit("openContainerSecurityCheckingModal", onboardingContainerId.value);
-    showOnboardingConfirmModal.value = false;
-    onboardingContainerId.value = null;
-}
-
-function cancelCompleteOnboarding() {
-    showOnboardingConfirmModal.value = false;
-    onboardingContainerId.value = null;
+    emit("openContainerSecurityCheckingModal", containerId);
 }
 
 </script>
@@ -710,60 +694,6 @@ function cancelCompleteOnboarding() {
 
 
 
-        <!-- Complete Onboarding Confirmation Modal -->
-        <Teleport to="body">
-            <Transition name="modal-fade">
-                <div
-                    v-if="showOnboardingConfirmModal"
-                    class="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center z-[9999]"
-                    @click.self="cancelCompleteOnboarding"
-                >
-                    <Transition name="modal-scale" appear>
-                        <div
-                            v-if="showOnboardingConfirmModal"
-                            class="bg-white p-6 rounded-lg shadow-[0_4px_20px_rgba(255,255,255,0.6)] w-[80%] max-w-md"
-                        >
-                            <div class="flex justify-between items-center mb-4">
-                                <h2 class="text-xl font-bold text-blue-700">
-                                    Confirm Complete Onboarding
-                                </h2>
-                                <button
-                                    @click="cancelCompleteOnboarding"
-                                    class="text-gray-500 hover:text-gray-700 text-xl font-bold"
-                                >
-                                    ×
-                                </button>
-                            </div>
 
-                            <div class="space-y-4">
-                                <div class="text-center">
-                                    <p class="text-gray-700 text-lg">
-                                        Are you sure you want to complete the onboarding security check?
-                                    </p>
-                                    <p class="text-gray-500 text-sm mt-2">
-                                        This will open the security checking form.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div class="flex justify-end space-x-3 mt-6">
-                                <button
-                                    @click="cancelCompleteOnboarding"
-                                    class="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md text-sm font-medium transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    @click="confirmCompleteOnboarding"
-                                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium transition-colors"
-                                >
-                                    Complete Onboarding
-                                </button>
-                            </div>
-                        </div>
-                    </Transition>
-                </div>
-            </Transition>
-        </Teleport>
     </div>
 </template>

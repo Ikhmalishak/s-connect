@@ -40,6 +40,7 @@ type FormField =
     | "person_to_meet"
     | "other_reasons"
     | "remarks"
+    | "shipment_transport_id"
     | "video_watched"
     | "security_guidelines_confirmed"
     | "visitor_type"
@@ -68,6 +69,7 @@ interface Values {
     person_to_meet: string;
     other_reasons: string;
     remarks: string;
+    shipment_transport_id: string;
     video_watched: boolean;
     security_guidelines_confirmed: boolean;
     visitor_type: string;
@@ -85,6 +87,7 @@ const { handleSubmit, setFieldValue, values, errors, resetForm } =
             person_to_meet: "",
             other_reasons: "",
             remarks: "",
+            shipment_transport_id: "",
             video_watched: false,
             security_guidelines_confirmed: false,
             visitor_type: "visitor",
@@ -461,6 +464,7 @@ const stepTitles = computed(() => ({
                     :values="values || {}"
                     :errors="errors || {}"
                     :purposes="purposes || []"
+                    :site-id="site.id"
                     @update="handleVisitUpdate"
                 />
 

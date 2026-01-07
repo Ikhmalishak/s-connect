@@ -10,6 +10,7 @@ const errorMessage = ref("");
 const successMessage = ref("");
 const selectedPhoto = ref("");
 const showCameraModal = ref(false);
+const linkedDriver = ref(null);
 
 // Reactive object to hold files
 const formData = ref<Record<string, File | null>>({});
@@ -18,11 +19,21 @@ const formData = ref<Record<string, File | null>>({});
 const fileInputRef = ref<HTMLInputElement | null>(null);
 
 // Clear messages when modal is closed or reopened
-watch(() => props.show, (newVal) => {
+watch(() => props.show, async (newVal) => {
     if (!newVal) {
         errorMessage.value = "";
         successMessage.value = "";
         isLoading.value = false;
+        linkedDriver.value = null;
+    } else if (props.id) {
+        // Clear previous photo data when opening for a new container
+        selectedPhoto.value = "";
+        formData.value = {};
+        errorMessage.value = "";
+        successMessage.value = "";
+
+        // Fetch driver information when modal opens
+        await fetchDriverInfo();
     }
 });
 
@@ -76,6 +87,18 @@ const handleCameraCapture = (imageData: string) => {
 
 const closeCameraModal = () => {
     showCameraModal.value = false;
+};
+
+const fetchDriverInfo = async () => {
+    if (!props.id) return;
+
+    try {
+        const response = await axios.get(`/containers/${props.id}/driver-info`);
+        linkedDriver.value = response.data.driver || null;
+    } catch (error) {
+        console.error('Failed to fetch driver info:', error);
+        linkedDriver.value = null;
+    }
 };
 
 const onSubmit = async () => {
@@ -164,6 +187,52 @@ const onSubmit = async () => {
                         </div>
 
                         <form @submit.prevent="onSubmit" class="space-y-4">
+                            <!-- Driver Verification Section -->
+                            <div v-if="linkedDriver" class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                                <h3 class="text-lg font-semibold text-blue-900 mb-3">
+                                    Driver Verification Required
+                                </h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-blue-800 mb-1">
+                                            Driver Name
+                                        </label>
+                                        <p class="text-blue-900 font-semibold">
+                                            {{ linkedDriver.visitor_name || 'Not Available' }}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-blue-800 mb-1">
+                                            Driver ID
+                                        </label>
+                                        <p class="text-blue-900 font-semibold">
+                                            {{ linkedDriver.ic_number || linkedDriver.passport || 'Not Available' }}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-blue-800 mb-1">
+                                            Company
+                                        </label>
+                                        <p class="text-blue-900 font-semibold">
+                                            {{ linkedDriver.visitor_company || 'Not Available' }}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-blue-800 mb-1">
+                                            Vehicle Number
+                                        </label>
+                                        <p class="text-blue-900 font-semibold">
+                                            {{ linkedDriver.vehicle_number || 'Not Available' }}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
+                                    <p class="text-yellow-800 text-sm">
+                                        <strong>Security Check:</strong> Please verify that the driver details above match the person presenting for container pickup.
+                                    </p>
+                                </div>
+                            </div>
+
                             <div class="flex flex-col gap-2">
                                 <label class="font-medium text-black">Security Check Photo</label>
 

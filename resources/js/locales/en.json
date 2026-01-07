@@ -62,10 +62,14 @@
       "purpose": "Purpose",
       "personToMeet": "Person to Meet",
       "statePurpose": "State Purpose",
+      "selectShipment": "Select Shipment",
+      "shipmentPlaceholder": "Choose a shipment",
+      "containerNumber": "Container Number",
       "remarks": "Remarks",
       "vehiclePlaceholder": "ABC1234",
       "companyPlaceholder": "Enter company name",
       "personPlaceholder": "Enter person's name",
+      "containerNumberPlaceholder": "Enter container number (e.g., ABCD1234567)",
       "purposePlaceholder": "Select Purpose",
       "remarksPlaceholder": "Additional notes or special requirements...",
       "purposes": {
@@ -94,6 +98,8 @@
         "reasonTooLong": "Reason cannot exceed 100 characters",
         "vehicleInvalid": "Please enter a valid Malaysian vehicle number (e.g., ABC1234, AB1234C)",
         "vehicleLength": "Vehicle number must be between 4-8 characters",
+        "containerNumberRequired": "Container number is required for shipping visitors",
+        "containerNumberInvalid": "Container number must be in ISO 6346 format (4 letters + 7 digits)",
         "remarksInvalid": "Remarks contain inappropriate or invalid content",
         "remarksTooLong": "Remarks cannot exceed 500 characters"
       }
@@ -106,6 +112,7 @@
       "contractor": "Contractor",
       "inboundShipment": "Inbound Shipment/Transfer",
       "outboundShipment": "Outbound Shipment/Transfer",
+      "shipping": "Shipping",
       "pax": "Pax",
       "confirm": "Confirm",
       "compliance": "Our Visitor Management System (VMS) is fully compliant with ISO 27001 information security standards and the Personal Data Protection Act (PDPA). All personal data is encrypted and handled solely for security and operational purposes, ensuring it is stored, processed, and protected according to legal requirements and industry best practices."
@@ -257,6 +264,7 @@
     "visitor": "Visitor",
     "contractor": "Contractor",
     "inbound-shipment/transfer": "Inbound Shipment/Transfer",
-    "outbound-shipment/transfer": "Outbound Shipment/Transfer"
+    "outbound-shipment/transfer": "Outbound Shipment/Transfer",
+    "shipping": "Shipping"
   }
 }

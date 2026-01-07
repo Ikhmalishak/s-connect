@@ -49,6 +49,23 @@ class Visitor extends Model
         )->withTimestamps();
     }
 
+    public function shipmentTransportDrivers()
+    {
+        return $this->hasMany(ShipmentTransportDriver::class);
+    }
+
+    public function shipmentTransport()
+    {
+        return $this->hasOneThrough(
+            ShipmentTransport::class,
+            ShipmentTransportDriver::class,
+            'visitor_id',
+            'id',
+            'id',
+            'shipment_transport_id'
+        );
+    }
+
     protected $casts = [
         'ic_number' => 'encrypted',
         'phone_number' => 'encrypted',
@@ -56,4 +73,3 @@ class Visitor extends Model
     ];
 
 }
-

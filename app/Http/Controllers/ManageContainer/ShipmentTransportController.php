@@ -143,6 +143,70 @@ class ShipmentTransportController extends Controller
         ]);
     }
 
+    /**
+     * Get shipments for visitor form selection.
+     */
+    public function getShipmentsForVisitor(Request $request)
+    {
+        $user = auth()->user();
+        $siteId = $request->input('site_id');
+
+        if (!$siteId) {
+            return response()->json(['error' => 'Site ID is required'], 400);
+        }
+
+        // Check if user can access this site
+        if (!$user->hasPermissionTo('superadmin') && $user->site_id != $siteId) {
+            return response()->json(['error' => 'Unauthorized access to site'], 403);
+        }
+
+        $shipments = ShipmentTransport::where('site_id', $siteId)
+            ->where('status', '!=', 'completed') // Don't show completed shipments
+            ->select('id', 'transport_number', 'transport_type', 'sku_number', 'model_project')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'data' => $shipments
+        ]);
+    }
+
+    /**
+     * Get driver information for a shipment.
+     */
+    public function getDriverInfo(ShipmentTransport $shipmentTransport)
+    {
+        $user = auth()->user();
+
+        // Check if shipment transport belongs to user's site (unless superadmin)
+        if (!$user->hasPermissionTo('superadmin') && $shipmentTransport->site_id !== $user->site_id) {
+            return response()->json(['message' => 'Unauthorized access to shipment transport'], 403);
+        }
+
+        // Get the driver assigned to this shipment
+        $driverAssignment = $shipmentTransport->shipmentTransportDrivers()->with('visitor')->first();
+
+        if (!$driverAssignment || !$driverAssignment->visitor) {
+            return response()->json([
+                'driver' => null,
+                'message' => 'No driver assigned to this shipment'
+            ]);
+        }
+
+        $visitor = $driverAssignment->visitor;
+
+        return response()->json([
+            'driver' => [
+                'visitor_name' => $visitor->visitor_name,
+                'ic_number' => $visitor->ic_number,
+                'passport' => $visitor->passport,
+                'visitor_company' => $visitor->visitor_company,
+                'vehicle_number' => $visitor->vehicle_number,
+                'phone_number' => $visitor->phone_number,
+            ]
+        ]);
+    }
+
     public function store(Request $request)
     {
         $site_id = auth()->user()->site_id;

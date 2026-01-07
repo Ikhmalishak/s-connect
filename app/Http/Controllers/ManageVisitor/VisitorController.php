@@ -74,7 +74,7 @@ class VisitorController extends Controller
 
         if ($user->hasRole('admin')) {
 
-            $query = Visitor::with(['gatePass:id,pass_number', 'site:id,site_code', 'acknowledgements']);
+            $query = Visitor::with(['gatePass:id,pass_number', 'site:id,site_code', 'acknowledgements', 'shipmentTransport:id,transport_number,driver_name']);
 
             // Admin filter based on dropdown selection
             if ($filterSite) {
@@ -84,7 +84,7 @@ class VisitorController extends Controller
         } else {
 
             // Non-admin always restricted to own site
-            $query = Visitor::with(['gatePass:id,pass_number', 'acknowledgements'])
+            $query = Visitor::with(['gatePass:id,pass_number', 'acknowledgements', 'shipmentTransport:id,transport_number,driver_name'])
                 ->whereDate('date', now()->toDateString())
                 ->where('site_id', $site);
         }
@@ -245,6 +245,7 @@ class VisitorController extends Controller
             'other_reasons' => 'nullable|string',
             'vehicle_number' => 'nullable|string',
             'visitor_company' => 'nullable|string',
+            'shipment_transport_id' => 'nullable|integer',
             'video_watched' => 'nullable|boolean',
             'security_guidelines_confirmed' => 'nullable|boolean',
             'visitors' => 'required|array|min:1',
@@ -253,6 +254,24 @@ class VisitorController extends Controller
             'visitors.*.id_number' => 'required|string',
             'visitors.*.phone_number' => 'required|string',
         ]);
+
+        // Additional validation for shipping visitors
+        if ($validated['visitor_type'] === 'shipping') {
+            $request->validate([
+                'shipment_transport_id' => 'required|integer|exists:shipment_transports,id',
+            ]);
+
+            // Check if shipment transport belongs to the site
+            $shipment = \App\Models\ShipmentTransport::where('id', $validated['shipment_transport_id'])
+                ->where('site_id', $validated['site_id'])
+                ->first();
+
+            if (!$shipment) {
+                return response()->json([
+                    'error' => 'Shipment not found for this site.'
+                ], 422);
+            }
+        }
 
         return DB::transaction(function () use ($validated) {
             $timeRegister = $validated['time_register'] ??= now()->format('H:i');
@@ -320,6 +339,14 @@ class VisitorController extends Controller
                     'is_acknowledge' => $validated['video_watched'] && $validated['security_guidelines_confirmed'],
                 ]);
 
+                // Create shipping assignment for shipping visitors
+                if ($validated['visitor_type'] === 'shipping' && $validated['shipment_transport_id']) {
+                    \App\Models\ShipmentTransportDriver::create([
+                        'visitor_id' => $new_visitor->id,
+                        'shipment_transport_id' => $validated['shipment_transport_id'],
+                    ]);
+                }
+
                 // Broadcast event
                 event(new VisitorRegistered());
 
@@ -378,7 +405,8 @@ class VisitorController extends Controller
     {
         if (
             str_starts_with($visitor_type, 'inbound-') ||
-            str_starts_with($visitor_type, 'outbound-')
+            str_starts_with($visitor_type, 'outbound-') ||
+            $visitor_type === 'shipping'
         ) {
             $visitor_type = 'driver';
         }

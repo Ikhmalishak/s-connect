@@ -54,6 +54,7 @@ interface VisitorForm {
     passport: string;
     phone_number: string;
     person_to_meet: string;
+    container_number?: string;
     gate_pass?: {
         pass_number: string;
     };

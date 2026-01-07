@@ -67,6 +67,9 @@ function confirm() {
                     <option value="outbound-shipment/transfer">
                         {{ t('visitor.paxModal.outboundShipment') }}
                     </option>
+                    <option value="shipping">
+                        {{ t('visitor.paxModal.shipping') }}
+                    </option>
                 </select>
             </div>
 

@@ -68,4 +68,9 @@ public function site()
 {
     return $this->belongsTo(\App\Models\Site::class);
 }
+
+public function shipmentTransportDrivers()
+{
+    return $this->hasMany(ShipmentTransportDriver::class);
+}
 }
