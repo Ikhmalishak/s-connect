@@ -59,11 +59,11 @@ class Visitor extends Model
         return $this->hasOneThrough(
             ShipmentTransport::class,
             ShipmentTransportDriver::class,
-            'visitor_id',
-            'id',
-            'id',
-            'shipment_transport_id'
-        );
+            'visitor_id',           // Foreign key on shipment_transport_drivers table
+            'id',                   // Foreign key on shipment_transports table
+            'id',                   // Local key on visitors table
+            'shipment_transport_id' // Local key on shipment_transport_drivers table
+        )->select('shipment_transports.*'); // Specify table to avoid ambiguous column
     }
 
     protected $casts = [

@@ -74,7 +74,14 @@ class VisitorController extends Controller
 
         if ($user->hasRole('admin')) {
 
-            $query = Visitor::with(['gatePass:id,pass_number', 'site:id,site_code', 'acknowledgements', 'shipmentTransport:id,transport_number,driver_name']);
+            $query = Visitor::with([
+                'gatePass:id,pass_number',
+                'site:id,site_code',
+                'acknowledgements',
+                'shipmentTransport' => function($q) {
+                    $q->select('shipment_transports.id', 'shipment_transports.transport_number', 'shipment_transports.driver_name');
+                }
+            ]);
 
             // Admin filter based on dropdown selection
             if ($filterSite) {
@@ -84,7 +91,13 @@ class VisitorController extends Controller
         } else {
 
             // Non-admin always restricted to own site
-            $query = Visitor::with(['gatePass:id,pass_number', 'acknowledgements', 'shipmentTransport:id,transport_number,driver_name'])
+            $query = Visitor::with([
+                'gatePass:id,pass_number',
+                'acknowledgements',
+                'shipmentTransport' => function($q) {
+                    $q->select('shipment_transports.id', 'shipment_transports.transport_number', 'shipment_transports.driver_name');
+                }
+            ])
                 ->whereDate('date', now()->toDateString())
                 ->where('site_id', $site);
         }
