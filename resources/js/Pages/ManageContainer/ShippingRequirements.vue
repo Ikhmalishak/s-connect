@@ -85,10 +85,14 @@ const formData = ref({
     attachment: null,
 });
 const formLoading = ref(false);
+const formMessage = ref("");
+const formMessageType = ref(""); // "success" or "error"
 
 // Delete form data
 const deleteReason = ref("");
 const deleteAttachment = ref(null);
+const deleteFormMessage = ref("");
+const deleteFormMessageType = ref("");
 
 // Refs
 const attachmentRef = ref(null);
@@ -187,6 +191,8 @@ const openEditDialog = (requirement: any) => {
 
 const createRequirement = async () => {
     formLoading.value = true;
+    formMessage.value = "";
+    formMessageType.value = "";
     try {
         const formDataToSend = new FormData();
         formDataToSend.append('change_type', 'create');
@@ -206,21 +212,22 @@ const createRequirement = async () => {
             },
         });
 
-        toast({
-            title: "Success",
-            description: "Shipping requirement creation request submitted for approval",
-            variant: "default",
-        });
-        showCreateDialog.value = false;
+        formMessage.value = "Shipping requirement creation request submitted for approval";
+        formMessageType.value = "success";
+
+        // Clear success message after 3 seconds and close dialog
+        setTimeout(() => {
+            formMessage.value = "";
+            formMessageType.value = "";
+            showCreateDialog.value = false;
+        }, 3000);
+
         fetchRequirements();
     } catch (error: any) {
         console.error("Failed to submit create request:", error);
         const message = error.response?.data?.message || "Failed to submit creation request";
-        toast({
-            title: "Error",
-            description: message,
-            variant: "destructive",
-        });
+        formMessage.value = message;
+        formMessageType.value = "error";
     } finally {
         formLoading.value = false;
     }
@@ -230,6 +237,8 @@ const updateRequirement = async () => {
     if (!editingRequirement.value) return;
 
     formLoading.value = true;
+    formMessage.value = "";
+    formMessageType.value = "";
     try {
         const formDataToSend = new FormData();
         formDataToSend.append('change_type', 'update');
@@ -250,21 +259,23 @@ const updateRequirement = async () => {
             },
         });
 
-        toast({
-            title: "Success",
-            description: "Shipping requirement change request submitted for approval",
-        });
-        showEditDialog.value = false;
-        editingRequirement.value = null;
+        formMessage.value = "Shipping requirement change request submitted for approval";
+        formMessageType.value = "success";
+
+        // Clear success message after 3 seconds and close dialog
+        setTimeout(() => {
+            formMessage.value = "";
+            formMessageType.value = "";
+            showEditDialog.value = false;
+            editingRequirement.value = null;
+        }, 3000);
+
         fetchRequirements();
     } catch (error: any) {
         console.error("Failed to submit update request:", error);
         const message = error.response?.data?.message || "Failed to submit update request";
-        toast({
-            title: "Error",
-            description: message,
-            variant: "destructive",
-        });
+        formMessage.value = message;
+        formMessageType.value = "error";
     } finally {
         formLoading.value = false;
     }
@@ -365,6 +376,11 @@ const removeDeleteAttachment = () => {
     }
 };
 
+const triggerDeleteFileUpload = () => {
+    const input = document.getElementById('delete-attachment') as HTMLInputElement;
+    input?.click();
+};
+
 const clearDeleteForm = () => {
     deleteReason.value = "";
     deleteAttachment.value = null;
@@ -377,6 +393,9 @@ const submitDeleteRequest = async (requirement: any) => {
     if (!deleteReason.value.trim() || !deleteAttachment.value) {
         return;
     }
+
+    deleteFormMessage.value = "";
+    deleteFormMessageType.value = "";
 
     try {
         const formDataToSend = new FormData();
@@ -394,21 +413,22 @@ const submitDeleteRequest = async (requirement: any) => {
             },
         });
 
-        toast({
-            title: "Success",
-            description: "Shipping requirement deletion request submitted for approval",
-        });
+        deleteFormMessage.value = "Shipping requirement deletion request submitted for approval";
+        deleteFormMessageType.value = "success";
+
+        // Clear success message after 3 seconds
+        setTimeout(() => {
+            deleteFormMessage.value = "";
+            deleteFormMessageType.value = "";
+        }, 3000);
 
         clearDeleteForm();
         fetchRequirements();
     } catch (error: any) {
         console.error("Failed to submit delete request:", error);
         const message = error.response?.data?.message || "Failed to submit deletion request";
-        toast({
-            title: "Error",
-            description: message,
-            variant: "destructive",
-        });
+        deleteFormMessage.value = message;
+        deleteFormMessageType.value = "error";
     }
 };
 
@@ -598,6 +618,15 @@ onMounted(() => {
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Inline Message -->
+                        <div v-if="formMessage" :class="[
+                            'mt-4 p-3 rounded-md text-sm',
+                            formMessageType === 'success' ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'
+                        ]">
+                            {{ formMessage }}
+                        </div>
+
                         <DialogFooter>
                             <Button variant="outline" @click="showCreateDialog = false">Cancel</Button>
                             <Button @click="createRequirement" :disabled="formLoading">
@@ -808,7 +837,7 @@ onMounted(() => {
                                                             class="hidden"
                                                         />
                                                         <div
-                                                            @click="() => deleteAttachmentRef?.click?.()"
+                                                            @click="triggerDeleteFileUpload"
                                                             class="border-2 border-dashed border-gray-300 rounded-md p-4 text-center cursor-pointer hover:border-gray-400 transition-colors"
                                                         >
                                                             <div v-if="!deleteAttachment" class="space-y-2">
@@ -846,6 +875,14 @@ onMounted(() => {
                                                         </div>
                                                     </div>
                                                 </div>
+                                            </div>
+
+                                            <!-- Inline Message -->
+                                            <div v-if="deleteFormMessage" :class="[
+                                                'mt-4 p-3 rounded-md text-sm',
+                                                deleteFormMessageType === 'success' ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'
+                                            ]">
+                                                {{ deleteFormMessage }}
                                             </div>
 
                                             <AlertDialogFooter>
@@ -1008,6 +1045,15 @@ onMounted(() => {
                         </div>
                     </div>
                 </div>
+
+                <!-- Inline Message -->
+                <div v-if="formMessage" :class="[
+                    'mt-4 p-3 rounded-md text-sm',
+                    formMessageType === 'success' ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'
+                ]">
+                    {{ formMessage }}
+                </div>
+
                 <DialogFooter>
                     <Button variant="outline" @click="showEditDialog = false">Cancel</Button>
                     <Button @click="updateRequirement" :disabled="formLoading">

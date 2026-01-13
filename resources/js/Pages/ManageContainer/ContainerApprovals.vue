@@ -36,7 +36,50 @@
             </div>
         </Card>
 
-        <ApprovalStatsCard :approvals="approvals" />
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <Card class="p-4 shadow-lg">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Pending Approvals</p>
+                        <p class="text-2xl font-bold text-blue-600">{{ stats.pending }}</p>
+                    </div>
+                    <div class="p-3 bg-blue-100 rounded-full">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </Card>
+
+            <Card class="p-4 shadow-lg">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Approved</p>
+                        <p class="text-2xl font-bold text-green-600">{{ stats.approved }}</p>
+                    </div>
+                    <div class="p-3 bg-green-100 rounded-full">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </Card>
+
+            <Card class="p-4 shadow-lg">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Rejected</p>
+                        <p class="text-2xl font-bold text-red-600">{{ stats.rejected }}</p>
+                    </div>
+                    <div class="p-3 bg-red-100 rounded-full">
+                        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </div>
+                </div>
+            </Card>
+        </div>
 
         <div class="relative">
             <!-- Badge -->
@@ -348,6 +391,18 @@ const formattedTime = computed(() =>
 
 const isSuperAdmin = computed(() => {
     return userPermissions.value.includes('superadmin');
+});
+
+const stats = computed(() => {
+    const pending = approvals.value.filter(approval => approval.approval_status === 'pending').length;
+    const approved = approvals.value.filter(approval => approval.approval_status === 'approved').length;
+    const rejected = approvals.value.filter(approval => approval.approval_status === 'rejected').length;
+
+    return {
+        pending,
+        approved,
+        rejected
+    };
 });
 
 const fetchApprovals = async () => {
