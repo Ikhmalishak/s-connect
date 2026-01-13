@@ -154,18 +154,32 @@
 
                     <!-- Approvals Table -->
                     <div v-else-if="approvals.length > 0" class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+                        <!-- Approval Sequence Legend -->
+                        <div class="bg-blue-50 p-4 border-b border-blue-100">
+                            <div class="flex items-center gap-2 text-sm text-blue-800 font-medium mb-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Sequential Approval Order: Warehouse → Quality → Shipping → Security
+                            </div>
+                            <div class="text-xs text-blue-600">
+                                Only departments that meet the approval sequence requirements are shown below.
+                            </div>
+                        </div>
+
                         <Table>
                             <TableHeader class="bg-gradient-to-r from-gray-50 to-gray-100">
                                 <TableRow class="border-b border-gray-200">
                                     <TableHead class="w-[180px] font-semibold text-gray-700 py-4">Container Number</TableHead>
                                     <TableHead class="w-[130px] font-semibold text-gray-700 py-4">Department</TableHead>
+                                    <TableHead class="w-[100px] font-semibold text-gray-700 py-4">Step</TableHead>
                                     <TableHead class="w-[130px] font-semibold text-gray-700 py-4">Status</TableHead>
                                     <TableHead class="w-[220px] font-semibold text-gray-700 py-4">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 <TableRow
-                                    v-for="approval in approvals"
+                                    v-for="approval in availableApprovals"
                                     :key="approval.id"
                                     class="hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-200 border-b border-gray-50"
                                 >
@@ -192,6 +206,11 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                                             </svg>
                                             {{ approval.department.charAt(0).toUpperCase() + approval.department.slice(1) }}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell class="py-4">
+                                        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-800 font-bold text-sm">
+                                            {{ getApprovalStep(approval.department) }}
                                         </span>
                                     </TableCell>
                                     <TableCell class="py-4">
@@ -404,6 +423,79 @@ const stats = computed(() => {
         rejected
     };
 });
+
+// Sequential approval logic
+const approvalSequence = ['warehouse', 'quality', 'shipping', 'security'];
+
+const availableApprovals = computed(() => {
+    // Group approvals by container
+    const containerGroups = {};
+    approvals.value.forEach(approval => {
+        const containerId = approval.shipment_transport.id;
+        if (!containerGroups[containerId]) {
+            containerGroups[containerId] = {
+                container: approval.shipment_transport,
+                approvals: []
+            };
+        }
+        containerGroups[containerId].approvals.push(approval);
+    });
+
+    const available = [];
+
+    // For each container, determine which approvals are available
+    Object.values(containerGroups).forEach(group => {
+        // Handle inspection approvals (not sequential)
+        const inspectionApprovals = group.approvals.filter(a => a.approval_type === 'inspection');
+        inspectionApprovals.forEach(approval => {
+            if (approval.approval_status === 'pending') {
+                available.push(approval);
+            }
+        });
+
+        // Handle loading approvals (sequential)
+        const containerApprovals = group.approvals.filter(a => a.approval_type === 'loading');
+
+        approvalSequence.forEach(dept => {
+            const deptApproval = containerApprovals.find(a => a.department === dept);
+
+            if (deptApproval && deptApproval.approval_status === 'pending') {
+                // Check if all previous departments have approved
+                const deptIndex = approvalSequence.indexOf(dept);
+                const prevDepts = approvalSequence.slice(0, deptIndex);
+
+                const allPrevApproved = prevDepts.every(prevDept => {
+                    const prevApproval = containerApprovals.find(a => a.department === prevDept);
+                    return prevApproval && prevApproval.approval_status === 'approved';
+                });
+
+                if (allPrevApproved) {
+                    available.push(deptApproval);
+                }
+            }
+        });
+    });
+
+    return available;
+});
+
+const getApprovalStep = (department) => {
+    return approvalSequence.indexOf(department) + 1;
+};
+
+const getNextRequiredApproval = (containerId) => {
+    const containerApprovals = approvals.value.filter(a =>
+        a.shipment_transport.id === containerId && a.approval_type === 'loading'
+    );
+
+    for (const dept of approvalSequence) {
+        const approval = containerApprovals.find(a => a.department === dept);
+        if (!approval || approval.approval_status !== 'approved') {
+            return dept;
+        }
+    }
+    return null;
+};
 
 const fetchApprovals = async () => {
     loading.value = true;

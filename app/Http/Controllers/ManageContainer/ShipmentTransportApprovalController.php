@@ -14,6 +14,9 @@ use Illuminate\Support\Facades\Mail;
 
 class ShipmentTransportApprovalController extends Controller
 {
+    // Define the sequential approval order for loading approvals
+    private $loadingApprovalSequence = ['warehouse', 'quality', 'shipping', 'security'];
+
     public function index(Request $request)
     {
         $user = auth()->user();
@@ -94,6 +97,31 @@ class ShipmentTransportApprovalController extends Controller
         $requiredPermission = "container.{$approval->department}_approve";
         if (!$user->hasPermissionTo($requiredPermission) && !$user->hasPermissionTo('container.management_approve')) {
             return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // For loading approvals, enforce sequential approval order
+        if ($approval->approval_type === 'loading') {
+            $container = $approval->shipmentTransport;
+            $currentDeptIndex = array_search($approval->department, $this->loadingApprovalSequence);
+
+            if ($currentDeptIndex === false) {
+                return response()->json(['message' => 'Invalid department for approval'], 400);
+            }
+
+            // Check if all previous departments in sequence have approved
+            for ($i = 0; $i < $currentDeptIndex; $i++) {
+                $prevDept = $this->loadingApprovalSequence[$i];
+                $prevApproval = $container->approvals->where('department', $prevDept)
+                    ->where('approval_type', 'loading')
+                    ->first();
+
+                if (!$prevApproval || $prevApproval->approval_status !== 'approved') {
+                    $prevDeptName = ucfirst($prevDept);
+                    return response()->json([
+                        'message' => "{$prevDeptName} department must approve first before {$approval->department} can approve"
+                    ], 400);
+                }
+            }
         }
 
         $approval->update([
