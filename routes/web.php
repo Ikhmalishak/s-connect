@@ -184,6 +184,9 @@ Route::middleware(['auth'])->prefix('container')->name('container.')->group(func
     Route::get('/shipping-requirements', function () {
         return Inertia::render('ManageContainer/ShippingRequirements');
     })->middleware('can:container.access')->name('shipping-requirements');
+    Route::get('/shipping-requirements-approvals', function () {
+        return Inertia::render('ManageContainer/ShippingRequirementsApprovals');
+    })->middleware('can:container.shipping.approve')->name('shipping-requirements-approvals');
 });
 
 // Container shipments API routes
@@ -209,6 +212,14 @@ Route::middleware(['auth'])->prefix('api/shipping-requirements')->name('shipping
     Route::post('/', [ShipmentTransportController::class, 'createShippingRequirement'])->name('store');
     Route::put('/{shippingRequirement}', [ShipmentTransportController::class, 'updateShippingRequirement'])->name('update');
     Route::delete('/{shippingRequirement}', [ShipmentTransportController::class, 'deleteShippingRequirement'])->name('destroy');
+
+    // Change request routes
+    Route::post('/request-change', [ShipmentTransportController::class, 'requestChange'])->name('request-change');
+
+    // Approval routes
+    Route::get('/pending-change-requests', [ShipmentTransportController::class, 'getPendingChangeRequests'])->name('pending-change-requests');
+    Route::post('/approve-change/{changeRequestId}', [ShipmentTransportController::class, 'approveChangeRequest'])->name('approve-change');
+    Route::post('/reject-change/{changeRequestId}', [ShipmentTransportController::class, 'rejectChangeRequest'])->name('reject-change');
 });
 Route::get('/containers/questions', [InspectionQuestionController::class, 'index'])->middleware('can:container.approve')->name('container.question');
 Route::post('/containers/create-inspection', [ShipmentTransportInspectionController::class, 'createInspection'])->middleware('can:container.approve')->name('container.create-inspection');

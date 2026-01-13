@@ -312,7 +312,9 @@ class ShipmentTransportController extends Controller
      */
     public function getShippingRequirements(Request $request)
     {
-        $query = ShippingRequirement::query();
+        $query = ShippingRequirement::with(['changes' => function($q) {
+            $q->where('status', 'pending')->latest();
+        }]);
 
         // Search functionality
         if ($request->has('search') && !empty($request->search)) {
@@ -336,60 +338,20 @@ class ShipmentTransportController extends Controller
         $perPage = $request->get('per_page', 50);
         $requirements = $query->paginate($perPage);
 
+        // Add approval status information to each requirement
+        $requirements->getCollection()->transform(function ($requirement) {
+            $pendingChange = $requirement->changes->first();
+
+            return array_merge($requirement->toArray(), [
+                'change_requested_at' => $pendingChange ? $pendingChange->created_at : null,
+                'approved_at' => $requirement->approved_at,
+            ]);
+        });
+
         return response()->json($requirements);
     }
 
-    /**
-     * Update shipping requirement.
-     */
-    public function updateShippingRequirement(Request $request, ShippingRequirement $shippingRequirement)
-    {
-        $validated = $request->validate([
-            'region' => 'required|string',
-            'destination' => 'required|string',
-            'risk_level' => 'required|string',
-            'strength_mm' => 'required|string',
-            'requires_seals' => 'required|boolean',
-        ]);
 
-        $shippingRequirement->update($validated);
-
-        return response()->json([
-            'message' => 'Shipping requirement updated successfully.',
-            'data' => $shippingRequirement,
-        ]);
-    }
-
-    /**
-     * Delete shipping requirement.
-     */
-    public function deleteShippingRequirement(ShippingRequirement $shippingRequirement)
-    {
-        $shippingRequirement->delete();
-
-        return response()->json(['message' => 'Shipping requirement deleted successfully']);
-    }
-
-    /**
-     * Create new shipping requirement.
-     */
-    public function createShippingRequirement(Request $request)
-    {
-        $validated = $request->validate([
-            'region' => 'required|string',
-            'destination' => 'required|string|unique:shipping_requirements,destination',
-            'risk_level' => 'required|string',
-            'strength_mm' => 'required|string',
-            'requires_seals' => 'required|boolean',
-        ]);
-
-        $requirement = ShippingRequirement::create($validated);
-
-        return response()->json([
-            'message' => 'Shipping requirement created successfully.',
-            'data' => $requirement,
-        ], 201);
-    }
 
     /**
      * Hold a container with reason.
@@ -500,6 +462,329 @@ class ShipmentTransportController extends Controller
                 }
             }
         }
+    }
+
+    /**
+     * Handle change requests for create, update, and delete operations.
+     */
+    public function requestChange(Request $request)
+    {
+        $user = auth()->user();
+
+        // Check if user has shipping access
+        if (!$user->hasPermissionTo('container.shipping.access')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'change_type' => 'required|in:create,update,delete',
+            'shipping_requirement_id' => 'required_if:change_type,update,delete|exists:shipping_requirements,id',
+            'proposed_data.region' => 'required_if:change_type,create,update|string',
+            'proposed_data.destination' => 'required_if:change_type,create,update|string',
+            'proposed_data.risk_level' => 'required_if:change_type,create,update|string',
+            'proposed_data.strength_mm' => 'required_if:change_type,create,update|string',
+            'proposed_data.requires_seals' => 'required_if:change_type,create,update',
+            'attachment' => 'required|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120',
+        ]);
+
+        // Store attachment
+        $attachmentPath = null;
+        if ($request->hasFile('attachment')) {
+            $attachmentPath = $request->file('attachment')->store('shipping-attachments', 'public');
+        }
+
+        $changeRequestData = [
+            'requested_by' => $user->id,
+            'change_type' => $validated['change_type'],
+            'attachment_path' => $attachmentPath,
+            'status' => 'pending',
+        ];
+
+        if ($validated['change_type'] === 'create') {
+            // For create operations, no shipping_requirement_id needed
+            $changeRequestData['proposed_data'] = [
+                'region' => $validated['proposed_data']['region'],
+                'destination' => $validated['proposed_data']['destination'],
+                'risk_level' => $validated['proposed_data']['risk_level'],
+                'strength_mm' => $validated['proposed_data']['strength_mm'],
+                'requires_seals' => filter_var($validated['proposed_data']['requires_seals'], FILTER_VALIDATE_BOOLEAN),
+            ];
+        } elseif ($validated['change_type'] === 'update') {
+            // For update operations
+            $shippingRequirement = ShippingRequirement::findOrFail($validated['shipping_requirement_id']);
+
+            // Check if at least one field has changed
+            $hasChanges = false;
+            $currentData = $shippingRequirement->only(['region', 'destination', 'risk_level', 'strength_mm', 'requires_seals']);
+
+            foreach (['region', 'destination', 'risk_level', 'strength_mm', 'requires_seals'] as $field) {
+                $proposedValue = $field === 'requires_seals' ?
+                    filter_var($validated['proposed_data'][$field], FILTER_VALIDATE_BOOLEAN) :
+                    $validated['proposed_data'][$field];
+
+                if (isset($proposedValue) && $proposedValue != $currentData[$field]) {
+                    $hasChanges = true;
+                    break;
+                }
+            }
+
+            if (!$hasChanges) {
+                return response()->json(['message' => 'No changes detected. Please modify at least one field.'], 422);
+            }
+
+            $changeRequestData['shipping_requirement_id'] = $shippingRequirement->id;
+            $changeRequestData['original_data'] = $currentData;
+            $changeRequestData['proposed_data'] = [
+                'region' => $validated['proposed_data']['region'],
+                'destination' => $validated['proposed_data']['destination'],
+                'risk_level' => $validated['proposed_data']['risk_level'],
+                'strength_mm' => $validated['proposed_data']['strength_mm'],
+                'requires_seals' => filter_var($validated['proposed_data']['requires_seals'], FILTER_VALIDATE_BOOLEAN),
+            ];
+
+            // Set status to pending
+            $shippingRequirement->update(['status' => 'pending']);
+        } elseif ($validated['change_type'] === 'delete') {
+            // For delete operations
+            $shippingRequirement = ShippingRequirement::findOrFail($validated['shipping_requirement_id']);
+            $changeRequestData['shipping_requirement_id'] = $shippingRequirement->id;
+            $changeRequestData['original_data'] = $shippingRequirement->only(['region', 'destination', 'risk_level', 'strength_mm', 'requires_seals']);
+
+            // Set status to pending
+            $shippingRequirement->update(['status' => 'pending']);
+        }
+
+        // Create change request
+        $changeRequest = \App\Models\ShippingRequirementChange::create($changeRequestData);
+
+        // Fire event for real-time updates
+        \Log::info('Firing ShippingRequirementChangeRequested event', ['change_request_id' => $changeRequest->id]);
+        \App\Events\ShippingRequirementChangeRequested::dispatch($changeRequest);
+
+        $actionMessage = match($validated['change_type']) {
+            'create' => 'creation',
+            'update' => 'change',
+            'delete' => 'deletion',
+        };
+
+        return response()->json([
+            'message' => "Shipping requirement {$actionMessage} request submitted for approval",
+            'data' => $changeRequest->load('requester'),
+        ]);
+    }
+
+    /**
+     * Request update to shipping requirement (creates change request).
+     */
+    public function updateShippingRequirement(Request $request, ShippingRequirement $shippingRequirement)
+    {
+        $user = auth()->user();
+
+        // Check if user has shipping access
+        if (!$user->hasPermissionTo('container.shipping.access')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'region' => 'required|string',
+            'destination' => 'required|string',
+            'risk_level' => 'required|string',
+            'strength_mm' => 'required|string',
+            'requires_seals' => 'required',
+            'attachment' => 'required|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120',
+        ]);
+
+        // Convert requires_seals to boolean
+        $validated['requires_seals'] = filter_var($validated['requires_seals'], FILTER_VALIDATE_BOOLEAN);
+
+        // Check if at least one field has changed
+        $hasChanges = false;
+        $currentData = $shippingRequirement->only(['region', 'destination', 'risk_level', 'strength_mm', 'requires_seals']);
+
+        foreach (['region', 'destination', 'risk_level', 'strength_mm', 'requires_seals'] as $field) {
+            if (isset($validated[$field]) && $validated[$field] != $currentData[$field]) {
+                $hasChanges = true;
+                break;
+            }
+        }
+
+        if (!$hasChanges) {
+            return response()->json(['message' => 'No changes detected. Please modify at least one field.'], 422);
+        }
+
+        // Store attachment if provided
+        $attachmentPath = null;
+        if ($request->hasFile('attachment')) {
+            $attachmentPath = $request->file('attachment')->store('shipping-attachments', 'public');
+        }
+
+        // Create change request
+        $changeRequest = \App\Models\ShippingRequirementChange::create([
+            'shipping_requirement_id' => $shippingRequirement->id,
+            'requested_by' => $user->id,
+            'change_type' => 'update',
+            'original_data' => $shippingRequirement->only(['region', 'destination', 'risk_level', 'strength_mm', 'requires_seals']),
+            'proposed_data' => [
+                'region' => $validated['region'],
+                'destination' => $validated['destination'],
+                'risk_level' => $validated['risk_level'],
+                'strength_mm' => $validated['strength_mm'],
+                'requires_seals' => $validated['requires_seals'],
+            ],
+            'attachment_path' => $attachmentPath,
+            'status' => 'pending',
+        ]);
+
+        // Fire event for real-time updates
+        \Log::info('Firing ShippingRequirementChangeRequested event', ['change_request_id' => $changeRequest->id]);
+        \App\Events\ShippingRequirementChangeRequested::dispatch($changeRequest);
+
+        return response()->json([
+            'message' => 'Change request submitted successfully. Awaiting approval.',
+            'data' => $changeRequest->load('requester'),
+        ]);
+    }
+
+    /**
+     * Get all change requests (for approval page).
+     */
+    public function getPendingChangeRequests(Request $request)
+    {
+        $user = auth()->user();
+
+        // Check if user has shipping approve permission
+        if (!$user->hasPermissionTo('container.shipping.approve')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $query = \App\Models\ShippingRequirementChange::with(['shippingRequirement', 'requester', 'reviewer']);
+
+        // Search functionality
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('shippingRequirement', function ($subQ) use ($search) {
+                    $subQ->where('destination', 'like', "%{$search}%")
+                         ->orWhere('region', 'like', "%{$search}%");
+                });
+            });
+        }
+
+        // Sorting
+        $sortBy = $request->get('sort_by', 'created_at');
+        $sortDirection = $request->get('sort_direction', 'desc');
+
+        if (in_array($sortBy, ['created_at', 'change_type'])) {
+            $query->orderBy($sortBy, $sortDirection);
+        }
+
+        // Pagination
+        $perPage = $request->get('per_page', 50);
+        $changeRequests = $query->paginate($perPage);
+
+        return response()->json($changeRequests);
+    }
+
+    /**
+     * Approve a change request.
+     */
+    public function approveChangeRequest(Request $request, $changeRequestId)
+    {
+        $user = auth()->user();
+
+        // Check if user has shipping approve permission
+        if (!$user->hasPermissionTo('container.shipping.approve')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $changeRequest = \App\Models\ShippingRequirementChange::findOrFail($changeRequestId);
+
+        if ($changeRequest->status !== 'pending') {
+            return response()->json(['message' => 'Change request has already been processed'], 400);
+        }
+
+        $validated = $request->validate([
+            'review_comments' => 'nullable|string|max:1000',
+        ]);
+
+        // Process the change based on type
+        $shippingRequirement = $changeRequest->shippingRequirement;
+
+        if ($changeRequest->change_type === 'update') {
+            // Apply the update
+            $shippingRequirement->update(array_merge($changeRequest->proposed_data, [
+                'last_updated_by' => $changeRequest->requested_by,
+                'attachment_path' => $changeRequest->attachment_path,
+                'change_requested_at' => $changeRequest->created_at,
+                'requires_approval' => false,
+                'approved_by' => $user->id,
+                'approved_at' => now(),
+                'status' => 'normal', // Set status back to normal
+            ]));
+        } elseif ($changeRequest->change_type === 'delete') {
+            // Delete the requirement
+            $shippingRequirement->delete();
+        }
+
+        // Update the change request
+        $changeRequest->update([
+            'status' => 'approved',
+            'reviewed_by' => $user->id,
+            'reviewed_at' => now(),
+            'review_comments' => $validated['review_comments'] ?? null,
+        ]);
+
+        // Fire event for real-time updates
+        \App\Events\ShippingRequirementChangeProcessed::dispatch($changeRequest, $shippingRequirement, 'approved');
+
+        return response()->json([
+            'message' => 'Change request approved successfully.',
+            'data' => $changeRequest->load(['shippingRequirement', 'requester', 'reviewer']),
+        ]);
+    }
+
+    /**
+     * Reject a change request.
+     */
+    public function rejectChangeRequest(Request $request, $changeRequestId)
+    {
+        $user = auth()->user();
+
+        // Check if user has shipping approve permission
+        if (!$user->hasPermissionTo('container.shipping.approve')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $changeRequest = \App\Models\ShippingRequirementChange::findOrFail($changeRequestId);
+
+        if ($changeRequest->status !== 'pending') {
+            return response()->json(['message' => 'Change request has already been processed'], 400);
+        }
+
+        $validated = $request->validate([
+            'review_comments' => 'required|string|max:1000',
+        ]);
+
+        // Update the change request
+        $changeRequest->update([
+            'status' => 'rejected',
+            'reviewed_by' => $user->id,
+            'reviewed_at' => now(),
+            'review_comments' => $validated['review_comments'],
+        ]);
+
+        // Set status back to normal for the shipping requirement
+        if ($changeRequest->shippingRequirement) {
+            $changeRequest->shippingRequirement->update(['status' => 'normal']);
+        }
+
+        // Fire event for real-time updates
+        \App\Events\ShippingRequirementChangeProcessed::dispatch($changeRequest, $changeRequest->shippingRequirement, 'rejected');
+
+        return response()->json([
+            'message' => 'Change request rejected successfully.',
+            'data' => $changeRequest->load(['shippingRequirement', 'requester', 'reviewer']),
+        ]);
     }
 
     /**

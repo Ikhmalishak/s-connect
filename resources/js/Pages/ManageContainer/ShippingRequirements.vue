@@ -35,11 +35,13 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
     DialogTrigger,
     DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -80,8 +82,18 @@ const formData = ref({
     risk_level: "",
     strength_mm: "",
     requires_seals: false,
+    attachment: null,
 });
 const formLoading = ref(false);
+
+// Delete form data
+const deleteReason = ref("");
+const deleteAttachment = ref(null);
+
+// Refs
+const attachmentRef = ref(null);
+const editAttachmentRef = ref(null);
+const deleteAttachmentRef = ref(null);
 
 // Toast
 const { toast } = useToast();
@@ -155,6 +167,7 @@ const openCreateDialog = () => {
         risk_level: "",
         strength_mm: "",
         requires_seals: false,
+        attachment: null,
     };
     showCreateDialog.value = true;
 };
@@ -167,6 +180,7 @@ const openEditDialog = (requirement: any) => {
         risk_level: requirement.risk_level,
         strength_mm: requirement.strength_mm,
         requires_seals: requirement.requires_seals,
+        attachment: null,
     };
     showEditDialog.value = true;
 };
@@ -174,17 +188,34 @@ const openEditDialog = (requirement: any) => {
 const createRequirement = async () => {
     formLoading.value = true;
     try {
-        await axios.post('/api/shipping-requirements', formData.value);
+        const formDataToSend = new FormData();
+        formDataToSend.append('change_type', 'create');
+        formDataToSend.append('proposed_data[region]', formData.value.region);
+        formDataToSend.append('proposed_data[destination]', formData.value.destination);
+        formDataToSend.append('proposed_data[risk_level]', formData.value.risk_level);
+        formDataToSend.append('proposed_data[strength_mm]', formData.value.strength_mm);
+        formDataToSend.append('proposed_data[requires_seals]', formData.value.requires_seals ? '1' : '0');
+
+        if (formData.value.attachment) {
+            formDataToSend.append('attachment', formData.value.attachment);
+        }
+
+        await axios.post('/api/shipping-requirements/request-change', formDataToSend, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+
         toast({
             title: "Success",
-            description: "Shipping requirement created successfully",
-                        variant: "destroy",
+            description: "Shipping requirement creation request submitted for approval",
+            variant: "default",
         });
         showCreateDialog.value = false;
         fetchRequirements();
     } catch (error: any) {
-        console.error("Failed to create requirement:", error);
-        const message = error.response?.data?.message || "Failed to create shipping requirement";
+        console.error("Failed to submit create request:", error);
+        const message = error.response?.data?.message || "Failed to submit creation request";
         toast({
             title: "Error",
             description: message,
@@ -200,17 +231,35 @@ const updateRequirement = async () => {
 
     formLoading.value = true;
     try {
-        await axios.put(`/api/shipping-requirements/${editingRequirement.value.id}`, formData.value);
+        const formDataToSend = new FormData();
+        formDataToSend.append('change_type', 'update');
+        formDataToSend.append('shipping_requirement_id', editingRequirement.value.id.toString());
+        formDataToSend.append('proposed_data[region]', formData.value.region);
+        formDataToSend.append('proposed_data[destination]', formData.value.destination);
+        formDataToSend.append('proposed_data[risk_level]', formData.value.risk_level);
+        formDataToSend.append('proposed_data[strength_mm]', formData.value.strength_mm);
+        formDataToSend.append('proposed_data[requires_seals]', formData.value.requires_seals ? '1' : '0');
+
+        if (formData.value.attachment) {
+            formDataToSend.append('attachment', formData.value.attachment);
+        }
+
+        await axios.post('/api/shipping-requirements/request-change', formDataToSend, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+
         toast({
             title: "Success",
-            description: "Shipping requirement updated successfully",
+            description: "Shipping requirement change request submitted for approval",
         });
         showEditDialog.value = false;
         editingRequirement.value = null;
         fetchRequirements();
     } catch (error: any) {
-        console.error("Failed to update requirement:", error);
-        const message = error.response?.data?.message || "Failed to update shipping requirement";
+        console.error("Failed to submit update request:", error);
+        const message = error.response?.data?.message || "Failed to submit update request";
         toast({
             title: "Error",
             description: message,
@@ -223,17 +272,27 @@ const updateRequirement = async () => {
 
 const deleteRequirement = async (requirement: any) => {
     try {
-        await axios.delete(`/api/shipping-requirements/${requirement.id}`);
+        const formDataToSend = new FormData();
+        formDataToSend.append('change_type', 'delete');
+        formDataToSend.append('shipping_requirement_id', requirement.id.toString());
+
+        await axios.post('/api/shipping-requirements/request-change', formDataToSend, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+
         toast({
             title: "Success",
-            description: "Shipping requirement deleted successfully",
+            description: "Shipping requirement deletion request submitted for approval",
         });
         fetchRequirements();
     } catch (error: any) {
-        console.error("Failed to delete requirement:", error);
+        console.error("Failed to submit delete request:", error);
+        const message = error.response?.data?.message || "Failed to submit deletion request";
         toast({
             title: "Error",
-            description: "Failed to delete shipping requirement",
+            description: message,
             variant: "destructive",
         });
     }
@@ -256,9 +315,137 @@ const getSealsBadgeVariant = (requires: boolean) => {
     return requires ? 'default' : 'secondary';
 };
 
+// File handling methods
+const handleFileSelect = (event: Event) => {
+    const target = event.target as HTMLInputElement;
+    const file = target.files?.[0];
+    if (file) {
+        // Validate file size (5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            toast({
+                title: "Error",
+                description: "File size must be less than 5MB",
+                variant: "destructive",
+            });
+            return;
+        }
+        formData.value.attachment = file;
+    }
+};
+
+const removeAttachment = () => {
+    formData.value.attachment = null;
+    if (attachmentRef.value) {
+        (attachmentRef.value as HTMLInputElement).value = '';
+    }
+};
+
+// Delete-specific methods
+const handleDeleteFileSelect = (event: Event) => {
+    const target = event.target as HTMLInputElement;
+    const file = target.files?.[0];
+    if (file) {
+        // Validate file size (5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            toast({
+                title: "Error",
+                description: "File size must be less than 5MB",
+                variant: "destructive",
+            });
+            return;
+        }
+        deleteAttachment.value = file;
+    }
+};
+
+const removeDeleteAttachment = () => {
+    deleteAttachment.value = null;
+    if (deleteAttachmentRef.value) {
+        (deleteAttachmentRef.value as HTMLInputElement).value = '';
+    }
+};
+
+const clearDeleteForm = () => {
+    deleteReason.value = "";
+    deleteAttachment.value = null;
+    if (deleteAttachmentRef.value) {
+        (deleteAttachmentRef.value as HTMLInputElement).value = '';
+    }
+};
+
+const submitDeleteRequest = async (requirement: any) => {
+    if (!deleteReason.value.trim() || !deleteAttachment.value) {
+        return;
+    }
+
+    try {
+        const formDataToSend = new FormData();
+        formDataToSend.append('change_type', 'delete');
+        formDataToSend.append('shipping_requirement_id', requirement.id.toString());
+        formDataToSend.append('proposed_data[reason]', deleteReason.value);
+
+        if (deleteAttachment.value) {
+            formDataToSend.append('attachment', deleteAttachment.value);
+        }
+
+        await axios.post('/api/shipping-requirements/request-change', formDataToSend, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+
+        toast({
+            title: "Success",
+            description: "Shipping requirement deletion request submitted for approval",
+        });
+
+        clearDeleteForm();
+        fetchRequirements();
+    } catch (error: any) {
+        console.error("Failed to submit delete request:", error);
+        const message = error.response?.data?.message || "Failed to submit deletion request";
+        toast({
+            title: "Error",
+            description: message,
+            variant: "destructive",
+        });
+    }
+};
+
+const formatDate = (dateString: string) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+};
+
 // Lifecycle
 onMounted(() => {
     fetchRequirements();
+
+    // Listen for real-time updates
+    if (window.Echo) {
+        window.Echo.private('shipping-requirements')
+            .listen('.change.requested', (e) => {
+                console.log('Shipping requirement change requested:', e);
+                // Refresh the requirements list to show pending status
+                fetchRequirements();
+            })
+            .listen('.change.processed', (e) => {
+                console.log('Shipping requirement change processed:', e);
+                // Refresh the requirements list to show updated data
+                fetchRequirements();
+            })
+            .error((error) => {
+                console.error('WebSocket error on shipping-requirements channel:', error);
+            });
+
+        console.log('Listening for shipping requirement change events.');
+    } else {
+        console.error('Laravel Echo is not initialized. Please check resources/js/app.js.');
+    }
 });
 </script>
 
@@ -321,9 +508,12 @@ onMounted(() => {
                             Add Requirement
                         </Button>
                     </DialogTrigger>
-                    <DialogContent class="max-w-md">
+                    <DialogContent class="max-w-lg max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
-                            <DialogTitle>Add Shipping Requirement</DialogTitle>
+                            <DialogTitle>Request New Shipping Requirement</DialogTitle>
+                            <DialogDescription>
+                                Your request will be submitted for approval. Supporting documentation is required.
+                            </DialogDescription>
                         </DialogHeader>
                         <div class="space-y-4">
                             <div>
@@ -355,12 +545,64 @@ onMounted(() => {
                                 <Checkbox id="requires_seals" v-model="formData.requires_seals" />
                                 <Label for="requires_seals">Requires GPS and Fork Seals</Label>
                             </div>
+
+                            <!-- Attachment Upload -->
+                            <div>
+                                <Label for="create-attachment">Supporting Documentation *</Label>
+                                <div class="mt-1">
+                                    <input
+                                        type="file"
+                                        id="create-attachment"
+                                        ref="attachmentRef"
+                                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                        @change="handleFileSelect"
+                                        class="hidden"
+                                    />
+                                    <div
+                                        @click="() => attachmentRef?.click?.()"
+                                        class="border-2 border-dashed border-gray-300 rounded-md p-4 text-center cursor-pointer hover:border-gray-400 transition-colors"
+                                    >
+                                        <div v-if="!formData.attachment" class="space-y-2">
+                                            <div class="text-gray-400">
+                                                <svg class="mx-auto h-8 w-8" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                                </svg>
+                                            </div>
+                                            <p class="text-sm text-gray-600">
+                                                Click to upload supporting documents
+                                            </p>
+                                            <p class="text-xs text-gray-500">
+                                                PDF, DOC, DOCX, JPG, PNG up to 5MB
+                                            </p>
+                                        </div>
+                                        <div v-else class="space-y-2">
+                                            <div class="text-green-600">
+                                                <svg class="mx-auto h-8 w-8" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                                </svg>
+                                            </div>
+                                            <p class="text-sm font-medium text-gray-900">
+                                                {{ formData.attachment.name }}
+                                            </p>
+                                            <p class="text-xs text-gray-500">
+                                                {{ (formData.attachment.size / 1024 / 1024).toFixed(2) }} MB
+                                            </p>
+                                            <button
+                                                @click.stop="removeAttachment"
+                                                class="text-xs text-red-600 hover:text-red-800"
+                                            >
+                                                Remove file
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <DialogFooter>
                             <Button variant="outline" @click="showCreateDialog = false">Cancel</Button>
                             <Button @click="createRequirement" :disabled="formLoading">
-                                <span v-if="formLoading">Creating...</span>
-                                <span v-else>Create</span>
+                                <span v-if="formLoading">Submitting...</span>
+                                <span v-else>Submit for Approval</span>
                             </Button>
                         </DialogFooter>
                     </DialogContent>
@@ -370,6 +612,18 @@ onMounted(() => {
 
         <!-- Requirements Table -->
         <Card class="p-6">
+            <!-- Status Legend -->
+            <div class="mb-4 flex items-center gap-6 text-sm">
+                <div class="flex items-center gap-2">
+                    <div class="w-4 h-4 bg-yellow-100 border border-yellow-300 rounded"></div>
+                    <span>Pending Approval</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-4 h-4 bg-white border border-gray-200 rounded"></div>
+                    <span>Approved</span>
+                </div>
+            </div>
+
             <div class="overflow-x-auto">
                 <Table>
                     <TableHeader>
@@ -439,6 +693,7 @@ onMounted(() => {
                                     />
                                 </div>
                             </TableHead>
+                            <TableHead>Last Updated</TableHead>
                             <TableHead class="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -456,7 +711,12 @@ onMounted(() => {
                                 No shipping requirements found
                             </TableCell>
                         </TableRow>
-                        <TableRow v-else v-for="requirement in paginatedRequirements" :key="requirement.id">
+                        <TableRow
+                            v-else
+                            v-for="requirement in paginatedRequirements"
+                            :key="requirement.id"
+                            :class="requirement.status === 'pending' ? 'bg-yellow-50' : ''"
+                        >
                             <TableCell class="font-medium">{{ requirement.region }}</TableCell>
                             <TableCell>{{ requirement.destination }}</TableCell>
                             <TableCell>
@@ -470,36 +730,132 @@ onMounted(() => {
                                     {{ requirement.requires_seals ? 'Yes' : 'No' }}
                                 </Badge>
                             </TableCell>
+                            <TableCell class="text-sm text-gray-600">
+                                <div v-if="requirement.approved_at">
+                                    {{ formatDate(requirement.approved_at) }}
+                                </div>
+                                <div v-else-if="requirement.change_requested_at">
+                                    <span class="text-yellow-600">Pending Approval</span>
+                                </div>
+                                <div v-else>
+                                    {{ formatDate(requirement.created_at) }}
+                                </div>
+                            </TableCell>
                             <TableCell class="text-right">
                                 <div class="flex items-center justify-end gap-2">
                                     <Button
                                         variant="outline"
                                         size="sm"
+                                        :disabled="requirement.status === 'pending'"
                                         @click="openEditDialog(requirement)"
                                     >
                                         <Edit class="h-4 w-4" />
                                     </Button>
                                     <AlertDialog>
                                         <AlertDialogTrigger as-child>
-                                            <Button variant="outline" size="sm" class="text-red-600 hover:text-red-700">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                class="text-red-600 hover:text-red-700"
+                                                :disabled="requirement.status === 'pending'"
+                                            >
                                                 <Trash2 class="h-4 w-4" />
                                             </Button>
                                         </AlertDialogTrigger>
-                                        <AlertDialogContent>
+                                        <AlertDialogContent class="max-w-lg max-h-[90vh] overflow-y-auto">
                                             <AlertDialogHeader>
-                                                <AlertDialogTitle>Delete Shipping Requirement</AlertDialogTitle>
+                                                <AlertDialogTitle>Request Shipping Requirement Deletion</AlertDialogTitle>
                                                 <AlertDialogDescription>
-                                                    Are you sure you want to delete the requirement for {{ requirement.destination }}?
-                                                    This action cannot be undone.
+                                                    Your deletion request will be submitted for approval. Please provide justification and supporting documentation.
                                                 </AlertDialogDescription>
                                             </AlertDialogHeader>
+
+                                            <!-- Current Requirement Info -->
+                                            <div class="bg-gray-50 p-3 rounded-md mb-4">
+                                                <h4 class="text-sm font-medium text-gray-900 mb-2">Requirement to Delete</h4>
+                                                <div class="grid grid-cols-2 gap-2 text-sm">
+                                                    <div><strong>Region:</strong> {{ requirement.region }}</div>
+                                                    <div><strong>Destination:</strong> {{ requirement.destination }}</div>
+                                                    <div><strong>Risk Level:</strong> {{ requirement.risk_level }}</div>
+                                                    <div><strong>Strength:</strong> {{ requirement.strength_mm }}</div>
+                                                    <div class="col-span-2"><strong>Requires Seals:</strong> {{ requirement.requires_seals ? 'Yes' : 'No' }}</div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Deletion Reason -->
+                                            <div class="space-y-4">
+                                                <div>
+                                                    <Label for="delete-reason">Deletion Reason *</Label>
+                                                    <Textarea
+                                                        id="delete-reason"
+                                                        v-model="deleteReason"
+                                                        placeholder="Please explain why this shipping requirement should be deleted..."
+                                                        rows="3"
+                                                        class="mt-1"
+                                                    />
+                                                </div>
+
+                                                <!-- Attachment Upload -->
+                                                <div>
+                                                    <Label for="delete-attachment">Supporting Documentation *</Label>
+                                                    <div class="mt-1">
+                                                        <input
+                                                            type="file"
+                                                            id="delete-attachment"
+                                                            ref="deleteAttachmentRef"
+                                                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                                            @change="handleDeleteFileSelect"
+                                                            class="hidden"
+                                                        />
+                                                        <div
+                                                            @click="() => deleteAttachmentRef?.click?.()"
+                                                            class="border-2 border-dashed border-gray-300 rounded-md p-4 text-center cursor-pointer hover:border-gray-400 transition-colors"
+                                                        >
+                                                            <div v-if="!deleteAttachment" class="space-y-2">
+                                                                <div class="text-gray-400">
+                                                                    <svg class="mx-auto h-8 w-8" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                                                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                                                    </svg>
+                                                                </div>
+                                                                <p class="text-sm text-gray-600">
+                                                                    Click to upload supporting documents
+                                                                </p>
+                                                                <p class="text-xs text-gray-500">
+                                                                    PDF, DOC, DOCX, JPG, PNG up to 5MB
+                                                                </p>
+                                                            </div>
+                                                            <div v-else class="space-y-2">
+                                                                <div class="text-green-600">
+                                                                    <svg class="mx-auto h-8 w-8" fill="currentColor" viewBox="0 0 20 20">
+                                                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                                                    </svg>
+                                                                </div>
+                                                                <p class="text-sm font-medium text-gray-900">
+                                                                    {{ deleteAttachment.name }}
+                                                                </p>
+                                                                <p class="text-xs text-gray-500">
+                                                                    {{ (deleteAttachment.size / 1024 / 1024).toFixed(2) }} MB
+                                                                </p>
+                                                                <button
+                                                                    @click.stop="removeDeleteAttachment"
+                                                                    class="text-xs text-red-600 hover:text-red-800"
+                                                                >
+                                                                    Remove file
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
                                             <AlertDialogFooter>
-                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogCancel @click="clearDeleteForm">Cancel</AlertDialogCancel>
                                                 <AlertDialogAction
-                                                    @click="deleteRequirement(requirement)"
+                                                    @click="submitDeleteRequest(requirement)"
+                                                    :disabled="!deleteReason.trim() || !deleteAttachment"
                                                     class="bg-red-600 hover:bg-red-700"
                                                 >
-                                                    Delete
+                                                    Submit for Approval
                                                 </AlertDialogAction>
                                             </AlertDialogFooter>
                                         </AlertDialogContent>
@@ -542,46 +898,121 @@ onMounted(() => {
 
         <!-- Edit Dialog -->
         <Dialog v-model:open="showEditDialog">
-            <DialogContent class="max-w-md">
-                <DialogHeader>
-                    <DialogTitle>Edit Shipping Requirement</DialogTitle>
-                </DialogHeader>
+            <DialogContent class="max-w-lg max-h-[90vh] overflow-y-auto">
+                        <DialogHeader>
+                            <DialogTitle>Request Shipping Requirement Changes</DialogTitle>
+                            <DialogDescription>
+                                Your changes will be submitted for approval. Supporting documentation is required.
+                            </DialogDescription>
+                        </DialogHeader>
                 <div class="space-y-4">
-                    <div>
-                        <Label for="edit-region">Region *</Label>
-                        <Input id="edit-region" v-model="formData.region" placeholder="e.g., Americas, APAC, EMEA" />
+                    <!-- Current Values (Read-only) -->
+                    <div class="bg-gray-50 p-3 rounded-md">
+                        <h4 class="text-sm font-medium text-gray-900 mb-2">Current Values</h4>
+                        <div class="grid grid-cols-2 gap-2 text-sm">
+                            <div><strong>Region:</strong> {{ editingRequirement?.region }}</div>
+                            <div><strong>Destination:</strong> {{ editingRequirement?.destination }}</div>
+                            <div><strong>Risk Level:</strong> {{ editingRequirement?.risk_level }}</div>
+                            <div><strong>Strength:</strong> {{ editingRequirement?.strength_mm }}</div>
+                            <div class="col-span-2"><strong>Requires Seals:</strong> {{ editingRequirement?.requires_seals ? 'Yes' : 'No' }}</div>
+                        </div>
                     </div>
-                    <div>
-                        <Label for="edit-destination">Destination *</Label>
-                        <Input id="edit-destination" v-model="formData.destination" placeholder="e.g., Canada, Japan, Germany" />
+
+                    <!-- New Values -->
+                    <div class="border-t pt-4">
+                        <h4 class="text-sm font-medium text-gray-900 mb-3">Proposed Changes</h4>
+                        <div class="space-y-3">
+                            <div>
+                                <Label for="edit-region">Region *</Label>
+                                <Input id="edit-region" v-model="formData.region" placeholder="e.g., Americas, APAC, EMEA" />
+                            </div>
+                            <div>
+                                <Label for="edit-destination">Destination *</Label>
+                                <Input id="edit-destination" v-model="formData.destination" placeholder="e.g., Canada, Japan, Germany" />
+                            </div>
+                            <div>
+                                <Label for="edit-risk_level">Risk Level *</Label>
+                                <Select v-model="formData.risk_level">
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select risk level" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="High">High</SelectItem>
+                                        <SelectItem value="Medium">Medium</SelectItem>
+                                        <SelectItem value="Low">Low</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div>
+                                <Label for="edit-strength_mm">Strength (mm) *</Label>
+                                <Input id="edit-strength_mm" v-model="formData.strength_mm" placeholder="e.g., 8mm, 3mm" />
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <Checkbox id="edit-requires_seals" v-model="formData.requires_seals" />
+                                <Label for="edit-requires_seals">Requires GPS and Fork Seals</Label>
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <Label for="edit-risk_level">Risk Level *</Label>
-                        <Select v-model="formData.risk_level">
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select risk level" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="High">High</SelectItem>
-                                <SelectItem value="Medium">Medium</SelectItem>
-                                <SelectItem value="Low">Low</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div>
-                        <Label for="edit-strength_mm">Strength (mm) *</Label>
-                        <Input id="edit-strength_mm" v-model="formData.strength_mm" placeholder="e.g., 8mm, 3mm" />
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <Checkbox id="edit-requires_seals" v-model="formData.requires_seals" />
-                        <Label for="edit-requires_seals">Requires GPS and Fork Seals</Label>
+
+                    <!-- Attachment Upload -->
+                    <div class="border-t pt-4">
+                        <div>
+                            <Label for="attachment">Supporting Documentation *</Label>
+                            <div class="mt-1">
+                                <input
+                                    type="file"
+                                    id="edit-attachment"
+                                    ref="editAttachmentRef"
+                                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                    @change="handleFileSelect"
+                                    class="hidden"
+                                />
+                                <div
+                                    @click="() => editAttachmentRef?.click?.()"
+                                    class="border-2 border-dashed border-gray-300 rounded-md p-4 text-center cursor-pointer hover:border-gray-400 transition-colors"
+                                >
+                                    <div v-if="!formData.attachment" class="space-y-2">
+                                        <div class="text-gray-400">
+                                            <svg class="mx-auto h-8 w-8" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                            </svg>
+                                        </div>
+                                        <p class="text-sm text-gray-600">
+                                            Click to upload supporting documents
+                                        </p>
+                                        <p class="text-xs text-gray-500">
+                                            PDF, DOC, DOCX, JPG, PNG up to 5MB
+                                        </p>
+                                    </div>
+                                    <div v-else class="space-y-2">
+                                        <div class="text-green-600">
+                                            <svg class="mx-auto h-8 w-8" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                            </svg>
+                                        </div>
+                                        <p class="text-sm font-medium text-gray-900">
+                                            {{ formData.attachment.name }}
+                                        </p>
+                                        <p class="text-xs text-gray-500">
+                                            {{ (formData.attachment.size / 1024 / 1024).toFixed(2) }} MB
+                                        </p>
+                                        <button
+                                            @click.stop="removeAttachment"
+                                            class="text-xs text-red-600 hover:text-red-800"
+                                        >
+                                            Remove file
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <DialogFooter>
                     <Button variant="outline" @click="showEditDialog = false">Cancel</Button>
                     <Button @click="updateRequirement" :disabled="formLoading">
-                        <span v-if="formLoading">Updating...</span>
-                        <span v-else>Update</span>
+                        <span v-if="formLoading">Submitting...</span>
+                        <span v-else>Submit for Approval</span>
                     </Button>
                 </DialogFooter>
             </DialogContent>
