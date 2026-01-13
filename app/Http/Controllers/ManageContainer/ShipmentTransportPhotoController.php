@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\ManageContainer;
 
 use App\Http\Controllers\Controller;
+use App\Models\ShipmentTransport;
 use App\Models\ShipmentTransportPhoto;
 use Illuminate\Http\Request;
 
@@ -31,9 +32,11 @@ class ShipmentTransportPhotoController extends Controller
             'shipment_transport_id' => 'required|exists:shipment_transports,id',
         ];
 
-        // Add validation rules for each photo type
+        // Add validation rules only for photo types that are actually sent
         foreach ($photoTypes as $type) {
-            $rules[$type] = 'nullable|image|max:5120'; // each file must be an image, max 5MB, optional
+            if ($request->hasFile($type)) {
+                $rules[$type] = 'required|image|max:5120'; // required if sent, must be image, max 5MB
+            }
         }
 
         $validated = $request->validate($rules);
@@ -50,34 +53,77 @@ class ShipmentTransportPhotoController extends Controller
         }
 
         $createdPhotos = [];
+        $uploadedPhotoCount = 0;
 
         foreach ($photoTypes as $type) {
             if ($request->hasFile($type)) {
                 $photo = $request->file($type);
                 $path = $photo->store('container_photo', 'public');
 
-                $createdPhotos[$type] = ShipmentTransportPhoto::create([
-                    'shipment_transport_id' => $validated['shipment_transport_id'],
-                    'label' => $type,
-                    'photo_path' => $path,
-                    'taken_by' => auth()->user()->id
-                ]);
+                // Check if photo of this type already exists for this shipment
+                $existingPhoto = ShipmentTransportPhoto::where('shipment_transport_id', $validated['shipment_transport_id'])
+                    ->where('label', $type)
+                    ->first();
+
+                if ($existingPhoto) {
+                    // Update existing photo
+                    $existingPhoto->update([
+                        'photo_path' => $path,
+                        'taken_by' => auth()->user()->id
+                    ]);
+                    $createdPhotos[$type] = $existingPhoto;
+                } else {
+                    // Create new photo
+                    $createdPhotos[$type] = ShipmentTransportPhoto::create([
+                        'shipment_transport_id' => $validated['shipment_transport_id'],
+                        'label' => $type,
+                        'photo_path' => $path,
+                        'taken_by' => auth()->user()->id
+                    ]);
+                }
+
+                $uploadedPhotoCount++;
             }
         }
 
-        // Update container stage and trigger department approvals
-        $container->update(['stage' => 'container_loading_report_approval']);
+        // Only trigger approvals if this is a bulk upload (multiple photos) or if explicitly creating record
+        // For individual photo uploads, just save them without triggering workflow
+        if ($uploadedPhotoCount > 1 || $request->input('create_record', false)) {
+            // Update container stage and trigger department approvals
+            $container->update(['stage' => 'container_loading_report_approval']);
 
-        // Broadcast real-time update for photo upload
-        broadcast(new \App\Events\ContainerStageUpdated($container))->toOthers();
+            // Broadcast real-time update for photo upload
+            broadcast(new \App\Events\ContainerStageUpdated($container))->toOthers();
 
-        // Create department approval requests
-        $approvalController = new \App\Http\Controllers\ManageContainer\ShipmentTransportApprovalController();
-        $approvalController->createDepartmentApprovals($container);
+            // Create department approval requests
+            $approvalController = new \App\Http\Controllers\ManageContainer\ShipmentTransportApprovalController();
+            $approvalController->createDepartmentApprovals($container);
+
+            $message = $uploadedPhotoCount > 1 ? 'Photos uploaded successfully.' : 'Record created successfully.';
+        } else {
+            // Individual photo upload - just save without triggering workflow
+            $message = 'Photo uploaded successfully.';
+        }
 
         return response()->json([
-            'message' => 'Photos uploaded successfully.',
+            'message' => $message,
             'data' => $createdPhotos,
+        ]);
+    }
+
+    public function getPhotos(ShipmentTransport $shipmentTransport)
+    {
+        $user = auth()->user();
+
+        // Check if shipment transport belongs to user's site (unless superadmin)
+        if (!$user->hasPermissionTo('superadmin') && $shipmentTransport->site_id !== $user->site_id) {
+            return response()->json(['message' => 'Unauthorized access to shipment transport'], 403);
+        }
+
+        $photos = $shipmentTransport->photo()->get();
+
+        return response()->json([
+            'data' => $photos
         ]);
     }
 

@@ -207,6 +207,32 @@ function completeOnboarding(containerId) {
     emit("openContainerSecurityCheckingModal", containerId);
 }
 
+function isRecordComplete(photos) {
+    // Check if all 12 required photo types are uploaded
+    const requiredPhotoTypes = [
+        'pallet_condition_photo',
+        'pallet_label_photo',
+        'gps_photo_before_installation',
+        'container_truck_photo',
+        'empty_container_photo',
+        'inside_gps_photo',
+        'half_loaded_photo',
+        'one_side_door_closed_with_container_number_photo',
+        'complete_loaded_photo',
+        'outside_gps_photo',
+        'security_seal_photo',
+        'container_full_seal_photo'
+    ];
+
+    if (!photos || photos.length === 0) {
+        return false;
+    }
+
+    // Check if all required photo types are present
+    const uploadedLabels = photos.map(photo => photo.label);
+    return requiredPhotoTypes.every(type => uploadedLabels.includes(type));
+}
+
 </script>
 
 <template>
@@ -423,35 +449,63 @@ function completeOnboarding(containerId) {
                             </td>
 
                             <td class="p-2">
-                                <CustomTooltip
-                                    v-if="container.photo && container.photo.length === 0"
-                                    :text="canCreateRecord ? 'Upload loading photos and documentation' : 'Requires Warehouse department permission'"
-                                    position="top"
-                                >
-                                    <Button
-                                        v-if="
-                                            container.photo &&
-                                            container.photo.length === 0
-                                        "
-                                        variant="outline"
-                                        :class="[
-                                            'text-white w-[150px]',
-                                            container.stage === 'container_loading_report' && canCreateRecord
-                                                ? 'bg-blue-600 hover:bg-blue-700'
-                                                : 'bg-gray-400 cursor-not-allowed',
-                                        ]"
-                                        :disabled="container.stage !== 'container_loading_report' || !canCreateRecord || container.is_on_hold"
-                                        @click="
-                                            container.stage === 'container_loading_report' && canCreateRecord && !container.is_on_hold
-                                                ? $emit('openCreateContainerRecordModal', container.id)
-                                                : null
-                                        "
+                                <!-- Only show photo options if inspection is passed -->
+                                <template v-if="container.inspection && container.inspection.status === 'passed'">
+                                    <CustomTooltip
+                                        v-if="isRecordComplete(container.photo || [])"
+                                        :text="canCreateRecord ? 'All photos uploaded - create final record for approval' : 'Requires Warehouse department permission'"
+                                        position="top"
                                     >
-                                        {{ canCreateRecord ? 'Create Record' : 'Report (Warehouse Only)' }}
+                                        <Button
+                                            v-if="isRecordComplete(container.photo || [])"
+                                            variant="outline"
+                                            :class="[
+                                                'text-white w-[150px]',
+                                                container.stage === 'container_loading_report' && canCreateRecord
+                                                    ? 'bg-green-600 hover:bg-green-700'
+                                                    : 'bg-gray-400 cursor-not-allowed',
+                                            ]"
+                                            :disabled="container.stage !== 'container_loading_report' || !canCreateRecord || container.is_on_hold"
+                                            @click="
+                                                container.stage === 'container_loading_report' && canCreateRecord && !container.is_on_hold
+                                                    ? $emit('openCreateContainerRecordModal', container.id)
+                                                    : null
+                                            "
+                                        >
+                                            {{ canCreateRecord ? 'Create Record' : 'Report (Warehouse Only)' }}
+                                        </Button>
+                                    </CustomTooltip>
+                                    <CustomTooltip
+                                        v-else-if="(container.photo || []).length > 0"
+                                        :text="'Continue uploading photos: ' + (container.photo || []).length + '/12 completed'"
+                                        position="top"
+                                    >
+                                        <Button
+                                            v-if="(container.photo || []).length > 0 && !isRecordComplete(container.photo || [])"
+                                            variant="outline"
+                                            class="text-white w-[150px] bg-blue-600 hover:bg-blue-700"
+                                            @click="$emit('openCreateContainerRecordModal', container.id)"
+                                        >
+                                            Continue ({{ (container.photo || []).length }}/12)
+                                        </Button>
+                                    </CustomTooltip>
+                                    <Button
+                                        v-else-if="(container.photo || []).length === 0"
+                                        variant="outline"
+                                        class="text-white w-[150px] bg-blue-600 hover:bg-blue-700"
+                                        @click="$emit('openCreateContainerRecordModal', container.id)"
+                                    >
+                                        Create Record
                                     </Button>
-                                </CustomTooltip>
+                                </template>
+                                <!-- Show inspection status if not passed -->
+                                <div v-else class="text-gray-500 text-sm text-center">
+                                    <CustomTooltip :text="'Inspection must be passed before uploading photos'" position="top">
+                                        <span>Inspection Required</span>
+                                    </CustomTooltip>
+                                </div>
                                 <Button
-                                    v-else
+                                    v-if="container.inspection && container.inspection.status === 'passed' && isRecordComplete(container.photo || []) && container.stage === 'container_loading_report_approval'"
                                     class="text-white w-[150px] bg-green-600 hover:bg-green-700"
                                     @click="
                                         $emit(

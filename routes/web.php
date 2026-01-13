@@ -226,6 +226,7 @@ Route::post('/containers/create-inspection', [ShipmentTransportInspectionControl
 Route::post('/containers/update-inspection/{id}', [ShipmentTransportInspectionController::class, 'updateInspection'])->middleware('can:container.approve')->name('container.update-inspection');
 Route::get('/containers/inspection-details/{id}', [ShipmentTransportInspectionController::class, 'getInspectionDetails'])->middleware('can:container.approve')->name('container.inspection-details');
 Route::post('containers/create-photo', [ShipmentTransportPhotoController::class, 'store'])->middleware('can:container.approve')->name('container.create-photo');
+Route::get('containers/{shipmentTransport}/photos', [ShipmentTransportPhotoController::class, 'getPhotos'])->middleware('can:container.approve')->name('container.get-photos');
 Route::get('/containers/inspection-answer', [ShipmentTransportInspectionController::class, 'showByShipmentTransportId'])->middleware('can:container.approve')->name('container.get-inspection-answer-by-shipment-transport-id');
 Route::post('/containers/submit-security-checking', [ShipmentTransportPhotoController::class, 'submitSecurityChecking'])->middleware('can:container.approve')->name('container.submit-security-checking');
 
