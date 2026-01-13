@@ -35,8 +35,6 @@ return [
         ],
     ],
 
-<<<<<<< HEAD
-=======
     'teams' => [
         'webhook_url' => env('TEAMS_WEBHOOK_URL'),
     ],
@@ -47,5 +45,4 @@ return [
         'client_secret' => env('AZURE_CLIENT_SECRET'),
     ],
 
->>>>>>> 8de594d (Remove shipping requirements approval workflow and fix Azure credentials security)
 ];
