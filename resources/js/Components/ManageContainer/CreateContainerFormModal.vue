@@ -29,8 +29,13 @@ const errorMessage = ref("");
 const successMessage = ref("");
 const countryRequirements = ref(null);
 
-const requiresSeals = computed(() => {
-    return countryRequirements.value?.requires_seals === true;
+const requiresGPS = computed(() => {
+    return countryRequirements.value?.requires_gps === true;
+});
+
+const forkSealSize = computed(() => {
+    const strength = countryRequirements.value?.strength;
+    return strength ? `${strength}mm` : '';
 });
 
 const formSchema = toTypedSchema(
@@ -45,10 +50,12 @@ const formSchema = toTypedSchema(
         country: z.string().min(1, "Country is required"),
         work_order: z.string().min(1, "Work Order is required"),
         hauler: z.string().min(1, "Hauler is required"),
-        high_security_seal: z.string().optional(),
-        gps: z.string().optional(),
-        fork_seal: z.string().optional(),
-        temporary_seal: z.string().optional(),
+        high_security_seal_sn: z.string().optional(),
+        inside_gps_sn: z.string().optional(),
+        outside_gps_sn: z.string().optional(),
+        fork_seal_sn: z.string().optional(),
+        fork_seal_size: z.string().optional(),
+        temporary_seal_sn: z.string().optional(),
     })
 );
 
@@ -64,10 +71,19 @@ const emit = defineEmits(["close", "save"]);
 
 watch(transportType, (val) => {
     if (val === "Truck") {
-        form.setFieldValue("high_security_seal", "");
-        form.setFieldValue("gps", "");
-        form.setFieldValue("fork_seal", "");
-        form.setFieldValue("temporary_seal", "");
+        form.setFieldValue("high_security_seal_sn", "");
+        form.setFieldValue("inside_gps_sn", "");
+        form.setFieldValue("outside_gps_sn", "");
+        form.setFieldValue("fork_seal_sn", "");
+        form.setFieldValue("fork_seal_size", "");
+        form.setFieldValue("temporary_seal_sn", "");
+    }
+});
+
+// Auto-populate fork seal size when country requirements change
+watch(countryRequirements, (newRequirements) => {
+    if (newRequirements?.strength) {
+        form.setFieldValue("fork_seal_size", `${newRequirements.strength}mm`);
     }
 });
 
@@ -324,10 +340,10 @@ const onSubmit = handleSubmit(async (values) => {
                             <FormField
                                 v-if="transportType === 'Container'"
                                 v-slot="{ componentField }"
-                                name="high_security_seal"
+                                name="high_security_seal_sn"
                             >
                                 <FormItem>
-                                    <FormLabel>High Security Seal <span class="text-red-500">*</span></FormLabel>
+                                    <FormLabel>High Security Seal Serial Number <span class="text-red-500">*</span></FormLabel>
                                     <FormControl>
                                         <Input
                                             type="text"
@@ -339,12 +355,12 @@ const onSubmit = handleSubmit(async (values) => {
                             </FormField>
 
                             <FormField
-                                v-if="transportType === 'Container' && requiresSeals"
+                                v-if="transportType === 'Container' && requiresGPS"
                                 v-slot="{ componentField }"
-                                name="gps"
+                                name="inside_gps_sn"
                             >
                                 <FormItem>
-                                    <FormLabel>GPS <span class="text-red-500">*</span></FormLabel>
+                                    <FormLabel>Inside GPS Serial Number <span class="text-red-500">*</span></FormLabel>
                                     <FormControl>
                                         <Input
                                             type="text"
@@ -356,12 +372,12 @@ const onSubmit = handleSubmit(async (values) => {
                             </FormField>
 
                             <FormField
-                                v-if="transportType === 'Container' && requiresSeals"
+                                v-if="transportType === 'Container' && requiresGPS"
                                 v-slot="{ componentField }"
-                                name="fork_seal"
+                                name="outside_gps_sn"
                             >
                                 <FormItem>
-                                    <FormLabel>Fork Seal <span class="text-red-500">*</span></FormLabel>
+                                    <FormLabel>Outside GPS Serial Number</FormLabel>
                                     <FormControl>
                                         <Input
                                             type="text"
@@ -375,10 +391,46 @@ const onSubmit = handleSubmit(async (values) => {
                             <FormField
                                 v-if="transportType === 'Container'"
                                 v-slot="{ componentField }"
-                                name="temporary_seal"
+                                name="fork_seal_sn"
                             >
                                 <FormItem>
-                                    <FormLabel>Temporary Seal</FormLabel>
+                                    <FormLabel>Fork Seal Serial Number <span class="text-red-500">*</span></FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            type="text"
+                                            v-bind="componentField"
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            </FormField>
+
+                            <FormField
+                                v-if="transportType === 'Container'"
+                                v-slot="{ componentField }"
+                                name="fork_seal_size"
+                            >
+                                <FormItem>
+                                    <FormLabel>Fork Seal Size</FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            type="text"
+                                            :value="forkSealSize"
+                                            readonly
+                                            placeholder="Auto-populated from country requirements"
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            </FormField>
+
+                            <FormField
+                                v-if="transportType === 'Container'"
+                                v-slot="{ componentField }"
+                                name="temporary_seal_sn"
+                            >
+                                <FormItem>
+                                    <FormLabel>Temporary Seal Serial Number</FormLabel>
                                     <FormControl>
                                         <Input
                                             type="text"

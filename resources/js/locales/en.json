@@ -65,6 +65,7 @@
       "selectShipment": "Select Shipment",
       "shipmentPlaceholder": "Choose a shipment",
       "containerNumber": "Container Number",
+      "containerPlaceholder": "Enter container number (e.g., ABCD1234567)",
       "remarks": "Remarks",
       "vehiclePlaceholder": "ABC1234",
       "companyPlaceholder": "Enter company name",

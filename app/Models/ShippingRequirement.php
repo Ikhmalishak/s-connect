@@ -12,8 +12,8 @@ class ShippingRequirement extends Model
         'region',
         'destination',
         'risk_level',
-        'strength_mm',
-        'requires_seals',
+        'strength',
+        'requires_gps',
         'last_updated_by',
         'attachment_path',
         'change_requested_at',
@@ -24,7 +24,8 @@ class ShippingRequirement extends Model
     ];
 
     protected $casts = [
-        'requires_seals' => 'boolean',
+        'strength' => 'integer',
+        'requires_gps' => 'boolean',
         'requires_approval' => 'boolean',
         'change_requested_at' => 'datetime',
         'approved_at' => 'datetime',

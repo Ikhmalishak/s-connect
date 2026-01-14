@@ -308,25 +308,6 @@ const handleOtherReasonInput = (event: Event) => {
     }
 };
 
-const handleContainerNumberInput = (event: Event) => {
-    const target = event.target as HTMLInputElement;
-    const value = target.value.toUpperCase();
-
-    emit("update", {
-        field: "container_number",
-        value,
-    });
-
-    const error = validateContainerNumber(value, props.values?.visitor_type);
-    const errorKey = "container_number";
-
-    if (error) {
-        validationErrors.value[errorKey] = error;
-    } else {
-        delete validationErrors.value[errorKey];
-    }
-};
-
 const handleRemarksInput = (event: Event) => {
     const target = event.target as HTMLTextAreaElement;
     const value = target.value;
@@ -346,12 +327,11 @@ const handleRemarksInput = (event: Event) => {
     }
 };
 
-// Debounced container number input handler
-const handleContainerNumberInputDebounced = (event: Event) => {
+// Container number input handler with debounced validation
+const handleContainerNumberInput = (event: Event) => {
     const target = event.target as HTMLInputElement;
     const value = target.value.toUpperCase();
 
-    // Update form value immediately
     emit("update", {
         field: "container_number",
         value,
@@ -365,8 +345,6 @@ const handleContainerNumberInputDebounced = (event: Event) => {
     // Reset validation state
     containerValidationState.value = 'idle';
     containerValidationMessage.value = '';
-
-    // Clear validation errors
     delete validationErrors.value['container_number'];
 
     // If value is empty, don't validate
@@ -386,7 +364,7 @@ const handleContainerNumberInputDebounced = (event: Event) => {
     // Set validating state
     containerValidationState.value = 'validating';
 
-    // Debounce API call
+    // Debounce API call (2 seconds as requested)
     containerValidationTimer = setTimeout(async () => {
         try {
             const response = await axios.post('/containers/validate-for-visitor', {
@@ -407,7 +385,7 @@ const handleContainerNumberInputDebounced = (event: Event) => {
             containerValidationMessage.value = error.response?.data?.message || 'Validation failed';
             validationErrors.value['container_number'] = error.response?.data?.message || 'Validation failed';
         }
-    }, 1500); // 1.5 second debounce
+    }, 2000); // 2 second debounce as requested
 };
 
 // Get CSS classes for container input based on validation state
@@ -470,7 +448,7 @@ defineExpose({
             !props.values?.person_to_meet?.trim();
         const containerRequired =
             props.values?.visitor_type === "shipping" &&
-            containerValidationState.value !== 'valid';
+            !props.values?.container_number?.trim();
 
         return (
             !hasErrors &&
@@ -655,7 +633,7 @@ defineExpose({
                             type="text"
                             v-bind="componentField"
                             :placeholder="t('visitor.visitDetails.containerPlaceholder')"
-                            @input="handleContainerNumberInputDebounced"
+                            @input="handleContainerNumberInput"
                             :class="getContainerInputClass()"
                             maxlength="11"
                         />
@@ -666,7 +644,7 @@ defineExpose({
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
                             </svg>
-                            Validating...
+                            Validating container...
                         </div>
                         <div v-else-if="containerValidationState === 'valid'" class="flex items-center gap-1 text-green-600 text-sm">
                             <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

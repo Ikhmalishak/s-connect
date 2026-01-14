@@ -80,8 +80,8 @@ const formData = ref({
     region: "",
     destination: "",
     risk_level: "",
-    strength_mm: "",
-    requires_seals: false,
+    strength: "",
+    requires_gps: false,
     attachment: null,
 });
 const formLoading = ref(false);
@@ -108,7 +108,7 @@ const sortedRequirements = computed(() => {
         let aVal = a[sortBy.value];
         let bVal = b[sortBy.value];
 
-        if (sortBy.value === 'requires_seals') {
+        if (sortBy.value === 'requires_gps') {
             aVal = aVal ? 1 : 0;
             bVal = bVal ? 1 : 0;
         }
@@ -169,8 +169,8 @@ const openCreateDialog = () => {
         region: "",
         destination: "",
         risk_level: "",
-        strength_mm: "",
-        requires_seals: false,
+        strength: "",
+        requires_gps: false,
         attachment: null,
     };
     showCreateDialog.value = true;
@@ -182,8 +182,8 @@ const openEditDialog = (requirement: any) => {
         region: requirement.region,
         destination: requirement.destination,
         risk_level: requirement.risk_level,
-        strength_mm: requirement.strength_mm,
-        requires_seals: requirement.requires_seals,
+        strength: requirement.strength,
+        requires_gps: requirement.requires_gps,
         attachment: null,
     };
     showEditDialog.value = true;
@@ -199,8 +199,8 @@ const createRequirement = async () => {
         formDataToSend.append('proposed_data[region]', formData.value.region);
         formDataToSend.append('proposed_data[destination]', formData.value.destination);
         formDataToSend.append('proposed_data[risk_level]', formData.value.risk_level);
-        formDataToSend.append('proposed_data[strength_mm]', formData.value.strength_mm);
-        formDataToSend.append('proposed_data[requires_seals]', formData.value.requires_seals ? '1' : '0');
+        formDataToSend.append('proposed_data[strength]', formData.value.strength);
+        formDataToSend.append('proposed_data[requires_gps]', formData.value.requires_gps ? '1' : '0');
 
         if (formData.value.attachment) {
             formDataToSend.append('attachment', formData.value.attachment);
@@ -246,8 +246,8 @@ const updateRequirement = async () => {
         formDataToSend.append('proposed_data[region]', formData.value.region);
         formDataToSend.append('proposed_data[destination]', formData.value.destination);
         formDataToSend.append('proposed_data[risk_level]', formData.value.risk_level);
-        formDataToSend.append('proposed_data[strength_mm]', formData.value.strength_mm);
-        formDataToSend.append('proposed_data[requires_seals]', formData.value.requires_seals ? '1' : '0');
+        formDataToSend.append('proposed_data[strength]', formData.value.strength);
+        formDataToSend.append('proposed_data[requires_gps]', formData.value.requires_gps ? '1' : '0');
 
         if (formData.value.attachment) {
             formDataToSend.append('attachment', formData.value.attachment);
@@ -558,12 +558,12 @@ onMounted(() => {
                                 </Select>
                             </div>
                             <div>
-                                <Label for="strength_mm">Strength (mm) *</Label>
-                                <Input id="strength_mm" v-model="formData.strength_mm" placeholder="e.g., 8mm, 3mm" />
+                                <Label for="strength">Strength *</Label>
+                                <Input id="strength" v-model="formData.strength" placeholder="e.g., 8, 3" />
                             </div>
                             <div class="flex items-center space-x-2">
-                                <Checkbox id="requires_seals" v-model="formData.requires_seals" />
-                                <Label for="requires_seals">Requires GPS and Fork Seals</Label>
+                                <Checkbox id="requires_gps" v-model="formData.requires_gps" />
+                                <Label for="requires_gps">Requires GPS</Label>
                             </div>
 
                             <!-- Attachment Upload -->
@@ -708,16 +708,16 @@ onMounted(() => {
                             <TableHead>Strength</TableHead>
                             <TableHead
                                 class="cursor-pointer hover:bg-gray-50"
-                                @click="handleSort('requires_seals')"
+                                @click="handleSort('requires_gps')"
                             >
                                 <div class="flex items-center">
-                                    Requires Seals
+                                    Requires GPS
                                     <ChevronUp
-                                        v-if="sortBy === 'requires_seals' && sortDirection === 'asc'"
+                                        v-if="sortBy === 'requires_gps' && sortDirection === 'asc'"
                                         class="h-4 w-4 ml-1"
                                     />
                                     <ChevronDown
-                                        v-if="sortBy === 'requires_seals' && sortDirection === 'desc'"
+                                        v-if="sortBy === 'requires_gps' && sortDirection === 'desc'"
                                         class="h-4 w-4 ml-1"
                                     />
                                 </div>
@@ -753,10 +753,10 @@ onMounted(() => {
                                     {{ requirement.risk_level }}
                                 </Badge>
                             </TableCell>
-                            <TableCell>{{ requirement.strength_mm }}</TableCell>
+                            <TableCell>{{ requirement.strength }}</TableCell>
                             <TableCell>
-                                <Badge :variant="getSealsBadgeVariant(requirement.requires_seals)">
-                                    {{ requirement.requires_seals ? 'Yes' : 'No' }}
+                                <Badge :variant="getSealsBadgeVariant(requirement.requires_gps)">
+                                    {{ requirement.requires_gps ? 'Yes' : 'No' }}
                                 </Badge>
                             </TableCell>
                             <TableCell class="text-sm text-gray-600">
@@ -806,8 +806,8 @@ onMounted(() => {
                                                     <div><strong>Region:</strong> {{ requirement.region }}</div>
                                                     <div><strong>Destination:</strong> {{ requirement.destination }}</div>
                                                     <div><strong>Risk Level:</strong> {{ requirement.risk_level }}</div>
-                                                    <div><strong>Strength:</strong> {{ requirement.strength_mm }}</div>
-                                                    <div class="col-span-2"><strong>Requires Seals:</strong> {{ requirement.requires_seals ? 'Yes' : 'No' }}</div>
+                                                    <div><strong>Strength:</strong> {{ requirement.strength }}</div>
+                                                    <div class="col-span-2"><strong>Requires GPS:</strong> {{ requirement.requires_gps ? 'Yes' : 'No' }}</div>
                                                 </div>
                                             </div>
 
@@ -950,8 +950,8 @@ onMounted(() => {
                             <div><strong>Region:</strong> {{ editingRequirement?.region }}</div>
                             <div><strong>Destination:</strong> {{ editingRequirement?.destination }}</div>
                             <div><strong>Risk Level:</strong> {{ editingRequirement?.risk_level }}</div>
-                            <div><strong>Strength:</strong> {{ editingRequirement?.strength_mm }}</div>
-                            <div class="col-span-2"><strong>Requires Seals:</strong> {{ editingRequirement?.requires_seals ? 'Yes' : 'No' }}</div>
+                            <div><strong>Strength:</strong> {{ editingRequirement?.strength }}</div>
+                            <div class="col-span-2"><strong>Requires GPS:</strong> {{ editingRequirement?.requires_gps ? 'Yes' : 'No' }}</div>
                         </div>
                     </div>
 
@@ -981,12 +981,12 @@ onMounted(() => {
                                 </Select>
                             </div>
                             <div>
-                                <Label for="edit-strength_mm">Strength (mm) *</Label>
-                                <Input id="edit-strength_mm" v-model="formData.strength_mm" placeholder="e.g., 8mm, 3mm" />
+                                <Label for="edit-strength">Strength *</Label>
+                                <Input id="edit-strength" v-model="formData.strength" placeholder="e.g., 8, 3" />
                             </div>
                             <div class="flex items-center space-x-2">
-                                <Checkbox id="edit-requires_seals" v-model="formData.requires_seals" />
-                                <Label for="edit-requires_seals">Requires GPS and Fork Seals</Label>
+                                <Checkbox id="edit-requires_gps" v-model="formData.requires_gps" />
+                                <Label for="edit-requires_gps">Requires GPS</Label>
                             </div>
                         </div>
                     </div>

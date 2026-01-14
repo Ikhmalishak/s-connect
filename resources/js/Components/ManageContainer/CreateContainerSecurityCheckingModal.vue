@@ -11,6 +11,7 @@ const successMessage = ref("");
 const selectedPhoto = ref("");
 const showCameraModal = ref(false);
 const linkedDriver = ref(null);
+const containerDetails = ref(null);
 
 // Reactive object to hold files
 const formData = ref<Record<string, File | null>>({});
@@ -25,6 +26,7 @@ watch(() => props.show, async (newVal) => {
         successMessage.value = "";
         isLoading.value = false;
         linkedDriver.value = null;
+        containerDetails.value = null;
     } else if (props.id) {
         // Clear previous photo data when opening for a new container
         selectedPhoto.value = "";
@@ -95,9 +97,11 @@ const fetchDriverInfo = async () => {
     try {
         const response = await axios.get(`/containers/${props.id}/driver-info`);
         linkedDriver.value = response.data.driver || null;
+        containerDetails.value = response.data.container || null;
     } catch (error) {
-        console.error('Failed to fetch driver info:', error);
+        console.error('Failed to fetch driver and container info:', error);
         linkedDriver.value = null;
+        containerDetails.value = null;
     }
 };
 
@@ -187,49 +191,142 @@ const onSubmit = async () => {
                         </div>
 
                         <form @submit.prevent="onSubmit" class="space-y-4">
-                            <!-- Driver Verification Section -->
-                            <div v-if="linkedDriver" class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                                <h3 class="text-lg font-semibold text-blue-900 mb-3">
-                                    Driver Verification Required
-                                </h3>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-blue-800 mb-1">
-                                            Driver Name
-                                        </label>
-                                        <p class="text-blue-900 font-semibold">
-                                            {{ linkedDriver.visitor_name || 'Not Available' }}
-                                        </p>
+                            <!-- Driver and Container Verification Section -->
+                            <div class="space-y-6 mb-6">
+                                <!-- Driver Verification Section -->
+                                <div v-if="linkedDriver" class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                    <h3 class="text-lg font-semibold text-blue-900 mb-3">
+                                        Driver Verification Required
+                                    </h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-blue-800 mb-1">
+                                                Driver Name
+                                            </label>
+                                            <p class="text-blue-900 font-semibold">
+                                                {{ linkedDriver.visitor_name || 'Not Available' }}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-blue-800 mb-1">
+                                                Driver ID
+                                            </label>
+                                            <p class="text-blue-900 font-semibold">
+                                                {{ linkedDriver.ic_number || linkedDriver.passport || 'Not Available' }}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-blue-800 mb-1">
+                                                Company
+                                            </label>
+                                            <p class="text-blue-900 font-semibold">
+                                                {{ linkedDriver.visitor_company || 'Not Available' }}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-blue-800 mb-1">
+                                                Vehicle Number
+                                            </label>
+                                            <p class="text-blue-900 font-semibold">
+                                                {{ linkedDriver.vehicle_number || 'Not Available' }}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-blue-800 mb-1">
-                                            Driver ID
-                                        </label>
-                                        <p class="text-blue-900 font-semibold">
-                                            {{ linkedDriver.ic_number || linkedDriver.passport || 'Not Available' }}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-blue-800 mb-1">
-                                            Company
-                                        </label>
-                                        <p class="text-blue-900 font-semibold">
-                                            {{ linkedDriver.visitor_company || 'Not Available' }}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-blue-800 mb-1">
-                                            Vehicle Number
-                                        </label>
-                                        <p class="text-blue-900 font-semibold">
-                                            {{ linkedDriver.vehicle_number || 'Not Available' }}
+                                    <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
+                                        <p class="text-yellow-800 text-sm">
+                                            <strong>Security Check:</strong> Please verify that the driver details above match the person presenting for container pickup.
                                         </p>
                                     </div>
                                 </div>
-                                <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
-                                    <p class="text-yellow-800 text-sm">
-                                        <strong>Security Check:</strong> Please verify that the driver details above match the person presenting for container pickup.
-                                    </p>
+
+                                <!-- Container Verification Section -->
+                                <div v-if="containerDetails" class="bg-green-50 border border-green-200 rounded-lg p-4">
+                                    <h3 class="text-lg font-semibold text-green-900 mb-3">
+                                        Container Verification Required
+                                    </h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-green-800 mb-1">
+                                                Container Number
+                                            </label>
+                                            <p class="text-green-900 font-semibold">
+                                                {{ containerDetails.transport_number || 'Not Available' }}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-green-800 mb-1">
+                                                Transport Type
+                                            </label>
+                                            <p class="text-green-900 font-semibold">
+                                                {{ containerDetails.transport_type || 'Not Available' }}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-green-800 mb-1">
+                                                SKU/Model
+                                            </label>
+                                            <p class="text-green-900 font-semibold">
+                                                {{ containerDetails.sku_number || 'Not Available' }}
+                                                <span v-if="containerDetails.model_project">/ {{ containerDetails.model_project }}</span>
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-green-800 mb-1">
+                                                Destination Country
+                                            </label>
+                                            <p class="text-green-900 font-semibold">
+                                                {{ containerDetails.country || 'Not Available' }}
+                                            </p>
+                                        </div>
+                                        <div v-if="containerDetails.high_security_seal_sn">
+                                            <label class="block text-sm font-medium text-green-800 mb-1">
+                                                High Security Seal Serial Number
+                                            </label>
+                                            <p class="text-green-900 font-semibold">
+                                                {{ containerDetails.high_security_seal_sn }}
+                                            </p>
+                                        </div>
+                                        <div v-if="containerDetails.fork_seal_sn">
+                                            <label class="block text-sm font-medium text-green-800 mb-1">
+                                                Fork Seal Serial Number
+                                            </label>
+                                            <p class="text-green-900 font-semibold">
+                                                {{ containerDetails.fork_seal_sn }}
+                                                <span v-if="containerDetails.fork_seal_size" class="text-sm text-green-700">
+                                                    ({{ containerDetails.fork_seal_size }})
+                                                </span>
+                                            </p>
+                                        </div>
+                                        <div v-if="containerDetails.temporary_seal_sn">
+                                            <label class="block text-sm font-medium text-green-800 mb-1">
+                                                Temporary Seal Serial Number
+                                            </label>
+                                            <p class="text-green-900 font-semibold">
+                                                {{ containerDetails.temporary_seal_sn }}
+                                            </p>
+                                        </div>
+                                        <div v-if="containerDetails.inside_gps_sn">
+                                            <label class="block text-sm font-medium text-green-800 mb-1">
+                                                Inside GPS Serial Number
+                                            </label>
+                                            <p class="text-green-900 font-semibold">
+                                                {{ containerDetails.inside_gps_sn }}
+                                            </p>
+                                        </div>
+                                        <div v-if="containerDetails.outside_gps_sn">
+                                            <label class="block text-sm font-medium text-green-800 mb-1">
+                                                Outside GPS Serial Number
+                                            </label>
+                                            <p class="text-green-900 font-semibold">
+                                                {{ containerDetails.outside_gps_sn }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="mt-4 p-3 bg-orange-50 border border-orange-200 rounded">
+                                        <p class="text-orange-800 text-sm">
+                                            <strong>Container Check:</strong> Please verify that all seal numbers and container details match the physical container being picked up.
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
 

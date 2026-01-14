@@ -226,7 +226,7 @@ class ShipmentTransportController extends Controller
     }
 
     /**
-     * Get driver information for a shipment.
+     * Get driver and container information for security checking.
      */
     public function getDriverInfo(ShipmentTransport $shipmentTransport)
     {
@@ -240,24 +240,40 @@ class ShipmentTransportController extends Controller
         // Get the driver assigned to this shipment
         $driverAssignment = $shipmentTransport->shipmentTransportDrivers()->with('visitor')->first();
 
-        if (!$driverAssignment || !$driverAssignment->visitor) {
-            return response()->json([
-                'driver' => null,
-                'message' => 'No driver assigned to this shipment'
-            ]);
-        }
-
-        $visitor = $driverAssignment->visitor;
-
-        return response()->json([
-            'driver' => [
+        $driver = null;
+        if ($driverAssignment && $driverAssignment->visitor) {
+            $visitor = $driverAssignment->visitor;
+            $driver = [
                 'visitor_name' => $visitor->visitor_name,
                 'ic_number' => $visitor->ic_number,
                 'passport' => $visitor->passport,
                 'visitor_company' => $visitor->visitor_company,
                 'vehicle_number' => $visitor->vehicle_number,
                 'phone_number' => $visitor->phone_number,
-            ]
+            ];
+        }
+
+        // Get container details
+        $container = [
+            'transport_number' => $shipmentTransport->transport_number,
+            'transport_type' => $shipmentTransport->transport_type,
+            'sku_number' => $shipmentTransport->sku_number,
+            'model_project' => $shipmentTransport->model_project,
+            'high_security_seal_sn' => $shipmentTransport->high_security_seal_sn,
+            'fork_seal_sn' => $shipmentTransport->fork_seal_sn,
+            'fork_seal_size' => $shipmentTransport->fork_seal_size,
+            'temporary_seal_sn' => $shipmentTransport->temporary_seal_sn,
+            'inside_gps_sn' => $shipmentTransport->inside_gps_sn,
+            'outside_gps_sn' => $shipmentTransport->outside_gps_sn,
+            'country' => $shipmentTransport->country,
+            'forwarder' => $shipmentTransport->forwarder,
+            'hauler' => $shipmentTransport->hauler,
+        ];
+
+        return response()->json([
+            'driver' => $driver,
+            'container' => $container,
+            'message' => $driver ? 'Driver and container information retrieved' : 'Container information retrieved (no driver assigned)'
         ]);
     }
 
@@ -277,25 +293,27 @@ class ShipmentTransportController extends Controller
             'hauler' => 'required|string',
             'driver_name' => 'nullable|string',
             'driver_id' => 'nullable|string',
-            'high_security_seal' => 'nullable|string',
-            'gps' => 'nullable|string',
-            'fork_seal' => 'nullable|string',
-            'temporary_seal' => 'nullable|string',
+            'high_security_seal_sn' => 'nullable|string',
+            'inside_gps_sn' => 'nullable|string',
+            'outside_gps_sn' => 'nullable|string',
+            'fork_seal_sn' => 'nullable|string',
+            'fork_seal_size' => 'nullable|string',
+            'temporary_seal_sn' => 'nullable|string',
         ];
 
-        // Check if transport type is Container - make high_security_seal required
+        // Check if transport type is Container - make high_security_seal_sn required
         $transportType = $request->input('transport_type');
         if ($transportType === 'Container') {
-            $rules['high_security_seal'] = 'required|string';
+            $rules['high_security_seal_sn'] = 'required|string';
+            $rules['fork_seal_sn'] = 'required|string';
         }
 
-        // Check if country requires seals
+        // Check if country requires GPS (only for high/medium risk countries)
         $country = $request->input('country');
         if ($country) {
             $requirement = ShippingRequirement::where('destination', $country)->first();
-            if ($requirement && $requirement->requires_seals) {
-                $rules['gps'] = 'required|string';
-                $rules['fork_seal'] = 'required|string';
+            if ($requirement && in_array($requirement->risk_level, ['high', 'medium'])) {
+                $rules['inside_gps_sn'] = 'required|string';
             }
         }
 
