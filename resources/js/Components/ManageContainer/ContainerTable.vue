@@ -452,12 +452,12 @@ function isRecordComplete(photos) {
                                 <!-- Only show photo options if inspection is passed -->
                                 <template v-if="container.inspection && container.inspection.status === 'passed'">
                                     <CustomTooltip
-                                        v-if="isRecordComplete(container.photo || [])"
+                                        v-if="isRecordComplete(container.photo || []) && container.stage === 'container_loading_report'"
                                         :text="canCreateRecord ? 'All photos uploaded - create final record for approval' : 'Requires Warehouse department permission'"
                                         position="top"
                                     >
                                         <Button
-                                            v-if="isRecordComplete(container.photo || [])"
+                                            v-if="isRecordComplete(container.photo || []) && container.stage === 'container_loading_report'"
                                             variant="outline"
                                             :class="[
                                                 'text-white w-[150px]',
@@ -505,7 +505,7 @@ function isRecordComplete(photos) {
                                     </CustomTooltip>
                                 </div>
                                 <Button
-                                    v-if="container.inspection && container.inspection.status === 'passed' && isRecordComplete(container.photo || []) && container.stage === 'container_loading_report_approval'"
+                                    v-if="container.inspection && container.inspection.status === 'passed' && isRecordComplete(container.photo || [])"
                                     class="text-white w-[150px] bg-green-600 hover:bg-green-700"
                                     @click="
                                         $emit(

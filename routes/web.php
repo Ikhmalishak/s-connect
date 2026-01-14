@@ -163,6 +163,9 @@ Route::post('/visitor/submit', [VisitorController::class, 'store']);
 //api to check acknowledgement whether visitor come for first time or not
 Route::post('/visitor/check-acknowledgement', [VisitorController::class, 'checkAcknowledgement']);
 
+//api to validate container for visitor registration (public access)
+Route::post('/containers/validate-for-visitor', [ShipmentTransportController::class, 'validateContainerForVisitor'])->name('container.validate-for-visitor');
+
 Route::get('/mfa-verify', [MFAController::class, 'showVerifyForm'])->name('mfa.verify');
 Route::post('/mfa-verify', [MFAController::class, 'verifyCode'])->name('mfa.verify');
 Route::post('/mfa-resend', [MFAController::class, 'resendCode'])->name('mfa.resend');

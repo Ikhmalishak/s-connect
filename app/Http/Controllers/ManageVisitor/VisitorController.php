@@ -258,7 +258,7 @@ class VisitorController extends Controller
             'other_reasons' => 'nullable|string',
             'vehicle_number' => 'nullable|string',
             'visitor_company' => 'nullable|string',
-            'shipment_transport_id' => 'nullable|integer',
+            'container_number' => 'nullable|string',
             'video_watched' => 'nullable|boolean',
             'security_guidelines_confirmed' => 'nullable|boolean',
             'visitors' => 'required|array|min:1',
@@ -271,19 +271,23 @@ class VisitorController extends Controller
         // Additional validation for shipping visitors
         if ($validated['visitor_type'] === 'shipping') {
             $request->validate([
-                'shipment_transport_id' => 'required|integer|exists:shipment_transports,id',
+                'container_number' => 'required|string|regex:/^[A-Z]{4}\d{7}$/',
             ]);
 
-            // Check if shipment transport belongs to the site
-            $shipment = \App\Models\ShipmentTransport::where('id', $validated['shipment_transport_id'])
+            // Check if container exists and has correct stage
+            $container = \App\Models\ShipmentTransport::where('transport_number', $validated['container_number'])
                 ->where('site_id', $validated['site_id'])
+                ->where('stage', 'onboarding_ready')
                 ->first();
 
-            if (!$shipment) {
+            if (!$container) {
                 return response()->json([
-                    'error' => 'Shipment not found for this site.'
+                    'error' => 'Container not found, not in correct stage, or does not belong to this site.'
                 ], 422);
             }
+
+            // Store the container ID for later use
+            $validated['shipment_transport_id'] = $container->id;
         }
 
         return DB::transaction(function () use ($validated) {

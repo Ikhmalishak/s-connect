@@ -282,6 +282,10 @@ const canSubmit = computed(() => {
     return !isUploading.value
 })
 
+const allPhotosComplete = computed(() => {
+    return photoTypes.every(type => photos.value[type.key] !== null)
+})
+
 async function handleFileSelect(type: string, event: Event) {
     const file = (event.target as HTMLInputElement).files?.[0]
     if (file) {
@@ -324,7 +328,7 @@ function takePhoto(type: string) {
     showCameraModal.value = true
 }
 
-function handleCameraCapture(imageData: string) {
+async function handleCameraCapture(imageData: string) {
     if (currentPhotoType.value) {
         // Convert base64 to File object
         const byteString = atob(imageData.split(',')[1])
@@ -342,6 +346,9 @@ function handleCameraCapture(imageData: string) {
             file,
             preview
         }
+
+        // Upload the camera photo immediately
+        await uploadSinglePhoto(currentPhotoType.value, file)
     }
     showCameraModal.value = false
     currentPhotoType.value = ''
@@ -391,6 +398,11 @@ async function uploadSinglePhoto(type: string, file: File) {
         }
         photos.value[type] = null
         console.error('Upload error:', err)
+    } finally {
+        // Reset the file input to allow selecting the same or different files again
+        if (fileInputRefs.value[type]) {
+            fileInputRefs.value[type].value = ''
+        }
     }
 }
 
@@ -515,6 +527,18 @@ async function submitPhotos() {
         currentUploadingLabel.value = ''
     }
 }
+
+// Auto-submit when all photos are complete and user is on the last step
+watch(allPhotosComplete, async (isComplete) => {
+    if (isComplete && currentStep.value === photoTypes.length - 1 && !isUploading.value && !uploadingPhoto.value) {
+        // Small delay to ensure the last photo upload is complete
+        setTimeout(async () => {
+            if (allPhotosComplete.value && !isUploading.value && !uploadingPhoto.value) {
+                await submitPhotos()
+            }
+        }, 1000)
+    }
+})
 
 // Load existing photos and set correct starting step when modal opens
 watch(() => props.show, async (newVal) => {

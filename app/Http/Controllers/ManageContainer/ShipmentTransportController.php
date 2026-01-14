@@ -172,6 +172,60 @@ class ShipmentTransportController extends Controller
     }
 
     /**
+     * Validate container number for visitor registration.
+     */
+    public function validateContainerForVisitor(Request $request)
+    {
+        $user = auth()->user();
+
+        $validated = $request->validate([
+            'container_number' => 'required|string|regex:/^[A-Z]{4}\d{7}$/',
+            'site_id' => 'required|integer|exists:sites,id',
+        ]);
+
+        // Check if user can access this site
+        if (!$user->hasPermissionTo('superadmin') && $user->site_id != $validated['site_id']) {
+            return response()->json([
+                'valid' => false,
+                'message' => 'Unauthorized access to site'
+            ], 403);
+        }
+
+        // Find container by transport number
+        $container = ShipmentTransport::where('transport_number', $validated['container_number'])
+            ->where('site_id', $validated['site_id'])
+            ->first();
+
+        if (!$container) {
+            return response()->json([
+                'valid' => false,
+                'message' => 'Container number not found'
+            ]);
+        }
+
+        // Check if container stage is 'onboarding_ready'
+        if ($container->stage !== 'onboarding_ready') {
+            return response()->json([
+                'valid' => false,
+                'message' => 'Container is not ready for visitor registration'
+            ]);
+        }
+
+        return response()->json([
+            'valid' => true,
+            'container' => [
+                'id' => $container->id,
+                'transport_number' => $container->transport_number,
+                'stage' => $container->stage,
+                'transport_type' => $container->transport_type,
+                'sku_number' => $container->sku_number,
+                'model_project' => $container->model_project,
+            ],
+            'message' => 'Container is valid and ready for visitor registration'
+        ]);
+    }
+
+    /**
      * Get driver information for a shipment.
      */
     public function getDriverInfo(ShipmentTransport $shipmentTransport)

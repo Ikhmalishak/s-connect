@@ -48,7 +48,7 @@ interface FormValues {
     other_reasons?: string;
     remarks?: string;
     visitor_type?: string;
-    shipment_transport_id?: string;
+    container_number?: string;
 }
 
 interface ShipmentTransport {
@@ -70,9 +70,16 @@ const emit = defineEmits(["update"]);
 // Custom validation errors
 const validationErrors = ref<{ [key: string]: string }>({});
 
+// Container validation state
+const containerValidationState = ref<'idle' | 'validating' | 'valid' | 'invalid'>('idle');
+const containerValidationMessage = ref('');
+
 // Shipment transports data
 const shipmentTransports = ref<ShipmentTransport[]>([]);
 const loadingShipments = ref(false);
+
+// Debounce timer for container validation
+let containerValidationTimer: ReturnType<typeof setTimeout> | null = null;
 
 // Fetch shipment transports for the site
 const fetchShipmentTransports = async () => {
@@ -339,6 +346,83 @@ const handleRemarksInput = (event: Event) => {
     }
 };
 
+// Debounced container number input handler
+const handleContainerNumberInputDebounced = (event: Event) => {
+    const target = event.target as HTMLInputElement;
+    const value = target.value.toUpperCase();
+
+    // Update form value immediately
+    emit("update", {
+        field: "container_number",
+        value,
+    });
+
+    // Clear previous timer
+    if (containerValidationTimer) {
+        clearTimeout(containerValidationTimer);
+    }
+
+    // Reset validation state
+    containerValidationState.value = 'idle';
+    containerValidationMessage.value = '';
+
+    // Clear validation errors
+    delete validationErrors.value['container_number'];
+
+    // If value is empty, don't validate
+    if (!value.trim()) {
+        return;
+    }
+
+    // Basic format validation first
+    const containerPattern = /^[A-Z]{4}\d{7}$/;
+    if (!containerPattern.test(value.trim())) {
+        validationErrors.value['container_number'] = t('visitor.visitDetails.validation.containerNumberInvalid');
+        containerValidationState.value = 'invalid';
+        containerValidationMessage.value = t('visitor.visitDetails.validation.containerNumberInvalid');
+        return;
+    }
+
+    // Set validating state
+    containerValidationState.value = 'validating';
+
+    // Debounce API call
+    containerValidationTimer = setTimeout(async () => {
+        try {
+            const response = await axios.post('/containers/validate-for-visitor', {
+                container_number: value.trim(),
+                site_id: props.siteId,
+            });
+
+            if (response.data.valid) {
+                containerValidationState.value = 'valid';
+                containerValidationMessage.value = '';
+            } else {
+                containerValidationState.value = 'invalid';
+                containerValidationMessage.value = response.data.message;
+                validationErrors.value['container_number'] = response.data.message;
+            }
+        } catch (error: any) {
+            containerValidationState.value = 'invalid';
+            containerValidationMessage.value = error.response?.data?.message || 'Validation failed';
+            validationErrors.value['container_number'] = error.response?.data?.message || 'Validation failed';
+        }
+    }, 1500); // 1.5 second debounce
+};
+
+// Get CSS classes for container input based on validation state
+const getContainerInputClass = () => {
+    const baseClasses = '';
+
+    if (containerValidationState.value === 'valid') {
+        return baseClasses + ' border-green-500';
+    } else if (containerValidationState.value === 'invalid') {
+        return baseClasses + ' border-red-500';
+    }
+
+    return baseClasses;
+};
+
 watch(
     () => props.values?.purpose,
     (newPurpose) => {
@@ -384,12 +468,16 @@ defineExpose({
         const personToMeetRequired =
             props.values?.purpose === "Meeting" &&
             !props.values?.person_to_meet?.trim();
+        const containerRequired =
+            props.values?.visitor_type === "shipping" &&
+            containerValidationState.value !== 'valid';
 
         return (
             !hasErrors &&
             !companyRequired &&
             !purposeRequired &&
-            !personToMeetRequired
+            !personToMeetRequired &&
+            !containerRequired
         );
     },
 });
@@ -551,41 +639,48 @@ defineExpose({
                 </FormItem>
             </FormField>
 
-            <!-- Shipment Transport Selection (conditional for shipping visitors) -->
+            <!-- Container Number Input (conditional for shipping visitors) -->
             <FormField
                 v-if="values.visitor_type === 'shipping'"
                 v-slot="{ componentField }"
-                name="shipment_transport_id"
+                name="container_number"
             >
                 <FormItem>
                     <FormLabel>
-                        {{ t('visitor.visitDetails.selectShipment') }}
+                        {{ t('visitor.visitDetails.containerNumber') }}
                         <span class="text-red-500">*</span>
                     </FormLabel>
-                    <Select v-bind="componentField">
-                        <FormControl>
-                            <SelectTrigger>
-                                <SelectValue :placeholder="t('visitor.visitDetails.shipmentPlaceholder')" />
-                            </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                            <SelectGroup>
-                                <SelectItem
-                                    v-for="shipment in shipmentTransports"
-                                    :key="shipment.id"
-                                    :value="shipment.id.toString()"
-                                >
-                                    {{ shipment.transport_number }}
-                                </SelectItem>
-                                <div v-if="loadingShipments" class="p-2 text-center text-sm text-gray-500">
-                                    Loading shipments...
-                                </div>
-                                <div v-else-if="shipmentTransports.length === 0" class="p-2 text-center text-sm text-gray-500">
-                                    No shipments available
-                                </div>
-                            </SelectGroup>
-                        </SelectContent>
-                    </Select>
+                    <FormControl>
+                        <Input
+                            type="text"
+                            v-bind="componentField"
+                            :placeholder="t('visitor.visitDetails.containerPlaceholder')"
+                            @input="handleContainerNumberInputDebounced"
+                            :class="getContainerInputClass()"
+                            maxlength="11"
+                        />
+                    </FormControl>
+                    <div class="flex items-center gap-2 mt-1">
+                        <div v-if="containerValidationState === 'validating'" class="flex items-center gap-1 text-blue-600 text-sm">
+                            <svg class="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                            </svg>
+                            Validating...
+                        </div>
+                        <div v-else-if="containerValidationState === 'valid'" class="flex items-center gap-1 text-green-600 text-sm">
+                            <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            Container validated
+                        </div>
+                        <div v-else-if="containerValidationState === 'invalid'" class="flex items-center gap-1 text-red-600 text-sm">
+                            <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                            {{ containerValidationMessage }}
+                        </div>
+                    </div>
                     <FormMessage />
                 </FormItem>
             </FormField>
