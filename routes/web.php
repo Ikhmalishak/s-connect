@@ -242,6 +242,9 @@ Route::middleware(['auth'])->prefix('container-approvals')->name('container-appr
     Route::get('/{approval}/approve-email', [ShipmentTransportApprovalController::class, 'approveFromEmail'])->middleware('can:container.approve')->name('approve-email');
 });
 
+// Power Automate approval result endpoint (public access for external service)
+Route::post('/api/approval-result', [ShipmentTransportApprovalController::class, 'receiveApprovalResult']);
+
 use App\Http\Controllers\ApprovalController;
 
 // Route::post('/approvals', [ApprovalController::class, 'create']);

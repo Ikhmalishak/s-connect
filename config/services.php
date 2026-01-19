@@ -35,14 +35,19 @@ return [
         ],
     ],
 
-    'teams' => [
-        'webhook_url' => env('TEAMS_WEBHOOK_URL'),
+
+
+    'power_automate' => [
+        'trigger_url' => env('POWER_AUTOMATE_TRIGGER_URL'),
+        'approval_result_url' => env('POWER_AUTOMATE_APPROVAL_RESULT_URL'),
+        'polling_url' => env('POWER_AUTOMATE_POLLING_URL'),
+        'cleanup_url' => 'https://my-approval-app-m91z.vercel.app/api/cleanup',
     ],
 
-    'azure' => [
-        'tenant_id' => env('AZURE_TENANT_ID'),
-        'client_id' => env('AZURE_CLIENT_ID'),
-        'client_secret' => env('AZURE_CLIENT_SECRET'),
+    'external_approvals' => [
+        'url' => env('EXTERNAL_APPROVALS_URL'),
+        'base_url' => env('EXTERNAL_APPROVALS_BASE_URL'),
+        'secret' => env('EXTERNAL_APPROVALS_SECRET'),
     ],
 
 ];

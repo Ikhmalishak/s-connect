@@ -52,6 +52,13 @@ class ShipmentTransportPhotoController extends Controller
             return response()->json(['message' => 'Unauthorized access to shipment transport'], 403);
         }
 
+        // Validate container stage - must be in loading report stage (after quality inspection approval)
+        if ($container->stage !== 'container_loading_report') {
+            return response()->json([
+                'message' => 'Cannot upload photos. Container must pass quality inspection approval first.'
+            ], 403);
+        }
+
         $createdPhotos = [];
         $uploadedPhotoCount = 0;
 

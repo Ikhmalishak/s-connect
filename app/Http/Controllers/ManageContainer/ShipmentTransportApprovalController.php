@@ -131,6 +131,11 @@ class ShipmentTransportApprovalController extends Controller
             'remarks' => $request->input('remarks'),
         ]);
 
+        // For loading approvals, create the next approval in sequence
+        if ($approval->approval_type === 'loading') {
+            $this->createNextSequentialApproval($approval->shipmentTransport, $approval->department);
+        }
+
         // Broadcast real-time update for approval
         broadcast(new \App\Events\ContainerStageUpdated($approval->shipmentTransport))->toOthers();
 
@@ -190,11 +195,12 @@ class ShipmentTransportApprovalController extends Controller
     {
         // Refresh the container to get latest approvals
         $container = $container->fresh();
+        $container->load('approvals');
         $approvals = $container->approvals;
 
         // Check if all required approvals are approved
         $qualityInspectionApproval = $approvals->where('department', 'quality')->where('approval_type', 'inspection')->first();
-        $departmentLoadingApprovals = $approvals->where('approval_type', 'loading')->whereIn('department', ['warehouse', 'shipping', 'security']);
+        $departmentLoadingApprovals = $approvals->where('approval_type', 'loading')->whereIn('department', ['warehouse', 'quality', 'shipping', 'security']);
 
         if ($container->stage === 'container_checking_approval' && $qualityInspectionApproval && $qualityInspectionApproval->approval_status === 'approved') {
             // Quality approved inspection - can upload photos
@@ -208,15 +214,21 @@ class ShipmentTransportApprovalController extends Controller
             }
 
         } elseif ($container->stage === 'container_loading_report_approval') {
-            // Check if all department loading approvals are approved
-            // Quality is considered approved for loading if they approved inspection
-            $allLoadingApproved = $departmentLoadingApprovals->every(function ($approval) {
-                return $approval->approval_status === 'approved';
-            });
+            // Check sequential approval: warehouse → quality → shipping → security
+            $sequence = ['warehouse', 'quality', 'shipping', 'security'];
+            $allInSequenceApproved = true;
+
+            foreach ($sequence as $dept) {
+                $approval = $departmentLoadingApprovals->where('department', $dept)->first();
+                if (!$approval || $approval->approval_status !== 'approved') {
+                    $allInSequenceApproved = false;
+                    break;
+                }
+            }
 
             $qualityApprovedForLoading = $qualityInspectionApproval && $qualityInspectionApproval->approval_status === 'approved';
 
-            if ($allLoadingApproved && $qualityApprovedForLoading) {
+            if ($allInSequenceApproved && $qualityApprovedForLoading) {
                 $container->update(['stage' => 'onboarding_ready']);
 
                 // Broadcast event to refresh dashboard
@@ -237,51 +249,137 @@ class ShipmentTransportApprovalController extends Controller
 
     public function createDepartmentApprovals(ShipmentTransport $container)
     {
-        // Create approvals for all departments that need to approve the loading report
-        $departments = ['warehouse', 'shipping', 'quality', 'security'];
-        $newlyCreated = [];
+        // Create only the FIRST approval in sequence (warehouse)
+        // Subsequent approvals will be created when previous ones are approved
+        $firstDepartment = 'warehouse';
 
-        foreach ($departments as $department) {
-            // Check if loading approval already exists for this department
-            $existingApproval = ShipmentTransportApproval::where([
+        // Check if warehouse approval already exists
+        $existingApproval = ShipmentTransportApproval::where([
+            'shipment_transport_id' => $container->id,
+            'department' => $firstDepartment,
+            'approval_type' => 'loading',
+        ])->first();
+
+        if (!$existingApproval) {
+            // Create warehouse approval first
+            $approval = ShipmentTransportApproval::create([
                 'shipment_transport_id' => $container->id,
-                'department' => $department,
+                'department' => $firstDepartment,
                 'approval_type' => 'loading',
-            ])->first();
+                'approval_status' => 'pending',
+            ]);
 
-            if (!$existingApproval) {
-                // Create loading approval for each department
-                $approval = ShipmentTransportApproval::create([
-                    'shipment_transport_id' => $container->id,
-                    'department' => $department,
-                    'approval_type' => 'loading',
-                    'approval_status' => 'pending',
-                ]);
-                $newlyCreated[] = $department;
-            }
+            // Send notification only for warehouse
+            $this->sendDepartmentApprovalEmails($container, [$firstDepartment]);
+        }
+    }
+
+    private function createNextSequentialApproval(ShipmentTransport $container, string $approvedDepartment)
+    {
+        // Define the sequential order
+        $sequence = ['warehouse', 'quality', 'shipping', 'security'];
+
+        // Find the index of the approved department
+        $currentIndex = array_search($approvedDepartment, $sequence);
+
+        if ($currentIndex === false || $currentIndex >= count($sequence) - 1) {
+            // Last in sequence or invalid department
+            return;
         }
 
-        // Send emails only for newly created approvals
-        if (!empty($newlyCreated)) {
-            $this->sendDepartmentApprovalEmails($container, $newlyCreated);
+        // Get the next department
+        $nextDepartment = $sequence[$currentIndex + 1];
+
+        // Check if next approval already exists
+        $existingApproval = ShipmentTransportApproval::where([
+            'shipment_transport_id' => $container->id,
+            'department' => $nextDepartment,
+            'approval_type' => 'loading',
+        ])->first();
+
+        if (!$existingApproval) {
+            // Create the next approval in sequence
+            $approval = ShipmentTransportApproval::create([
+                'shipment_transport_id' => $container->id,
+                'department' => $nextDepartment,
+                'approval_type' => 'loading',
+                'approval_status' => 'pending',
+            ]);
+
+            // Send notification for the next department
+            $this->sendDepartmentApprovalEmails($container, [$nextDepartment]);
         }
     }
 
     private function sendDepartmentApprovalEmails(ShipmentTransport $container, array $departments = null)
     {
         // Send notifications to department representatives that container is ready for approval
-        $departmentsToNotify = $departments ?? ['warehouse', 'shipping', 'quality', 'security'];
+        $departmentsToNotify = $departments ? $departments : ['warehouse', 'shipping', 'quality', 'security'];
 
         foreach ($departmentsToNotify as $department) {
-            $users = $this->getDepartmentUsers($department);
-            if ($users->isNotEmpty()) {
-                try {
-                    Mail::to($users)->send(new ContainerReadyForDepartmentApproval($container, $department));
-                } catch (\Exception $e) {
-                    // Log the error but don't fail the entire process
-                    \Log::error("Failed to send approval email to {$department} department: " . $e->getMessage());
+            // Find the approval record for this department
+            $approval = ShipmentTransportApproval::where([
+                'shipment_transport_id' => $container->id,
+                'department' => $department,
+                'approval_type' => 'loading',
+            ])->first();
+
+            if ($approval) {
+                // Send Power Automate notifications
+                $this->sendPowerAutomateNotification($container, $approval);
+
+                // Send email as backup
+                $users = $this->getDepartmentUsers($department);
+                if ($users->isNotEmpty()) {
+                    try {
+                        Mail::to($users)->send(new ContainerReadyForDepartmentApproval($container, $department, 'loading'));
+                    } catch (\Exception $e) {
+                        // Log the error but don't fail the entire process
+                        \Log::error("Failed to send approval email to {$department} department: " . $e->getMessage());
+                    }
                 }
             }
+        }
+    }
+
+    private function sendPowerAutomateNotification(ShipmentTransport $container, ShipmentTransportApproval $approval)
+    {
+        try {
+            // Get department users who can approve
+            $departmentUsers = $this->getDepartmentUsers($approval->department);
+
+            if ($departmentUsers->isEmpty()) {
+                \Log::warning("No users found for department {$approval->department}, skipping Power Automate notifications");
+                return;
+            }
+
+            $triggerUrl = config('services.power_automate.trigger_url');
+            if (!$triggerUrl) {
+                \Log::error("Power Automate trigger URL not configured");
+                return;
+            }
+
+            // Collect all approver emails into an array for Power Automate to handle "first wins" logic
+            $approverEmails = $departmentUsers->pluck('email')->toArray();
+
+            $payload = [
+                'approval_id' => $approval->id,
+                'title' => $container->container_number ?: $container->transport_number,
+                'description' => 'Container approval required for loading process',
+                'approver_email' => $approverEmails,  // Array of all qualified emails
+                //'department' => $approval->department   // Department info for Power Automate logic
+            ];
+
+            $response = \Illuminate\Support\Facades\Http::post($triggerUrl, $payload);
+
+            if ($response->successful()) {
+                \Log::info("Sent Power Automate notification to " . count($approverEmails) . " users for approval {$approval->id} in department {$approval->department}");
+            } else {
+                \Log::error("Failed to send Power Automate notification for approval {$approval->id}: " . $response->body());
+            }
+
+        } catch (\Exception $e) {
+            \Log::error("Exception sending Power Automate notifications for approval {$approval->id}: " . $e->getMessage());
         }
     }
 
@@ -315,6 +413,49 @@ class ShipmentTransportApprovalController extends Controller
     {
         // Return users with the specific permission
         return \App\Models\User::permission("container.{$department}_approve")->get();
+    }
+
+    public function receiveApprovalResult(Request $request)
+    {
+        $validated = $request->validate([
+            'approval_id' => 'required|integer',
+            'decision' => 'required|string|in:Approve,Reject',
+            'by' => 'required|email',
+            'name' => 'required|string',
+            'time' => 'required|string'
+        ]);
+
+        $approval = ShipmentTransportApproval::findOrFail($validated['approval_id']);
+
+        // Check if already processed
+        if ($approval->approval_status !== 'pending') {
+            return response()->json(['message' => 'Approval already processed'], 200);
+        }
+
+        // Find or create user who approved
+        $user = \App\Models\User::firstOrCreate(
+            ['email' => $validated['by']],
+            ['name' => $validated['name']]
+        );
+
+        $approval->update([
+            'approval_status' => $validated['decision'] === 'Approve' ? 'approved' : 'rejected',
+            'approved_by' => $user->id,
+            'approved_at' => $validated['time']
+        ]);
+
+        // For loading approvals, create the next approval in sequence if approved
+        if ($approval->approval_type === 'loading' && $validated['decision'] === 'Approve') {
+            $this->createNextSequentialApproval($approval->shipmentTransport, $approval->department);
+        }
+
+        // Broadcast real-time update
+        broadcast(new \App\Events\ContainerStageUpdated($approval->shipmentTransport))->toOthers();
+
+        // Check and update container status
+        $this->checkAndUpdateContainerStatus($approval->shipmentTransport);
+
+        return response()->json(['message' => 'Approval result processed successfully']);
     }
 
     public function getApprovalDetails($approvalId)

@@ -176,7 +176,7 @@
                         <!-- Submit Section -->
                         <div class="flex flex-row justify-between items-center pt-6 mt-6 border-t">
                             <div class="text-sm text-gray-600">
-                                Complete all 12 photos to create the record and submit for approval.
+                                Complete all {{ photoTypes.length }} photos to create the record and submit for approval.
                             </div>
                             <div class="flex gap-3">
                                 <button
@@ -209,7 +209,6 @@ import axios from 'axios'
 import { X } from 'lucide-vue-next'
 import CameraCaptureModal from '@/Components/ManageContainer/CameraCaptureModal.vue'
 import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
 
 interface Props {
     show: boolean
@@ -237,16 +236,17 @@ const photos = ref({
 const photoTypes = [
     { key: 'pallet_condition_photo', label: 'Pallet Condition' },
     { key: 'pallet_label_photo', label: 'Pallet Label' },
-    { key: 'gps_photo_before_installation', label: 'GPS Before Installation' },
-    { key: 'container_truck_photo', label: 'Container Truck' },
-    { key: 'empty_container_photo', label: 'Empty Container' },
-    { key: 'inside_gps_photo', label: 'Inside GPS' },
-    { key: 'half_loaded_photo', label: 'Half Loaded' },
-    { key: 'one_side_door_closed_with_container_number_photo', label: 'Door Closed' },
-    { key: 'complete_loaded_photo', label: 'Complete Loaded' },
-    { key: 'outside_gps_photo', label: 'Outside GPS' },
-    { key: 'security_seal_photo', label: 'Security Seal' },
-    { key: 'container_full_seal_photo', label: 'Container Full Seal' },
+    // Temporarily disabled for testing - only require 2 photos
+    // { key: 'gps_photo_before_installation', label: 'GPS Before Installation' },
+    // { key: 'container_truck_photo', label: 'Container Truck' },
+    // { key: 'empty_container_photo', label: 'Empty Container' },
+    // { key: 'inside_gps_photo', label: 'Inside GPS' },
+    // { key: 'half_loaded_photo', label: 'Half Loaded' },
+    // { key: 'one_side_door_closed_with_container_number_photo', label: 'Door Closed' },
+    // { key: 'complete_loaded_photo', label: 'Complete Loaded' },
+    // { key: 'outside_gps_photo', label: 'Outside GPS' },
+    // { key: 'security_seal_photo', label: 'Security Seal' },
+    // { key: 'container_full_seal_photo', label: 'Container Full Seal' },
 ]
 
 const isUploading = ref(false)
@@ -528,15 +528,36 @@ async function submitPhotos() {
     }
 }
 
-// Auto-submit when all photos are complete and user is on the last step
+// Auto-submit when all photos are complete (regardless of current step)
 watch(allPhotosComplete, async (isComplete) => {
-    if (isComplete && currentStep.value === photoTypes.length - 1 && !isUploading.value && !uploadingPhoto.value) {
-        // Small delay to ensure the last photo upload is complete
+    if (isComplete && !isUploading.value) {
+        console.log('All photos complete, checking for auto-submit...')
+        // Wait a bit longer to ensure photo upload is fully complete
         setTimeout(async () => {
+            console.log('Checking auto-submit conditions:', {
+                allPhotosComplete: allPhotosComplete.value,
+                isUploading: isUploading.value,
+                uploadingPhoto: uploadingPhoto.value
+            })
             if (allPhotosComplete.value && !isUploading.value && !uploadingPhoto.value) {
+                console.log('Auto-submitting photos...')
                 await submitPhotos()
             }
-        }, 1000)
+        }, 1500) // Increased delay to be safe
+    }
+})
+
+// Also watch for individual photo uploads to trigger auto-submit
+watch(uploadingPhoto, async (isUploadingPhoto, wasUploadingPhoto) => {
+    // When photo upload completes (changes from true to false)
+    if (wasUploadingPhoto && !isUploadingPhoto && allPhotosComplete.value && !isUploading.value) {
+        console.log('Photo upload completed, checking if all photos are done...')
+        setTimeout(async () => {
+            if (allPhotosComplete.value && !isUploading.value && !uploadingPhoto.value) {
+                console.log('All photos uploaded, auto-submitting...')
+                await submitPhotos()
+            }
+        }, 500)
     }
 })
 
