@@ -142,6 +142,9 @@ class ShipmentTransportInspectionController extends Controller
             // Broadcast real-time update for inspection submission
             broadcast(new \App\Events\ContainerStageUpdated($container))->toOthers();
 
+            // Send Power Automate notification for inspection approval
+            $this->sendInspectionApprovalNotification($container, $approval);
+
             // Send email to quality department for inspection approval
             $qualityUsers = \App\Models\User::permission('container.quality_approve')->get();
             \Illuminate\Support\Facades\Mail::to($qualityUsers)->send(new \App\Mail\ContainerInspectionPassed($container, $approval));
@@ -200,5 +203,45 @@ class ShipmentTransportInspectionController extends Controller
         return response()->json([
             'data' => $inspection
         ]);
+    }
+
+    private function sendInspectionApprovalNotification(ShipmentTransport $container, \App\Models\ShipmentTransportApproval $approval)
+    {
+        try {
+            // Get quality department users who can approve inspections
+            $qualityUsers = \App\Models\User::permission('container.quality_approve')->get();
+
+            if ($qualityUsers->isEmpty()) {
+                \Illuminate\Support\Facades\Log::warning("No quality users found for inspection approval notifications");
+                return;
+            }
+
+            $triggerUrl = config('services.power_automate.inspection_trigger_url');
+            if (!$triggerUrl) {
+                \Illuminate\Support\Facades\Log::error("Power Automate inspection trigger URL not configured");
+                return;
+            }
+
+            // Collect all quality approver emails into an array for Power Automate to handle "first wins" logic
+            $approverEmails = $qualityUsers->pluck('email')->toArray();
+
+            $payload = [
+                'approval_id' => $approval->id,
+                'title' => ($container->container_number ?: $container->transport_number) . ' - Inspection Approval',
+                'description' => 'Container inspection requires quality department approval',
+                'approver_email' => $approverEmails,
+            ];
+
+            $response = \Illuminate\Support\Facades\Http::post($triggerUrl, $payload);
+
+            if ($response->successful()) {
+                \Illuminate\Support\Facades\Log::info("Sent Power Automate notification to " . count($approverEmails) . " quality users for inspection approval {$approval->id}");
+            } else {
+                \Illuminate\Support\Facades\Log::error("Failed to send Power Automate notification for inspection approval {$approval->id}: " . $response->body());
+            }
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Exception sending Power Automate notifications for inspection approval {$approval->id}: " . $e->getMessage());
+        }
     }
 }

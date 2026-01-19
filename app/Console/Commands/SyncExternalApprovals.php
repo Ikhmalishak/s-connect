@@ -28,33 +28,63 @@ class SyncExternalApprovals extends Command
      */
     public function handle()
     {
-        $pollingUrl = config('services.power_automate.polling_url');
+        $loadingApprovalsUrl = config('services.power_automate.loading_approvals_url');
+        $inspectionApprovalsUrl = config('services.power_automate.inspection_approvals_url');
         $cleanupUrl = config('services.power_automate.cleanup_url');
-
-        if (!$pollingUrl) {
-            $this->error('Power Automate polling URL not configured');
-            return Command::FAILURE;
-        }
 
         try {
             $this->info('Polling for approval updates from Vercel...');
 
-            // Fetch all approvals from Vercel bulk API
+            $allProcessedIds = [];
+            $totalProcessedCount = 0;
+
+            // Poll loading approvals
+            $loadingProcessed = $this->pollApprovals($loadingApprovalsUrl, 'loading');
+            $allProcessedIds = array_merge($allProcessedIds, $loadingProcessed['ids']);
+            $totalProcessedCount += $loadingProcessed['count'];
+
+            // Poll inspection approvals
+            $inspectionProcessed = $this->pollApprovals($inspectionApprovalsUrl, 'inspection');
+            $allProcessedIds = array_merge($allProcessedIds, $inspectionProcessed['ids']);
+            $totalProcessedCount += $inspectionProcessed['count'];
+
+            $this->info("Successfully processed {$totalProcessedCount} approvals locally");
+
+            // Cleanup processed approvals from Vercel
+            if (!empty($allProcessedIds)) {
+                $this->cleanupProcessedApprovals($allProcessedIds, $cleanupUrl);
+            }
+
+            return Command::SUCCESS;
+
+        } catch (\Exception $e) {
+            $this->error('Bulk polling failed: ' . $e->getMessage());
+            Log::error('Power Automate bulk polling failed', ['error' => $e->getMessage()]);
+            return Command::FAILURE;
+        }
+    }
+
+    private function pollApprovals(string $pollingUrl, string $approvalType): array
+    {
+        try {
+            $this->info("Polling {$approvalType} approvals from {$pollingUrl}...");
+
+            // Fetch approvals from Vercel API
             $response = Http::timeout(30)->get($pollingUrl);
 
             if (!$response->successful()) {
-                $this->error("Failed to fetch approvals from Vercel: " . $response->status());
-                return Command::FAILURE;
+                $this->error("Failed to fetch {$approvalType} approvals from Vercel: " . $response->status());
+                return ['ids' => [], 'count' => 0];
             }
 
             $vercelApprovals = $response->json();
 
             if (empty($vercelApprovals)) {
-                $this->info('No approvals found in Vercel');
-                return Command::SUCCESS;
+                $this->info("No {$approvalType} approvals found in Vercel");
+                return ['ids' => [], 'count' => 0];
             }
 
-            $this->info("Found " . count($vercelApprovals) . " approvals in Vercel");
+            $this->info("Found " . count($vercelApprovals) . " {$approvalType} approvals in Vercel");
 
             $processedIds = [];
             $processedCount = 0;
@@ -66,19 +96,12 @@ class SyncExternalApprovals extends Command
                 }
             }
 
-            $this->info("Successfully processed {$processedCount} approvals locally");
-
-            // Cleanup processed approvals from Vercel
-            if (!empty($processedIds)) {
-                $this->cleanupProcessedApprovals($processedIds, $cleanupUrl);
-            }
-
-            return Command::SUCCESS;
+            return ['ids' => $processedIds, 'count' => $processedCount];
 
         } catch (\Exception $e) {
-            $this->error('Bulk polling failed: ' . $e->getMessage());
-            Log::error('Power Automate bulk polling failed', ['error' => $e->getMessage()]);
-            return Command::FAILURE;
+            $this->error("{$approvalType} polling failed: " . $e->getMessage());
+            Log::error("Power Automate {$approvalType} polling failed", ['error' => $e->getMessage()]);
+            return ['ids' => [], 'count' => 0];
         }
     }
 
