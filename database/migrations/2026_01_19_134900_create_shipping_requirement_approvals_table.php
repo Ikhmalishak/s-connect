@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -13,14 +12,34 @@ return new class extends Migration
     {
         Schema::create('shipping_requirement_approvals', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('shipping_requirement_change_id')->constrained('shipping_requirement_changes', 'sr_approvals_change_fk')->onDelete('cascade');
+
+            $table->unsignedBigInteger('shipping_requirement_change_id');
+
+            $table->foreign(
+                'shipping_requirement_change_id',
+                'sr_approvals_change_fk'
+            )
+                ->references('id')
+                ->on('shipping_requirement_changes')
+                ->onDelete('cascade');
+
             $table->string('department');
             $table->enum('approval_status', ['pending', 'approved', 'rejected'])->default('pending');
-            $table->foreignId('approved_by')->nullable()->constrained('users', 'sr_approvals_user_fk')->onDelete('set null');
+
+            $table->unsignedBigInteger('approved_by')->nullable();
+            $table->foreign(
+                'approved_by',
+                'sr_approvals_user_fk'
+            )
+                ->references('id')
+                ->on('users')
+                ->nullOnDelete();
+
             $table->text('remarks')->nullable();
             $table->timestamp('approved_at')->nullable();
             $table->timestamps();
         });
+
     }
 
     /**
