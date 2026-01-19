@@ -44,8 +44,10 @@ return [
         'cleanup_url' => 'https://my-approval-app-m91z.vercel.app/api/cleanup',
         'inspection_trigger_url' => env('POWER_AUTOMATE_INSPECTION_TRIGGER_URL'),
         'inspection_polling_url' => env('POWER_AUTOMATE_INSPECTION_POLLING_URL'),
+        'shipping_trigger_url' => env('POWER_AUTOMATE_SHIPPING_TRIGGER_URL'),
         'loading_approvals_url' => env('VERCEL_LOADING_APPROVALS_URL', 'https://my-approval-app-m91z.vercel.app/api/loading-approvals'),
         'inspection_approvals_url' => env('VERCEL_INSPECTION_APPROVALS_URL', 'https://my-approval-app-m91z.vercel.app/api/inspection-approvals'),
+        'shipping_approvals_url' => env('VERCEL_SHIPPING_APPROVALS_URL', 'https://my-approval-app-m91z.vercel.app/api/shipping-approvals'),
     ],
 
     'external_approvals' => [

@@ -551,11 +551,11 @@ class ShipmentTransportController extends Controller
         $validated = $request->validate([
             'change_type' => 'required|in:create,update,delete',
             'shipping_requirement_id' => 'required_if:change_type,update,delete|exists:shipping_requirements,id',
-            'proposed_data.region' => 'required_if:change_type,create,update|string',
-            'proposed_data.destination' => 'required_if:change_type,create,update|string',
-            'proposed_data.risk_level' => 'required_if:change_type,create,update|string',
-            'proposed_data.strength_mm' => 'required_if:change_type,create,update|string',
-            'proposed_data.requires_seals' => 'required_if:change_type,create,update',
+            'proposed_data.region' => 'required_if:change_type,create|string',
+            'proposed_data.destination' => 'required_if:change_type,create|string',
+            'proposed_data.risk_level' => 'required_if:change_type,create|string',
+            'proposed_data.strength_mm' => 'required_if:change_type,create|string',
+            'proposed_data.requires_seals' => 'required_if:change_type,create',
             'attachment' => 'required|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120',
         ]);
 
@@ -575,43 +575,53 @@ class ShipmentTransportController extends Controller
         if ($validated['change_type'] === 'create') {
             // For create operations, no shipping_requirement_id needed
             $changeRequestData['proposed_data'] = [
-                'region' => $validated['proposed_data']['region'],
-                'destination' => $validated['proposed_data']['destination'],
-                'risk_level' => $validated['proposed_data']['risk_level'],
-                'strength_mm' => $validated['proposed_data']['strength_mm'],
-                'requires_seals' => filter_var($validated['proposed_data']['requires_seals'], FILTER_VALIDATE_BOOLEAN),
+                'region' => $validated['proposed_data']['region'] ?? null,
+                'destination' => $validated['proposed_data']['destination'] ?? null,
+                'risk_level' => $validated['proposed_data']['risk_level'] ?? null,
+                'strength_mm' => $validated['proposed_data']['strength_mm'] ?? null,
+                'requires_seals' => isset($validated['proposed_data']['requires_seals']) ? filter_var($validated['proposed_data']['requires_seals'], FILTER_VALIDATE_BOOLEAN) : null,
             ];
         } elseif ($validated['change_type'] === 'update') {
             // For update operations
             $shippingRequirement = ShippingRequirement::findOrFail($validated['shipping_requirement_id']);
 
-            // Check if at least one field has changed
+            // Check if at least one field has been provided for update
+            $providedFields = array_filter($validated['proposed_data'], function($value) {
+                return $value !== null && $value !== '';
+            });
+
+            if (empty($providedFields)) {
+                return response()->json(['message' => 'No changes detected. Please modify at least one field.'], 422);
+            }
+
+            // Check if at least one provided field is actually different from current
             $hasChanges = false;
             $currentData = $shippingRequirement->only(['region', 'destination', 'risk_level', 'strength_mm', 'requires_seals']);
 
-            foreach (['region', 'destination', 'risk_level', 'strength_mm', 'requires_seals'] as $field) {
-                $proposedValue = $field === 'requires_seals' ?
-                    filter_var($validated['proposed_data'][$field], FILTER_VALIDATE_BOOLEAN) :
-                    $validated['proposed_data'][$field];
+            foreach ($providedFields as $field => $proposedValue) {
+                $currentValue = $currentData[$field];
+                $compareValue = $field === 'requires_seals' ?
+                    filter_var($proposedValue, FILTER_VALIDATE_BOOLEAN) :
+                    $proposedValue;
 
-                if (isset($proposedValue) && $proposedValue != $currentData[$field]) {
+                if ($compareValue != $currentValue) {
                     $hasChanges = true;
                     break;
                 }
             }
 
             if (!$hasChanges) {
-                return response()->json(['message' => 'No changes detected. Please modify at least one field.'], 422);
+                return response()->json(['message' => 'No actual changes detected. The provided values are the same as current values.'], 422);
             }
 
             $changeRequestData['shipping_requirement_id'] = $shippingRequirement->id;
             $changeRequestData['original_data'] = $currentData;
             $changeRequestData['proposed_data'] = [
-                'region' => $validated['proposed_data']['region'],
-                'destination' => $validated['proposed_data']['destination'],
-                'risk_level' => $validated['proposed_data']['risk_level'],
-                'strength_mm' => $validated['proposed_data']['strength_mm'],
-                'requires_seals' => filter_var($validated['proposed_data']['requires_seals'], FILTER_VALIDATE_BOOLEAN),
+                'region' => $validated['proposed_data']['region'] ?? null,
+                'destination' => $validated['proposed_data']['destination'] ?? null,
+                'risk_level' => $validated['proposed_data']['risk_level'] ?? null,
+                'strength_mm' => $validated['proposed_data']['strength_mm'] ?? null,
+                'requires_seals' => isset($validated['proposed_data']['requires_seals']) ? filter_var($validated['proposed_data']['requires_seals'], FILTER_VALIDATE_BOOLEAN) : null,
             ];
 
             // Set status to pending
@@ -628,6 +638,9 @@ class ShipmentTransportController extends Controller
 
         // Create change request
         $changeRequest = \App\Models\ShippingRequirementChange::create($changeRequestData);
+
+        // Send Power Automate notification directly with change request ID as approval ID
+        $this->sendShippingRequirementApprovalNotification($changeRequest);
 
         // Fire event for real-time updates
         \Log::info('Firing ShippingRequirementChangeRequested event', ['change_request_id' => $changeRequest->id]);
@@ -658,11 +671,11 @@ class ShipmentTransportController extends Controller
         }
 
         $validated = $request->validate([
-            'region' => 'required|string',
-            'destination' => 'required|string',
-            'risk_level' => 'required|string',
-            'strength_mm' => 'required|string',
-            'requires_seals' => 'required',
+            'region' => 'nullable|string',
+            'destination' => 'nullable|string',
+            'risk_level' => 'nullable|string',
+            'strength_mm' => 'nullable|string',
+            'requires_seals' => 'nullable',
             'attachment' => 'required|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120',
         ]);
 
@@ -882,6 +895,56 @@ class ShipmentTransportController extends Controller
                     \Log::error("Failed to send release notification to {$department} department: " . $e->getMessage());
                 }
             }
+        }
+    }
+
+
+
+    /**
+     * Send Power Automate notification for shipping requirement change approval.
+     */
+    private function sendShippingRequirementApprovalNotification(\App\Models\ShippingRequirementChange $changeRequest)
+    {
+        try {
+            // Get shipping department users who can approve
+            $shippingUsers = \App\Models\User::permission('container.shipping.approve')->get();
+
+            if ($shippingUsers->isEmpty()) {
+                \Illuminate\Support\Facades\Log::warning("No shipping users found for requirement change approval notifications");
+                return;
+            }
+
+            $triggerUrl = config('services.power_automate.shipping_trigger_url');
+            if (!$triggerUrl) {
+                \Illuminate\Support\Facades\Log::error("Power Automate shipping trigger URL not configured");
+                return;
+            }
+
+            // Collect all shipping approver emails
+            $approverEmails = $shippingUsers->pluck('email')->toArray();
+
+            // Create title based on change type and destination
+            $destination = $changeRequest->shippingRequirement ? $changeRequest->shippingRequirement->destination : $changeRequest->proposed_data['destination'];
+            $changeType = ucfirst($changeRequest->change_type);
+            $title = "Shipping Requirement {$changeType} - {$destination}";
+
+            $payload = [
+                'approval_id' => $changeRequest->id, // Use change request ID directly
+                'title' => $title,
+                'description' => 'Shipping requirement change requires shipping department approval',
+                'approver_email' => $approverEmails,
+            ];
+
+            $response = \Illuminate\Support\Facades\Http::post($triggerUrl, $payload);
+
+            if ($response->successful()) {
+                \Illuminate\Support\Facades\Log::info("Sent Power Automate notification to " . count($approverEmails) . " shipping users for requirement change {$changeRequest->id}");
+            } else {
+                \Illuminate\Support\Facades\Log::error("Failed to send Power Automate notification for shipping requirement change {$changeRequest->id}: " . $response->body());
+            }
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Exception sending Power Automate notifications for shipping requirement change {$changeRequest->id}: " . $e->getMessage());
         }
     }
 

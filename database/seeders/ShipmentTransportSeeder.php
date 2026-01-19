@@ -1,0 +1,146 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\ShipmentTransport;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Database\Seeder;
+
+class ShipmentTransportSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void
+    {
+        $transports = [
+            [
+                'site_id' => 1,
+                'transport_type' => 'Truck',
+                'transport_number' => 'TRK-2026-001',
+                'sku_number' => '410624-01',
+                'model_project' => 'X664',
+                'forwarder' => 'CEVA Logistics',
+                'hauler' => 'NTL Transport',
+                'driver_name' => 'Ahmad bin Abdullah',
+                'driver_id' => 'DVR001',
+                'high_security_seal_sn' => 'HSS-2026-001',
+                'inside_gps_sn' => 'GPS-IN-2026-001',
+                'outside_gps_sn' => 'GPS-OUT-2026-001',
+                'fork_seal_sn' => 'FS-2026-001',
+                'fork_seal_size' => '40HC',
+                'temporary_seal_sn' => 'TS-2026-001',
+                'country' => 'Turkey',
+                'work_order' => 'WO-2026-001',
+                'date' => '2026-01-20',
+                'status' => 'in_progress',
+                'stage' => 'container_checking_approval',
+                'created_by' => 1,
+                'is_on_hold' => false,
+            ],
+            [
+                'site_id' => 1,
+                'transport_type' => 'Container',
+                'transport_number' => 'CNT-2026-002',
+                'sku_number' => '410623-01',
+                'model_project' => 'X664',
+                'forwarder' => 'Maersk Line',
+                'hauler' => 'Narita Logistics',
+                'driver_name' => 'Mohd bin Hassan',
+                'driver_id' => 'DVR002',
+                'high_security_seal_sn' => 'HSS-2026-002',
+                'inside_gps_sn' => 'GPS-IN-2026-002',
+                'outside_gps_sn' => 'GPS-OUT-2026-002',
+                'fork_seal_sn' => 'FS-2026-002',
+                'fork_seal_size' => '40HC',
+                'temporary_seal_sn' => 'TS-2026-002',
+                'country' => 'Taiwan',
+                'work_order' => 'WO-2026-002',
+                'date' => '2026-01-21',
+                'status' => 'pending',
+                'stage' => 'container_checking',
+                'created_by' => 1,
+                'is_on_hold' => false,
+            ],
+            [
+                'site_id' => 2,
+                'transport_type' => 'Truck',
+                'transport_number' => 'TRK-2026-003',
+                'sku_number' => '481768-01',
+                'model_project' => 'X285L',
+                'forwarder' => 'Maersk Line',
+                'hauler' => 'Narita Logistics',
+                'driver_name' => 'Siti binti Rahman',
+                'driver_id' => 'DVR003',
+                'high_security_seal_sn' => 'HSS-2026-003',
+                'inside_gps_sn' => 'GPS-IN-2026-003',
+                'outside_gps_sn' => 'GPS-OUT-2026-003',
+                'fork_seal_sn' => 'FS-2026-003',
+                'fork_seal_size' => '20GP',
+                'temporary_seal_sn' => 'TS-2026-003',
+                'country' => 'China',
+                'work_order' => 'WO-2026-003',
+                'date' => '2026-01-22',
+                'status' => 'in_progress',
+                'stage' => 'container_loading_report',
+                'created_by' => 2,
+                'is_on_hold' => false,
+            ],
+            [
+                'site_id' => 1,
+                'transport_type' => 'Container',
+                'transport_number' => 'CNT-2026-004',
+                'sku_number' => '586175-01',
+                'model_project' => 'X664',
+                'forwarder' => 'Maersk Line',
+                'hauler' => 'Narita Logistics',
+                'driver_name' => 'Lee Wei Ming',
+                'driver_id' => 'DVR004',
+                'high_security_seal_sn' => 'HSS-2026-004',
+                'inside_gps_sn' => 'GPS-IN-2026-004',
+                'outside_gps_sn' => 'GPS-OUT-2026-004',
+                'fork_seal_sn' => 'FS-2026-004',
+                'fork_seal_size' => '40HC',
+                'temporary_seal_sn' => 'TS-2026-004',
+                'country' => 'Taiwan',
+                'work_order' => 'WO-2026-004',
+                'date' => '2026-01-23',
+                'status' => 'completed',
+                'stage' => 'onboarding_ready',
+                'created_by' => 1,
+                'is_on_hold' => false,
+            ],
+            [
+                'site_id' => 2,
+                'transport_type' => 'Truck',
+                'transport_number' => 'TRK-2026-005',
+                'sku_number' => '400404-01',
+                'model_project' => 'X285K',
+                'forwarder' => 'DHL Global',
+                'hauler' => 'Zeno Transport',
+                'driver_name' => 'Tan Chee Keong',
+                'driver_id' => 'DVR005',
+                'high_security_seal_sn' => 'HSS-2026-005',
+                'inside_gps_sn' => 'GPS-IN-2026-005',
+                'outside_gps_sn' => 'GPS-OUT-2026-005',
+                'fork_seal_sn' => 'FS-2026-005',
+                'fork_seal_size' => '40HC',
+                'temporary_seal_sn' => 'TS-2026-005',
+                'country' => 'Japan',
+                'work_order' => 'WO-2026-005',
+                'date' => '2026-01-24',
+                'status' => 'in_progress',
+                'stage' => 'container_loading_report_approval',
+                'created_by' => 2,
+                'is_on_hold' => true,
+                'hold_reason' => 'Waiting for customs clearance',
+                'hold_by' => 2,
+                'hold_at' => now(),
+            ],
+        ];
+
+        foreach ($transports as $transport) {
+            ShipmentTransport::create($transport);
+        }
+    }
+}

@@ -30,6 +30,7 @@ class SyncExternalApprovals extends Command
     {
         $loadingApprovalsUrl = config('services.power_automate.loading_approvals_url');
         $inspectionApprovalsUrl = config('services.power_automate.inspection_approvals_url');
+        $shippingApprovalsUrl = config('services.power_automate.shipping_approvals_url');
         $cleanupUrl = config('services.power_automate.cleanup_url');
 
         try {
@@ -47,6 +48,11 @@ class SyncExternalApprovals extends Command
             $inspectionProcessed = $this->pollApprovals($inspectionApprovalsUrl, 'inspection');
             $allProcessedIds = array_merge($allProcessedIds, $inspectionProcessed['ids']);
             $totalProcessedCount += $inspectionProcessed['count'];
+
+            // Poll shipping requirement approvals
+            $shippingProcessed = $this->pollApprovals($shippingApprovalsUrl, 'shipping');
+            $allProcessedIds = array_merge($allProcessedIds, $shippingProcessed['ids']);
+            $totalProcessedCount += $shippingProcessed['count'];
 
             $this->info("Successfully processed {$totalProcessedCount} approvals locally");
 
@@ -117,21 +123,43 @@ class SyncExternalApprovals extends Command
             // Convert approval_id to integer
             $approvalId = (int) $vercelApproval['approval_id'];
 
-            // Find the local approval
-            $approval = ShipmentTransportApproval::find($approvalId);
+            // Initialize variables
+            $approval = null;
+            $changeRequest = null;
 
-            if (!$approval) {
-                Log::warning("Local approval not found", ['approval_id' => $approvalId]);
+            // Find the local approval based on type
+            $approvalType = $vercelApproval['type'] ?? null;
+            if ($approvalType === 'shipping') {
+                $changeRequest = \App\Models\ShippingRequirementChange::find($approvalId);
+                Log::info("Looking for shipping change request ID {$approvalId}");
+            } else {
+                // Default to container approvals (loading/inspection)
+                $approval = ShipmentTransportApproval::find($approvalId);
+                Log::info("Looking for container approval ID {$approvalId}");
+            }
+
+            if (!$approval && !$changeRequest) {
+                Log::warning("Local approval/change request not found", ['approval_id' => $approvalId, 'type' => $approvalType]);
                 return false;
             }
 
-            // Check if already processed
-            if ($approval->approval_status !== 'pending') {
-                Log::info("Approval {$approvalId} already processed locally");
+            $entity = $approval ?? $changeRequest;
+            Log::info("Found approval/change request ID {$approvalId} of type " . get_class($entity));
+
+            // Check if already processed (different field names for different entities)
+            $alreadyProcessed = false;
+            if ($approval && $approval->approval_status !== 'pending') {
+                $alreadyProcessed = true;
+            } elseif ($changeRequest && $changeRequest->status !== 'pending') {
+                $alreadyProcessed = true;
+            }
+
+            if ($alreadyProcessed) {
+                Log::info("Approval/change request {$approvalId} already processed locally");
                 return true; // Still count as processed for cleanup
             }
 
-            // Update approval status
+            // Update status
             $status = $vercelApproval['decision'] === 'Approve' ? 'approved' : 'rejected';
 
             // Find or create user
@@ -140,22 +168,29 @@ class SyncExternalApprovals extends Command
                 ['name' => 'Unknown'] // Vercel doesn't provide name, so use default
             );
 
-            $approval->update([
-                'approval_status' => $status,
-                'approved_by' => $user->id,
-                'approved_at' => $vercelApproval['timestamp'] ?? now()
-            ]);
-
-            // For loading approvals, create the next approval in sequence if approved
-            if ($approval->approval_type === 'loading' && $status === 'approved') {
+            // Handle different approval types
+            if ($approval && $approval->approval_type === 'loading' && $status === 'approved') {
                 $this->createNextSequentialApproval($approval);
+            } elseif ($changeRequest) {
+                $this->processShippingRequirementChangeApproval($changeRequest, $status, $user);
+            } elseif ($approval) {
+                // Update container approval
+                $approval->update([
+                    'approval_status' => $status,
+                    'approved_by' => $user->id,
+                    'approved_at' => $vercelApproval['timestamp'] ?? now()
+                ]);
             }
 
-            // Broadcast real-time update
-            broadcast(new \App\Events\ContainerStageUpdated($approval->shipmentTransport))->toOthers();
+            // Broadcast real-time update for container approvals
+            if ($approval && $approval->shipmentTransport) {
+                broadcast(new \App\Events\ContainerStageUpdated($approval->shipmentTransport))->toOthers();
+            }
 
-            // Check and update container status
-            $this->checkAndUpdateContainerStatus($approval->shipmentTransport);
+            // Check and update container status for container-related approvals
+            if ($approval && $approval->shipmentTransport) {
+                $this->checkAndUpdateContainerStatus($approval->shipmentTransport);
+            }
 
             Log::info("Processed approval {$approvalId}: {$status} by {$vercelApproval['approver']}");
             return true;
@@ -299,6 +334,73 @@ class SyncExternalApprovals extends Command
                     }
                 }
             }
+        }
+    }
+
+    private function processShippingRequirementChangeApproval(\App\Models\ShippingRequirementChange $changeRequest, string $status, $user)
+    {
+        try {
+            if ($changeRequest->status !== 'pending') {
+                Log::info("Change request {$changeRequest->id} already processed");
+                return;
+            }
+
+            // Process the change based on type
+            $shippingRequirement = $changeRequest->shippingRequirement;
+
+            if ($status === 'approved') {
+                if ($changeRequest->change_type === 'update') {
+                    // Apply the update
+                    $shippingRequirement->update(array_merge($changeRequest->proposed_data, [
+                        'last_updated_by' => $changeRequest->requested_by,
+                        'attachment_path' => $changeRequest->attachment_path,
+                        'change_requested_at' => $changeRequest->created_at,
+                        'requires_approval' => false,
+                        'approved_by' => $user->id,
+                        'approved_at' => now(),
+                        'status' => 'normal',
+                    ]));
+                } elseif ($changeRequest->change_type === 'delete') {
+                    // Delete the requirement
+                    $shippingRequirement->delete();
+                }
+
+                // Update the change request
+                $changeRequest->update([
+                    'status' => 'approved',
+                    'reviewed_by' => $user->id,
+                    'reviewed_at' => now(),
+                    'review_comments' => 'Approved via Teams',
+                ]);
+
+                Log::info("Shipping requirement change request {$changeRequest->id} approved via Teams");
+            } else {
+                // Reject the change request
+                $changeRequest->update([
+                    'status' => 'rejected',
+                    'reviewed_by' => $user->id,
+                    'reviewed_at' => now(),
+                    'review_comments' => 'Rejected via Teams',
+                ]);
+
+                // Set status back to normal for the shipping requirement
+                if ($shippingRequirement) {
+                    $shippingRequirement->update(['status' => 'normal']);
+                }
+
+                Log::info("Shipping requirement change request {$changeRequest->id} rejected via Teams");
+            }
+
+            // Fire event for real-time updates
+            try {
+                \App\Events\ShippingRequirementChangeProcessed::dispatch($changeRequest, $shippingRequirement, $status);
+            } catch (\Exception $e) {
+                Log::error("Failed to dispatch ShippingRequirementChangeProcessed event: " . $e->getMessage());
+                // Don't fail the entire process for event dispatch issues
+            }
+
+        } catch (\Exception $e) {
+            Log::error("Exception processing shipping requirement change approval {$changeRequest->id}: " . $e->getMessage());
         }
     }
 
