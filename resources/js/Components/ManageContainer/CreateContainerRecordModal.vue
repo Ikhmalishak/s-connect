@@ -59,26 +59,26 @@
                     <div class="space-y-4">
                         <div class="text-center">
                             <h3 class="text-lg font-semibold text-gray-900">
-                                Step {{ currentStep + 1 }}: {{ photoTypes[currentStep].label }}
+                                Step {{ currentStep + 1 }}: {{ photoTypes[currentStep]?.label }}
                             </h3>
                             <p class="text-sm text-gray-600 mt-1">
-                                Upload the {{ photoTypes[currentStep].label.toLowerCase() }} photo
+                                Upload the {{ photoTypes[currentStep]?.label?.toLowerCase() }} photo
                             </p>
                         </div>
 
                         <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
                             <input
-                                :ref="(el) => setFileInputRef(el, photoTypes[currentStep].key)"
+                                :ref="(el) => setFileInputRef(el, photoTypes[currentStep]?.key)"
                                 type="file"
                                 accept="image/*"
-                                @change="handleFileSelect(photoTypes[currentStep].key, $event)"
+                                @change="handleFileSelect(photoTypes[currentStep]?.key, $event)"
                                 class="hidden"
                             />
-                            <div v-if="!photos[photoTypes[currentStep].key]" class="space-y-4">
+                            <div v-if="!photos[photoTypes[currentStep]?.key]" class="space-y-4">
                                 <div class="flex gap-3 justify-center">
                                     <button
                                         type="button"
-                                        @click="takePhoto(photoTypes[currentStep].key)"
+                                        @click="takePhoto(photoTypes[currentStep]?.key)"
                                         :disabled="uploadingPhoto"
                                         class="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white text-sm font-medium rounded-md transition-colors"
                                     >
@@ -86,29 +86,29 @@
                                     </button>
                                     <button
                                         type="button"
-                                        @click="triggerFileInput(photoTypes[currentStep].key)"
+                                        @click="triggerFileInput(photoTypes[currentStep]?.key)"
                                         :disabled="uploadingPhoto"
                                         class="px-4 py-2 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white text-sm font-medium rounded-md transition-colors"
                                     >
                                         Upload from Gallery
                                     </button>
                                 </div>
-                                <p class="text-xs text-gray-600">{{ photoTypes[currentStep].label.toLowerCase() }}</p>
+                                <p class="text-xs text-gray-600">{{ photoTypes[currentStep]?.label?.toLowerCase() }}</p>
                             </div>
                             <div v-else class="relative">
-                                <img :src="photos[photoTypes[currentStep].key].preview" class="max-h-32 mx-auto rounded" />
+                                <img :src="photos[photoTypes[currentStep]?.key]?.preview" class="max-h-32 mx-auto rounded" />
                                 <Button
                                     variant="destructive"
                                     size="sm"
                                     class="absolute -top-2 -right-2 h-6 w-6"
-                                    @click="removePhoto(photoTypes[currentStep].key)"
+                                    @click="removePhoto(photoTypes[currentStep]?.key)"
                                 >
                                     <X class="h-3 w-3" />
                                 </button>
                             </div>
 
                             <!-- Individual Photo Upload Progress -->
-                            <div v-if="uploadingPhoto && photos[photoTypes[currentStep].key]" class="mt-4 space-y-2">
+                            <div v-if="uploadingPhoto && photos[photoTypes[currentStep]?.key]" class="mt-4 space-y-2">
                                 <div class="flex items-center justify-between text-xs text-gray-600">
                                     <span>Uploading...</span>
                                     <span>{{ photoUploadProgress }}%</span>
@@ -233,21 +233,7 @@ const photos = ref({
     container_full_seal_photo: null,
 })
 
-const photoTypes = [
-    { key: 'pallet_condition_photo', label: 'Pallet Condition' },
-    { key: 'pallet_label_photo', label: 'Pallet Label' },
-    //Temporarily disabled for testing - only require 2 photos
-    { key: 'gps_photo_before_installation', label: 'GPS Before Installation' },
-    { key: 'container_truck_photo', label: 'Container Truck' },
-    { key: 'empty_container_photo', label: 'Empty Container' },
-    { key: 'inside_gps_photo', label: 'Inside GPS' },
-    { key: 'half_loaded_photo', label: 'Half Loaded' },
-    { key: 'one_side_door_closed_with_container_number_photo', label: 'Door Closed' },
-    { key: 'complete_loaded_photo', label: 'Complete Loaded' },
-    { key: 'outside_gps_photo', label: 'Outside GPS' },
-    { key: 'security_seal_photo', label: 'Security Seal' },
-    { key: 'container_full_seal_photo', label: 'Container Full Seal' },
-]
+const photoTypes = ref([])
 
 const isUploading = ref(false)
 const uploadProgress = ref(0)
@@ -265,15 +251,15 @@ const photoUploadProgress = ref(0)
 const fileInputRefs = ref<Record<string, HTMLInputElement>>({})
 
 const photosToUpload = computed(() => {
-    return photoTypes.filter(type => photos.value[type.key] !== null)
+    return photoTypes.value.filter(type => photos.value[type.key] !== null)
 })
 
 const canGoToNextStep = computed(() => {
     // Can go to next step only if current step is completed and not at the last step
-    if (currentStep.value >= photoTypes.length - 1) {
+    if (currentStep.value >= photoTypes.value.length - 1) {
         return false
     }
-    const currentPhotoType = photoTypes[currentStep.value]
+    const currentPhotoType = photoTypes.value[currentStep.value]
     return photos.value[currentPhotoType.key] !== null
 })
 
@@ -283,7 +269,7 @@ const canSubmit = computed(() => {
 })
 
 const allPhotosComplete = computed(() => {
-    return photoTypes.every(type => photos.value[type.key] !== null)
+    return photoTypes.value.every(type => photos.value[type.key] !== null)
 })
 
 async function handleFileSelect(type: string, event: Event) {
@@ -418,16 +404,16 @@ function canNavigateToStep(stepIndex: number) {
 
     // Can navigate to next step only if current step is completed
     if (stepIndex === currentStep.value + 1) {
-        const currentPhotoType = photoTypes[currentStep.value]
-        return photos.value[currentPhotoType.key] !== null
+        const currentPhotoType = photoTypes.value[currentStep.value]
+        return photos.value[currentPhotoType?.key] !== null
     }
 
     return false
 }
 
 function getStepClass(index: number) {
-    const photoType = photoTypes[index]
-    const hasPhoto = photos.value[photoType.key] !== null
+    const photoType = photoTypes.value[index]
+    const hasPhoto = photos.value[photoType?.key] !== null
 
     if (index === currentStep.value) {
         return 'bg-blue-600 text-white border-blue-600'
@@ -457,7 +443,7 @@ function previousStep() {
 }
 
 function nextStep() {
-    if (currentStep.value < photoTypes.length - 1) {
+    if (currentStep.value < photoTypes.value.length - 1) {
         currentStep.value++
     }
 }
@@ -564,7 +550,8 @@ watch(uploadingPhoto, async (isUploadingPhoto, wasUploadingPhoto) => {
 // Load existing photos and set correct starting step when modal opens
 watch(() => props.show, async (newVal) => {
     if (newVal) {
-        // Load existing photos for this container
+        // Load required photos configuration and existing photos for this container
+        await loadRequiredPhotos()
         await loadExistingPhotos()
     } else {
         // Clear any existing previews when closing
@@ -587,6 +574,7 @@ watch(() => props.show, async (newVal) => {
             security_seal_photo: null,
             container_full_seal_photo: null,
         }
+        photoTypes.value = []
         currentStep.value = 0
         error.value = ''
         success.value = ''
@@ -654,17 +642,38 @@ async function loadExistingPhotos() {
     }
 }
 
+async function loadRequiredPhotos() {
+    try {
+        console.log('Loading required photos for container:', props.id)
+        const response = await axios.get(`/containers/${props.id}/required-photos`)
+        photoTypes.value = response.data.data || []
+        console.log('Required photo types:', photoTypes.value)
+    } catch (error) {
+        console.error('Error loading required photos:', error)
+        // Fallback to all photos if loading fails
+        photoTypes.value = [
+            { key: 'pallet_condition_photo', label: 'Pallet Condition' },
+            { key: 'pallet_label_photo', label: 'Pallet Label' },
+            { key: 'container_truck_photo', label: 'Container Truck' },
+            { key: 'empty_container_photo', label: 'Empty Container' },
+            { key: 'half_loaded_photo', label: 'Half Loaded' },
+            { key: 'one_side_door_closed_with_container_number_photo', label: 'Door Closed' },
+            { key: 'complete_loaded_photo', label: 'Complete Loaded' },
+        ]
+    }
+}
+
 function setCurrentStepToFirstIncomplete() {
     // Find the first step that doesn't have a photo
-    for (let i = 0; i < photoTypes.length; i++) {
-        const photoType = photoTypes[i]
+    for (let i = 0; i < photoTypes.value.length; i++) {
+        const photoType = photoTypes.value[i]
         if (!photos.value[photoType.key]) {
             currentStep.value = i
             return
         }
     }
     // If all photos are complete, stay on the last step
-    currentStep.value = photoTypes.length - 1
+    currentStep.value = photoTypes.value.length - 1
 }
 </script>
 

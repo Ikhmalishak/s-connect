@@ -380,6 +380,63 @@ class ShipmentTransportController extends Controller
     }
 
     /**
+     * Get required photos for a shipment transport based on its configuration.
+     */
+    public function getRequiredPhotos(ShipmentTransport $shipmentTransport)
+    {
+        $user = auth()->user();
+
+        // Check if shipment transport belongs to user's site (unless superadmin)
+        if (!$user->hasPermissionTo('superadmin') && $shipmentTransport->site_id !== $user->site_id) {
+            return response()->json(['message' => 'Unauthorized access to shipment transport'], 403);
+        }
+
+        $requiredPhotos = $this->determineRequiredPhotos($shipmentTransport);
+
+        return response()->json([
+            'data' => $requiredPhotos
+        ]);
+    }
+
+    /**
+     * Determine which photos are required based on shipment transport configuration.
+     */
+    private function determineRequiredPhotos(ShipmentTransport $shipmentTransport)
+    {
+        // Always required photos
+        $requiredPhotos = [
+            ['key' => 'pallet_condition_photo', 'label' => 'Pallet Condition'],
+            ['key' => 'pallet_label_photo', 'label' => 'Pallet Label'],
+            ['key' => 'container_truck_photo', 'label' => 'Container Truck'],
+            ['key' => 'empty_container_photo', 'label' => 'Empty Container'],
+            ['key' => 'half_loaded_photo', 'label' => 'Half Loaded'],
+            ['key' => 'one_side_door_closed_with_container_number_photo', 'label' => 'Door Closed'],
+            ['key' => 'complete_loaded_photo', 'label' => 'Complete Loaded'],
+        ];
+
+        // GPS photos - required if GPS serial numbers are present
+        if (!empty($shipmentTransport->inside_gps_sn) || !empty($shipmentTransport->outside_gps_sn)) {
+            $requiredPhotos = array_merge($requiredPhotos, [
+                ['key' => 'gps_photo_before_installation', 'label' => 'GPS Before Installation'],
+                ['key' => 'inside_gps_photo', 'label' => 'Inside GPS'],
+                ['key' => 'outside_gps_photo', 'label' => 'Outside GPS'],
+            ]);
+        }
+
+        // Seal photos - required if seal serial numbers are present
+        if (!empty($shipmentTransport->high_security_seal_sn) ||
+            !empty($shipmentTransport->fork_seal_sn) ||
+            !empty($shipmentTransport->temporary_seal_sn)) {
+            $requiredPhotos = array_merge($requiredPhotos, [
+                ['key' => 'security_seal_photo', 'label' => 'Security Seal'],
+                ['key' => 'container_full_seal_photo', 'label' => 'Container Full Seal'],
+            ]);
+        }
+
+        return $requiredPhotos;
+    }
+
+    /**
      * Get all shipping requirements for management page.
      */
     public function getShippingRequirements(Request $request)

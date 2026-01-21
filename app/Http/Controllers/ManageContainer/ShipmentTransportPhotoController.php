@@ -13,27 +13,28 @@ class ShipmentTransportPhotoController extends Controller
     {
         $user = auth()->user();
 
-        $photoTypes = [
-            'pallet_condition_photo',
-            'pallet_label_photo',
-            'gps_photo_before_installation',
-            'container_truck_photo',
-            'empty_container_photo',
-            'inside_gps_photo',
-            'half_loaded_photo',
-            'one_side_door_closed_with_container_number_photo',
-            'complete_loaded_photo',
-            'outside_gps_photo',
-            'security_seal_photo',
-            'container_full_seal_photo'
-        ];
-
         $rules = [
             'shipment_transport_id' => 'required|exists:shipment_transports,id',
         ];
 
-        // Add validation rules only for photo types that are actually sent
-        foreach ($photoTypes as $type) {
+        $validated = $request->validate($rules);
+
+        // Get the container to determine required photos
+        $container = \App\Models\ShipmentTransport::where('id', $validated['shipment_transport_id']);
+        if (!$user->hasPermissionTo('superadmin')) {
+            $container->where('site_id', $user->site_id);
+        }
+        $container = $container->first();
+
+        if (!$container) {
+            return response()->json(['message' => 'Unauthorized access to shipment transport'], 403);
+        }
+
+        // Get required photo types for this container
+        $requiredPhotoTypes = $this->getRequiredPhotoKeys($container);
+
+        // Add validation rules only for photo types that are actually sent and required
+        foreach ($requiredPhotoTypes as $type) {
             if ($request->hasFile($type)) {
                 $rules[$type] = 'required|image|max:5120'; // required if sent, must be image, max 5MB
             }
@@ -62,7 +63,7 @@ class ShipmentTransportPhotoController extends Controller
         $createdPhotos = [];
         $uploadedPhotoCount = 0;
 
-        foreach ($photoTypes as $type) {
+        foreach ($requiredPhotoTypes as $type) {
             if ($request->hasFile($type)) {
                 $photo = $request->file($type);
                 $path = $photo->store('container_photo', 'public');
@@ -184,5 +185,45 @@ class ShipmentTransportPhotoController extends Controller
         return response()->json([
             'message' => 'Security checking completed successfully',
         ]);
+    }
+
+    /**
+     * Get the keys of required photos for a shipment transport.
+     */
+    private function getRequiredPhotoKeys(ShipmentTransport $shipmentTransport)
+    {
+        $requiredPhotos = [];
+
+        // Always required photos
+        $requiredPhotos = [
+            'pallet_condition_photo',
+            'pallet_label_photo',
+            'container_truck_photo',
+            'empty_container_photo',
+            'half_loaded_photo',
+            'one_side_door_closed_with_container_number_photo',
+            'complete_loaded_photo',
+        ];
+
+        // GPS photos - required if GPS serial numbers are present
+        if (!empty($shipmentTransport->inside_gps_sn) || !empty($shipmentTransport->outside_gps_sn)) {
+            $requiredPhotos = array_merge($requiredPhotos, [
+                'gps_photo_before_installation',
+                'inside_gps_photo',
+                'outside_gps_photo',
+            ]);
+        }
+
+        // Seal photos - required if seal serial numbers are present
+        if (!empty($shipmentTransport->high_security_seal_sn) ||
+            !empty($shipmentTransport->fork_seal_sn) ||
+            !empty($shipmentTransport->temporary_seal_sn)) {
+            $requiredPhotos = array_merge($requiredPhotos, [
+                'security_seal_photo',
+                'container_full_seal_photo',
+            ]);
+        }
+
+        return $requiredPhotos;
     }
 }
