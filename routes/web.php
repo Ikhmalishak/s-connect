@@ -13,6 +13,7 @@ use App\Http\Controllers\ManageContainer\ShipmentTransportController;
 use App\Http\Controllers\ManageContainer\ShipmentTransportInspectionController;
 use App\Http\Controllers\ManageContainer\ShipmentTransportPhotoController;
 use App\Http\Controllers\ManageContainer\ShipmentTransportApprovalController;
+use App\Http\Controllers\ManageContainer\ArchiveContainerReportController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ManageVisitor\VisitorController;
 use App\Http\Controllers\ProfileController;
@@ -184,6 +185,9 @@ Route::middleware(['auth'])->prefix('container')->name('container.')->group(func
     Route::get('/approvals', function () {
         return Inertia::render('ManageContainer/ContainerApprovals');
     })->middleware('can:container.approve')->name('approvals');
+    Route::get('/archive', function () {
+        return Inertia::render('ManageContainer/ArchiveContainerReports');
+    })->middleware('can:container.access')->name('archive');
     Route::get('/shipping-requirements', function () {
         return Inertia::render('ManageContainer/ShippingRequirements');
     })->middleware('can:container.access')->name('shipping-requirements');
@@ -199,6 +203,11 @@ Route::middleware(['auth'])->prefix('api/container-shipments')->name('container-
     Route::get('/{containerShipment}', [ContainerShipmentController::class, 'show'])->name('show');
     Route::put('/{containerShipment}', [ContainerShipmentController::class, 'update'])->name('update');
     Route::delete('/{containerShipment}', [ContainerShipmentController::class, 'destroy'])->name('destroy');
+});
+
+// Archive container reports API routes
+Route::middleware(['auth'])->prefix('api/archive-container-reports')->name('archive-container-reports.')->group(function () {
+    Route::get('/', [App\Http\Controllers\ManageContainer\ArchiveContainerReportController::class, 'index'])->name('index');
 });
 
 Route::post('/containers/create', [ShipmentTransportController::class, 'store'])->middleware('can:container.access')->name('container.create');

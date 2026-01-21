@@ -65,6 +65,11 @@ const navMain = [
                 url: "/container/shipping-requirements-approvals",
                 permission: "container.shipping.approve",
             },
+            {
+                title: "Archive Container Reports",
+                url: "/container/archive",
+                permission: "container.access",
+            },
         ],
         permission: "container.access",
     },
