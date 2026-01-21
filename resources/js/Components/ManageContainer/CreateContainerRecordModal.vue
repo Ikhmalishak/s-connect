@@ -236,17 +236,17 @@ const photos = ref({
 const photoTypes = [
     { key: 'pallet_condition_photo', label: 'Pallet Condition' },
     { key: 'pallet_label_photo', label: 'Pallet Label' },
-    // Temporarily disabled for testing - only require 2 photos
-    // { key: 'gps_photo_before_installation', label: 'GPS Before Installation' },
-    // { key: 'container_truck_photo', label: 'Container Truck' },
-    // { key: 'empty_container_photo', label: 'Empty Container' },
-    // { key: 'inside_gps_photo', label: 'Inside GPS' },
-    // { key: 'half_loaded_photo', label: 'Half Loaded' },
-    // { key: 'one_side_door_closed_with_container_number_photo', label: 'Door Closed' },
-    // { key: 'complete_loaded_photo', label: 'Complete Loaded' },
-    // { key: 'outside_gps_photo', label: 'Outside GPS' },
-    // { key: 'security_seal_photo', label: 'Security Seal' },
-    // { key: 'container_full_seal_photo', label: 'Container Full Seal' },
+    //Temporarily disabled for testing - only require 2 photos
+    { key: 'gps_photo_before_installation', label: 'GPS Before Installation' },
+    { key: 'container_truck_photo', label: 'Container Truck' },
+    { key: 'empty_container_photo', label: 'Empty Container' },
+    { key: 'inside_gps_photo', label: 'Inside GPS' },
+    { key: 'half_loaded_photo', label: 'Half Loaded' },
+    { key: 'one_side_door_closed_with_container_number_photo', label: 'Door Closed' },
+    { key: 'complete_loaded_photo', label: 'Complete Loaded' },
+    { key: 'outside_gps_photo', label: 'Outside GPS' },
+    { key: 'security_seal_photo', label: 'Security Seal' },
+    { key: 'container_full_seal_photo', label: 'Container Full Seal' },
 ]
 
 const isUploading = ref(false)

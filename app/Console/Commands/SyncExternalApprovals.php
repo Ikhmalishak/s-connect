@@ -168,18 +168,23 @@ class SyncExternalApprovals extends Command
                 ['name' => 'Unknown'] // Vercel doesn't provide name, so use default
             );
 
-            // Handle different approval types
-            if ($approval && $approval->approval_type === 'loading' && $status === 'approved') {
-                $this->createNextSequentialApproval($approval);
-            } elseif ($changeRequest) {
-                $this->processShippingRequirementChangeApproval($changeRequest, $status, $user);
-            } elseif ($approval) {
-                // Update container approval
+            // Update approval status for all approval types
+            if ($approval) {
                 $approval->update([
                     'approval_status' => $status,
                     'approved_by' => $user->id,
                     'approved_at' => $vercelApproval['timestamp'] ?? now()
                 ]);
+
+                // Special handling for loading approvals
+                if ($approval->approval_type === 'loading' && $status === 'approved') {
+                    $this->createNextSequentialApproval($approval);
+                }
+            }
+
+            // Handle shipping requirement changes
+            if ($changeRequest) {
+                $this->processShippingRequirementChangeApproval($changeRequest, $status, $user);
             }
 
             // Broadcast real-time update for container approvals
