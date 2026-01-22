@@ -284,6 +284,7 @@ class ShipmentTransportController extends Controller
         // Get base validation rules
         $rules = [
             'transport_type' => 'required|string',
+            'size' => 'nullable|string|in:20GP,40HC',
             'transport_number' => 'required|string',
             'sku_number' => 'required|string',
             'model_project' => 'required|string',
@@ -301,9 +302,10 @@ class ShipmentTransportController extends Controller
             'temporary_seal_sn' => 'nullable|string',
         ];
 
-        // Check if transport type is Container - make high_security_seal_sn required
+        // Check if transport type is Container - make high_security_seal_sn and size required
         $transportType = $request->input('transport_type');
         if ($transportType === 'Container') {
+            $rules['size'] = 'required|string|in:20GP,40HC';
             $rules['high_security_seal_sn'] = 'required|string';
             $rules['fork_seal_sn'] = 'required|string';
         }

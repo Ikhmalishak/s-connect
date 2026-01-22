@@ -10,6 +10,7 @@ class ShipmentTransport extends Model
     protected $fillable = [
         'site_id',
         'transport_type',
+        'size',
         'transport_number',
         'sku_number',
         'model_project',

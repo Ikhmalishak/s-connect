@@ -43,6 +43,9 @@ const formSchema = toTypedSchema(
         transport_type: z.enum(["Truck", "Container"], {
             required_error: "Transport Type is required",
         }),
+        size: z.enum(["20GP", "40HC"], {
+            required_error: "Container Size is required for containers",
+        }).optional(),
         transport_number: z.string().min(1, "Transport Number is required"),
         sku_number: z.string().min(1, "SKU Number is required"),
         model_project: z.string().min(1, "Model/Project is required"),
@@ -56,6 +59,15 @@ const formSchema = toTypedSchema(
         fork_seal_sn: z.string().optional(),
         fork_seal_size: z.string().optional(),
         temporary_seal_sn: z.string().optional(),
+    }).refine((data) => {
+        // If transport_type is Container, size is required
+        if (data.transport_type === "Container") {
+            return data.size !== undefined && data.size !== null;
+        }
+        return true;
+    }, {
+        message: "Container Size is required when Transport Type is Container",
+        path: ["size"],
     })
 );
 
@@ -253,6 +265,34 @@ const onSubmit = handleSubmit(async (values) => {
                                             v-bind="componentField"
                                         />
                                     </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            </FormField>
+
+                            <FormField
+                                v-if="transportType === 'Container'"
+                                v-slot="{ componentField }"
+                                name="size"
+                            >
+                                <FormItem>
+                                    <FormLabel>Container Size <span class="text-red-500">*</span></FormLabel>
+                                    <Select v-bind="componentField">
+                                        <SelectTrigger>
+                                            <SelectValue
+                                                placeholder="Select Container Size"
+                                            />
+                                        </SelectTrigger>
+                                        <SelectContent class="z-[10001]">
+                                            <SelectGroup>
+                                                <SelectItem value="20GP"
+                                                    >20GP</SelectItem
+                                                >
+                                                <SelectItem value="40HC"
+                                                    >40HC</SelectItem
+                                                >
+                                            </SelectGroup>
+                                        </SelectContent>
+                                    </Select>
                                     <FormMessage />
                                 </FormItem>
                             </FormField>
