@@ -263,6 +263,9 @@ const canGoToNextStep = computed(() => {
     return photos.value[currentPhotoType.key] !== null
 })
 
+// Track photos uploaded in current modal session
+const photosUploadedInSession = ref(0)
+
 const canSubmit = computed(() => {
     // Allow creating record even with no photos
     return !isUploading.value
@@ -296,6 +299,9 @@ async function handleFileSelect(type: string, event: Event) {
         }
 
         error.value = ''
+
+        // Track that user uploaded a photo in this session
+        photosUploadedInSession.value++
 
         // Upload photo immediately
         await uploadSinglePhoto(type, file)
@@ -332,6 +338,9 @@ async function handleCameraCapture(imageData: string) {
             file,
             preview
         }
+
+        // Track that user uploaded a photo in this session
+        photosUploadedInSession.value++
 
         // Upload the camera photo immediately
         await uploadSinglePhoto(currentPhotoType.value, file)
@@ -514,18 +523,19 @@ async function submitPhotos() {
     }
 }
 
-// Auto-submit when all photos are complete (regardless of current step)
+// Auto-submit when all photos are complete AND user uploaded photos in this session
 watch(allPhotosComplete, async (isComplete) => {
-    if (isComplete && !isUploading.value) {
-        console.log('All photos complete, checking for auto-submit...')
+    if (isComplete && !isUploading.value && photosUploadedInSession.value > 0) {
+        console.log('All photos complete and user uploaded in session, checking for auto-submit...')
         // Wait a bit longer to ensure photo upload is fully complete
         setTimeout(async () => {
             console.log('Checking auto-submit conditions:', {
                 allPhotosComplete: allPhotosComplete.value,
                 isUploading: isUploading.value,
-                uploadingPhoto: uploadingPhoto.value
+                uploadingPhoto: uploadingPhoto.value,
+                photosUploadedInSession: photosUploadedInSession.value
             })
-            if (allPhotosComplete.value && !isUploading.value && !uploadingPhoto.value) {
+            if (allPhotosComplete.value && !isUploading.value && !uploadingPhoto.value && photosUploadedInSession.value > 0) {
                 console.log('Auto-submitting photos...')
                 await submitPhotos()
             }
@@ -536,11 +546,11 @@ watch(allPhotosComplete, async (isComplete) => {
 // Also watch for individual photo uploads to trigger auto-submit
 watch(uploadingPhoto, async (isUploadingPhoto, wasUploadingPhoto) => {
     // When photo upload completes (changes from true to false)
-    if (wasUploadingPhoto && !isUploadingPhoto && allPhotosComplete.value && !isUploading.value) {
+    if (wasUploadingPhoto && !isUploadingPhoto && allPhotosComplete.value && !isUploading.value && photosUploadedInSession.value > 0) {
         console.log('Photo upload completed, checking if all photos are done...')
         setTimeout(async () => {
-            if (allPhotosComplete.value && !isUploading.value && !uploadingPhoto.value) {
-                console.log('All photos uploaded, auto-submitting...')
+            if (allPhotosComplete.value && !isUploading.value && !uploadingPhoto.value && photosUploadedInSession.value > 0) {
+                console.log('All photos uploaded in session, auto-submitting...')
                 await submitPhotos()
             }
         }, 500)
@@ -550,6 +560,8 @@ watch(uploadingPhoto, async (isUploadingPhoto, wasUploadingPhoto) => {
 // Load existing photos and set correct starting step when modal opens
 watch(() => props.show, async (newVal) => {
     if (newVal) {
+        // Reset session counter for new modal session
+        photosUploadedInSession.value = 0
         // Load required photos configuration and existing photos for this container
         await loadRequiredPhotos()
         await loadExistingPhotos()
@@ -579,6 +591,7 @@ watch(() => props.show, async (newVal) => {
         error.value = ''
         success.value = ''
         uploadProgress.value = 0
+        photosUploadedInSession.value = 0
     }
 })
 

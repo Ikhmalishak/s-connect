@@ -522,8 +522,8 @@ class ShipmentTransportController extends Controller
             'hold_at' => now(),
         ]);
 
-        // Send email notifications
-        $this->sendHoldNotifications($shipmentTransport, $user);
+        // Send email notifications - DISABLED: Using Teams instead
+        // $this->sendHoldNotifications($shipmentTransport, $user);
 
         return response()->json([
             'message' => 'Container has been put on hold successfully',
@@ -560,8 +560,8 @@ class ShipmentTransportController extends Controller
             'hold_at' => null,
         ]);
 
-        // Send email notifications
-        $this->sendReleaseNotifications($shipmentTransport, $user);
+        // Send email notifications - DISABLED: Using Teams instead
+        // $this->sendReleaseNotifications($shipmentTransport, $user);
 
         return response()->json([
             'message' => 'Container has been released from hold successfully',
