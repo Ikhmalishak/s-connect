@@ -14,7 +14,7 @@ class RolePermissionSeeder extends Seeder
         $modules = [
             'visitor' => ['access', 'report'],
             'room-reservation' => ['access', 'report'],
-            'container' => ['access','approve', 'create', 'inspect', 'upload_photos', 'security_check', 'management_approve', 'warehouse_approve', 'shipping_approve', 'quality_approve', 'security_approve','shipping.approve'],
+            'container' => ['access','approve', 'create', 'inspect', 'upload_photos', 'security_check', 'management_approve', 'warehouse_approve', 'shipping_approve', 'quality_approve', 'security_approve','shipping.approve','shipping.access'],
         ];
 
         foreach ($modules as $module => $actions) {
