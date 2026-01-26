@@ -124,7 +124,58 @@ watch(
                                     </div>
                                 </div>
                             </div>
-                            
+
+                            <!-- Seals & GPS Information -->
+                            <div class="bg-blue-50 p-4 rounded-lg">
+                                <h3 class="font-semibold text-gray-700 mb-3">
+                                    Seals & GPS Information
+                                </h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                    <!-- Seals Column -->
+                                    <div class="space-y-2">
+                                        <h4 class="font-medium text-gray-600">Seals</h4>
+                                        <div class="flex">
+                                            <span class="text-gray-600 w-32">High Security:</span>
+                                            <span class="text-gray-900">
+                                                {{ inspectionDetails?.transport?.high_security_seal_sn || 'N/A' }}
+                                            </span>
+                                        </div>
+                                        <div class="flex">
+                                            <span class="text-gray-600 w-32">Fork Seal:</span>
+                                            <span class="text-gray-900">
+                                                {{ inspectionDetails?.transport?.fork_seal_sn || 'N/A' }}
+                                                <span v-if="inspectionDetails?.transport?.fork_seal_size" class="text-xs text-gray-500">
+                                                    ({{ inspectionDetails.transport.fork_seal_size }})
+                                                </span>
+                                            </span>
+                                        </div>
+                                        <div class="flex">
+                                            <span class="text-gray-600 w-32">Temporary:</span>
+                                            <span class="text-gray-900">
+                                                {{ inspectionDetails?.transport?.temporary_seal_sn || 'N/A' }}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <!-- GPS Column -->
+                                    <div class="space-y-2">
+                                        <h4 class="font-medium text-gray-600">GPS</h4>
+                                        <div class="flex">
+                                            <span class="text-gray-600 w-24">Inside:</span>
+                                            <span class="text-gray-900">
+                                                {{ inspectionDetails?.transport?.inside_gps_sn || 'N/A' }}
+                                            </span>
+                                        </div>
+                                        <div class="flex">
+                                            <span class="text-gray-600 w-24">Outside:</span>
+                                            <span class="text-gray-900">
+                                                {{ inspectionDetails?.transport?.outside_gps_sn || 'N/A' }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Container Photos -->
                             <div
                                 v-if="

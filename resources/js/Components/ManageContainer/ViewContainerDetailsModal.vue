@@ -333,27 +333,72 @@
                                         >
                                     </div>
 
-                                    <!-- High Security -->
-                                    <div
-                                        class="flex justify-between items-center p-4"
-                                    >
+                                    <!-- High Security Seal SN -->
+                                    <div class="flex justify-between p-4">
                                         <span class="text-gray-700 text-sm"
-                                            >High Security:</span
+                                            >High Security Seal SN:</span
                                         >
                                         <span
-                                            class="text-sm font-semibold"
-                                            :class="
-                                                container.high_security_seal
-                                                    ? 'text-red-700'
-                                                    : 'text-gray-900'
-                                            "
+                                            class="text-gray-900 text-sm font-semibold"
+                                            >{{
+                                                container.high_security_seal_sn || 'N/A'
+                                            }}</span
                                         >
-                                            {{
-                                                container.high_security_seal
-                                                    ? "YES"
-                                                    : "NO"
+                                    </div>
+
+                                    <!-- Fork Seal SN -->
+                                    <div class="flex justify-between p-4">
+                                        <span class="text-gray-700 text-sm"
+                                            >Fork Seal SN:</span
+                                        >
+                                        <span
+                                            class="text-gray-900 text-sm font-semibold"
+                                            >{{
+                                                container.fork_seal_sn || 'N/A'
                                             }}
+                                            <span v-if="container.fork_seal_size" class="text-xs text-gray-500">
+                                                ({{ container.fork_seal_size }})
+                                            </span>
                                         </span>
+                                    </div>
+
+                                    <!-- Temporary Seal SN -->
+                                    <div class="flex justify-between p-4">
+                                        <span class="text-gray-700 text-sm"
+                                            >Temporary Seal SN:</span
+                                        >
+                                        <span
+                                            class="text-gray-900 text-sm font-semibold"
+                                            >{{
+                                                container.temporary_seal_sn || 'N/A'
+                                            }}</span
+                                        >
+                                    </div>
+
+                                    <!-- Inside GPS SN -->
+                                    <div class="flex justify-between p-4">
+                                        <span class="text-gray-700 text-sm"
+                                            >Inside GPS SN:</span
+                                        >
+                                        <span
+                                            class="text-gray-900 text-sm font-semibold"
+                                            >{{
+                                                container.inside_gps_sn || 'N/A'
+                                            }}</span
+                                        >
+                                    </div>
+
+                                    <!-- Outside GPS SN -->
+                                    <div class="flex justify-between p-4">
+                                        <span class="text-gray-700 text-sm"
+                                            >Outside GPS SN:</span
+                                        >
+                                        <span
+                                            class="text-gray-900 text-sm font-semibold"
+                                            >{{
+                                                container.outside_gps_sn || 'N/A'
+                                            }}</span
+                                        >
                                     </div>
 
                                     <!-- Inspection Status -->
@@ -368,17 +413,17 @@
                                             class="text-sm font-semibold"
                                             :class="{
                                                 'text-yellow-700':
-                                                    container.status ===
+                                                    container.inspection.status ===
                                                     'pending',
                                                 'text-green-700':
-                                                    container.status ===
+                                                    container.inspection.status ===
                                                     'passed',
                                                 'text-red-700':
-                                                    container.status ===
+                                                    container.inspection.status ===
                                                     'failed',
                                             }"
                                         >
-                                            {{ container.status.toUpperCase() }}
+                                            {{ container.inspection.status.toUpperCase() }}
                                         </span>
                                     </div>
 
@@ -449,6 +494,12 @@ interface Container {
     model?: string;
     work_order?: string;
     high_security_seal?: boolean;
+    high_security_seal_sn?: string;
+    fork_seal_sn?: string;
+    fork_seal_size?: string;
+    temporary_seal_sn?: string;
+    inside_gps_sn?: string;
+    outside_gps_sn?: string;
     inspection?: {
         id: number;
         status: string;
