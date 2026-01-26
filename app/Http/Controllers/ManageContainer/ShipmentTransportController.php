@@ -461,7 +461,7 @@ class ShipmentTransportController extends Controller
         $sortBy = $request->get('sort_by', 'created_at');
         $sortDirection = $request->get('sort_direction', 'desc');
 
-        if (in_array($sortBy, ['region', 'destination', 'risk_level', 'strength_mm', 'requires_seals', 'created_at'])) {
+        if (in_array($sortBy, ['region', 'destination', 'risk_level', 'strength', 'requires_gps', 'created_at'])) {
             $query->orderBy($sortBy, $sortDirection);
         }
 
@@ -613,8 +613,8 @@ class ShipmentTransportController extends Controller
             'proposed_data.region' => 'required_if:change_type,create|string',
             'proposed_data.destination' => 'required_if:change_type,create|string',
             'proposed_data.risk_level' => 'required_if:change_type,create|string',
-            'proposed_data.strength_mm' => 'required_if:change_type,create|string',
-            'proposed_data.requires_seals' => 'required_if:change_type,create',
+            'proposed_data.strength' => 'required_if:change_type,create|string',
+            'proposed_data.requires_gps' => 'required_if:change_type,create',
             'attachment' => 'required|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120',
         ]);
 
@@ -637,8 +637,8 @@ class ShipmentTransportController extends Controller
                 'region' => $validated['proposed_data']['region'] ?? null,
                 'destination' => $validated['proposed_data']['destination'] ?? null,
                 'risk_level' => $validated['proposed_data']['risk_level'] ?? null,
-                'strength_mm' => $validated['proposed_data']['strength_mm'] ?? null,
-                'requires_seals' => isset($validated['proposed_data']['requires_seals']) ? filter_var($validated['proposed_data']['requires_seals'], FILTER_VALIDATE_BOOLEAN) : null,
+                'strength' => $validated['proposed_data']['strength'] ?? null,
+                'requires_gps' => isset($validated['proposed_data']['requires_gps']) ? filter_var($validated['proposed_data']['requires_gps'], FILTER_VALIDATE_BOOLEAN) : null,
             ];
         } elseif ($validated['change_type'] === 'update') {
             // For update operations
@@ -655,11 +655,11 @@ class ShipmentTransportController extends Controller
 
             // Check if at least one provided field is actually different from current
             $hasChanges = false;
-            $currentData = $shippingRequirement->only(['region', 'destination', 'risk_level', 'strength_mm', 'requires_seals']);
+            $currentData = $shippingRequirement->only(['region', 'destination', 'risk_level', 'strength', 'requires_gps']);
 
             foreach ($providedFields as $field => $proposedValue) {
                 $currentValue = $currentData[$field];
-                $compareValue = $field === 'requires_seals' ?
+                $compareValue = $field === 'requires_gps' ?
                     filter_var($proposedValue, FILTER_VALIDATE_BOOLEAN) :
                     $proposedValue;
 
@@ -679,8 +679,8 @@ class ShipmentTransportController extends Controller
                 'region' => $validated['proposed_data']['region'] ?? null,
                 'destination' => $validated['proposed_data']['destination'] ?? null,
                 'risk_level' => $validated['proposed_data']['risk_level'] ?? null,
-                'strength_mm' => $validated['proposed_data']['strength_mm'] ?? null,
-                'requires_seals' => isset($validated['proposed_data']['requires_seals']) ? filter_var($validated['proposed_data']['requires_seals'], FILTER_VALIDATE_BOOLEAN) : null,
+                'strength' => $validated['proposed_data']['strength'] ?? null,
+                'requires_gps' => isset($validated['proposed_data']['requires_gps']) ? filter_var($validated['proposed_data']['requires_gps'], FILTER_VALIDATE_BOOLEAN) : null,
             ];
 
             // Set status to pending
@@ -689,7 +689,7 @@ class ShipmentTransportController extends Controller
             // For delete operations
             $shippingRequirement = ShippingRequirement::findOrFail($validated['shipping_requirement_id']);
             $changeRequestData['shipping_requirement_id'] = $shippingRequirement->id;
-            $changeRequestData['original_data'] = $shippingRequirement->only(['region', 'destination', 'risk_level', 'strength_mm', 'requires_seals']);
+            $changeRequestData['original_data'] = $shippingRequirement->only(['region', 'destination', 'risk_level', 'strength', 'requires_gps']);
 
             // Set status to pending
             $shippingRequirement->update(['status' => 'pending']);
@@ -733,19 +733,19 @@ class ShipmentTransportController extends Controller
             'region' => 'nullable|string',
             'destination' => 'nullable|string',
             'risk_level' => 'nullable|string',
-            'strength_mm' => 'nullable|string',
-            'requires_seals' => 'nullable',
+            'strength' => 'nullable|string',
+            'requires_gps' => 'nullable',
             'attachment' => 'required|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120',
         ]);
 
-        // Convert requires_seals to boolean
-        $validated['requires_seals'] = filter_var($validated['requires_seals'], FILTER_VALIDATE_BOOLEAN);
+        // Convert requires_gps to boolean
+        $validated['requires_gps'] = filter_var($validated['requires_gps'], FILTER_VALIDATE_BOOLEAN);
 
         // Check if at least one field has changed
         $hasChanges = false;
-        $currentData = $shippingRequirement->only(['region', 'destination', 'risk_level', 'strength_mm', 'requires_seals']);
+        $currentData = $shippingRequirement->only(['region', 'destination', 'risk_level', 'strength', 'requires_gps']);
 
-        foreach (['region', 'destination', 'risk_level', 'strength_mm', 'requires_seals'] as $field) {
+        foreach (['region', 'destination', 'risk_level', 'strength', 'requires_gps'] as $field) {
             if (isset($validated[$field]) && $validated[$field] != $currentData[$field]) {
                 $hasChanges = true;
                 break;
@@ -767,13 +767,13 @@ class ShipmentTransportController extends Controller
             'shipping_requirement_id' => $shippingRequirement->id,
             'requested_by' => $user->id,
             'change_type' => 'update',
-            'original_data' => $shippingRequirement->only(['region', 'destination', 'risk_level', 'strength_mm', 'requires_seals']),
+            'original_data' => $shippingRequirement->only(['region', 'destination', 'risk_level', 'strength', 'requires_gps']),
             'proposed_data' => [
                 'region' => $validated['region'],
                 'destination' => $validated['destination'],
                 'risk_level' => $validated['risk_level'],
-                'strength_mm' => $validated['strength_mm'],
-                'requires_seals' => $validated['requires_seals'],
+                'strength' => $validated['strength'],
+                'requires_gps' => $validated['requires_gps'],
             ],
             'attachment_path' => $attachmentPath,
             'status' => 'pending',
