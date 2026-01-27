@@ -278,23 +278,25 @@ class ShipmentTransportController extends Controller
             $rules['high_security_seal_sn'] = 'required|string';
         }
 
-        // Check country-specific requirements
-        $country = $request->input('country');
-        if ($country) {
-            $requirement = ShippingRequirement::whereRaw('LOWER(destination) = ?', [strtolower($country)])->first();
-            if (!$requirement) {
-                $requirement = ShippingRequirement::whereRaw('LOWER(destination) LIKE ?', ['%' . strtolower($country) . '%'])->first();
-            }
-
-            if ($requirement) {
-                // Require fork seal only if country requires it
-                if ($requirement->requires_fork_seal) {
-                    $rules['fork_seal_sn'] = 'required|string';
+        // Check country-specific requirements (only for containers)
+        if ($transportType === 'Container') {
+            $country = $request->input('country');
+            if ($country) {
+                $requirement = ShippingRequirement::whereRaw('LOWER(destination) = ?', [strtolower($country)])->first();
+                if (!$requirement) {
+                    $requirement = ShippingRequirement::whereRaw('LOWER(destination) LIKE ?', ['%' . strtolower($country) . '%'])->first();
                 }
 
-                // Require GPS for high/medium risk countries
-                if (in_array($requirement->risk_level, ['high', 'medium'])) {
-                    $rules['inside_gps_sn'] = 'required|string';
+                if ($requirement) {
+                    // Require fork seal only if country requires it
+                    if ($requirement->requires_fork_seal) {
+                        $rules['fork_seal_sn'] = 'required|string';
+                    }
+
+                    // Require GPS for high/medium risk countries
+                    if (in_array($requirement->risk_level, ['high', 'medium'])) {
+                        $rules['inside_gps_sn'] = 'required|string';
+                    }
                 }
             }
         }
