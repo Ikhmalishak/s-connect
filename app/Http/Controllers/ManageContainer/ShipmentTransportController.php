@@ -9,6 +9,7 @@ use App\Mail\ContainerReleased;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
+use Mpdf\Mpdf;
 
 class ShipmentTransportController extends Controller
 {
@@ -143,74 +144,42 @@ class ShipmentTransportController extends Controller
         ]);
     }
 
-    /**
-     * Get shipments for visitor form selection.
-     */
-    public function getShipmentsForVisitor(Request $request)
-    {
-        $user = auth()->user();
-        $siteId = $request->input('site_id');
 
-        if (!$siteId) {
-            return response()->json(['error' => 'Site ID is required'], 400);
-        }
-
-        // Check if user can access this site
-        if (!$user->hasPermissionTo('superadmin') && $user->site_id != $siteId) {
-            return response()->json(['error' => 'Unauthorized access to site'], 403);
-        }
-
-        $shipments = ShipmentTransport::where('site_id', $siteId)
-            ->where('status', '!=', 'completed') // Don't show completed shipments
-            ->select('id', 'transport_number', 'transport_type', 'sku_number', 'model_project')
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        return response()->json([
-            'data' => $shipments
-        ]);
-    }
 
     /**
-     * Validate container number for visitor registration.
+     * Validate container number for visitor registration (public access for visitor form).
+     * Only allows proceeding if container exists and is ready for pickup (stage = 'onboarding_ready').
      */
     public function validateContainerForVisitor(Request $request)
     {
-        $user = auth()->user();
-
         $validated = $request->validate([
-            'container_number' => 'required|string|regex:/^[A-Z]{4}\d{7}$/',
+            'container_number' => 'required|string',
             'site_id' => 'required|integer|exists:sites,id',
         ]);
 
-        // Check if user can access this site
-        if (!$user->hasPermissionTo('superadmin') && $user->site_id != $validated['site_id']) {
-            return response()->json([
-                'valid' => false,
-                'message' => 'Unauthorized access to site'
-            ], 403);
-        }
-
-        // Find container by transport number
+        // Find container by transport number (exact match only)
         $container = ShipmentTransport::where('transport_number', $validated['container_number'])
             ->where('site_id', $validated['site_id'])
             ->first();
 
         if (!$container) {
+            // Container doesn't exist - cannot proceed
             return response()->json([
                 'valid' => false,
-                'message' => 'Container number not found'
+                'message' => 'Container number not found in system'
             ]);
         }
 
         // Check if container stage is 'onboarding_ready'
         if ($container->stage !== 'onboarding_ready') {
+            // Container exists but not ready for pickup - cannot proceed
             return response()->json([
                 'valid' => false,
-                'message' => 'Container is not ready for visitor registration'
+                'message' => 'Container is not ready for visitor registration (current stage: ' . str_replace('_', ' ', $container->stage) . ')'
             ]);
         }
 
+        // Container exists and is ready for pickup - success
         return response()->json([
             'valid' => true,
             'container' => [
@@ -307,15 +276,26 @@ class ShipmentTransportController extends Controller
         if ($transportType === 'Container') {
             $rules['size'] = 'required|string|in:20GP,40HC';
             $rules['high_security_seal_sn'] = 'required|string';
-            $rules['fork_seal_sn'] = 'required|string';
         }
 
-        // Check if country requires GPS (only for high/medium risk countries)
+        // Check country-specific requirements
         $country = $request->input('country');
         if ($country) {
-            $requirement = ShippingRequirement::where('destination', $country)->first();
-            if ($requirement && in_array($requirement->risk_level, ['high', 'medium'])) {
-                $rules['inside_gps_sn'] = 'required|string';
+            $requirement = ShippingRequirement::whereRaw('LOWER(destination) = ?', [strtolower($country)])->first();
+            if (!$requirement) {
+                $requirement = ShippingRequirement::whereRaw('LOWER(destination) LIKE ?', ['%' . strtolower($country) . '%'])->first();
+            }
+
+            if ($requirement) {
+                // Require fork seal only if country requires it
+                if ($requirement->requires_fork_seal) {
+                    $rules['fork_seal_sn'] = 'required|string';
+                }
+
+                // Require GPS for high/medium risk countries
+                if (in_array($requirement->risk_level, ['high', 'medium'])) {
+                    $rules['inside_gps_sn'] = 'required|string';
+                }
             }
         }
 
@@ -336,30 +316,6 @@ class ShipmentTransportController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     */
-    public function show(ShipmentTransport $shipmentTransport)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(ShipmentTransport $shipmentTransport)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, ShipmentTransport $shipmentTransport)
-    {
-        //
-    }
-
-    /**
      * Get shipping requirements for a country.
      */
     public function getCountryRequirements(Request $request)
@@ -370,10 +326,16 @@ class ShipmentTransportController extends Controller
             return response()->json(['error' => 'Country parameter is required'], 400);
         }
 
-        $requirement = ShippingRequirement::where('destination', $country)->first();
+        // Try exact match first (case-insensitive)
+        $requirement = ShippingRequirement::whereRaw('LOWER(destination) = ?', [strtolower($country)])->first();
+
+        // If no exact match, try partial match
+        if (!$requirement) {
+            $requirement = ShippingRequirement::whereRaw('LOWER(destination) LIKE ?', ['%' . strtolower($country) . '%'])->first();
+        }
 
         if (!$requirement) {
-            return response()->json(['error' => 'Requirements not found for this country'], 404);
+            return response()->json(['error' => 'Requirements not found for this country. Available destinations: ' . implode(', ', ShippingRequirement::pluck('destination')->toArray())], 404);
         }
 
         return response()->json([
@@ -613,10 +575,21 @@ class ShipmentTransportController extends Controller
             'proposed_data.region' => 'required_if:change_type,create|string',
             'proposed_data.destination' => 'required_if:change_type,create|string',
             'proposed_data.risk_level' => 'required_if:change_type,create|string',
-            'proposed_data.strength' => 'required_if:change_type,create|string',
-            'proposed_data.requires_gps' => 'required_if:change_type,create',
+            'proposed_data.strength' => 'nullable|string',
+            'proposed_data.requires_fork_seal' => 'nullable|boolean',
+            'proposed_data.requires_gps' => 'nullable|boolean',
             'attachment' => 'required|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120',
         ]);
+
+        // Custom validation: strength is required only if requires_fork_seal is true
+        // For update operations, check the proposed_data from the change request
+        if ($validated['change_type'] === 'update') {
+            $proposedData = $validated['proposed_data'] ?? [];
+            $requiresForkSeal = isset($proposedData['requires_fork_seal']) ? filter_var($proposedData['requires_fork_seal'], FILTER_VALIDATE_BOOLEAN) : false;
+            if ($requiresForkSeal && empty($proposedData['strength'])) {
+                return response()->json(['message' => 'Strength is required when fork seal is required'], 422);
+            }
+        }
 
         // Store attachment
         $attachmentPath = null;
@@ -638,7 +611,8 @@ class ShipmentTransportController extends Controller
                 'destination' => $validated['proposed_data']['destination'] ?? null,
                 'risk_level' => $validated['proposed_data']['risk_level'] ?? null,
                 'strength' => $validated['proposed_data']['strength'] ?? null,
-                'requires_gps' => isset($validated['proposed_data']['requires_gps']) ? filter_var($validated['proposed_data']['requires_gps'], FILTER_VALIDATE_BOOLEAN) : null,
+                'requires_fork_seal' => isset($validated['proposed_data']['requires_fork_seal']) ? filter_var($validated['proposed_data']['requires_fork_seal'], FILTER_VALIDATE_BOOLEAN) : false,
+                'requires_gps' => isset($validated['proposed_data']['requires_gps']) ? filter_var($validated['proposed_data']['requires_gps'], FILTER_VALIDATE_BOOLEAN) : false,
             ];
         } elseif ($validated['change_type'] === 'update') {
             // For update operations
@@ -655,11 +629,11 @@ class ShipmentTransportController extends Controller
 
             // Check if at least one provided field is actually different from current
             $hasChanges = false;
-            $currentData = $shippingRequirement->only(['region', 'destination', 'risk_level', 'strength', 'requires_gps']);
+            $currentData = $shippingRequirement->only(['region', 'destination', 'risk_level', 'strength', 'requires_fork_seal', 'requires_gps']);
 
             foreach ($providedFields as $field => $proposedValue) {
                 $currentValue = $currentData[$field];
-                $compareValue = $field === 'requires_gps' ?
+                $compareValue = in_array($field, ['requires_gps', 'requires_fork_seal']) ?
                     filter_var($proposedValue, FILTER_VALIDATE_BOOLEAN) :
                     $proposedValue;
 
@@ -675,12 +649,16 @@ class ShipmentTransportController extends Controller
 
             $changeRequestData['shipping_requirement_id'] = $shippingRequirement->id;
             $changeRequestData['original_data'] = $currentData;
+            // Get the raw input data to ensure we capture all fields
+            $proposedData = $request->input('proposed_data', []);
+
             $changeRequestData['proposed_data'] = [
-                'region' => $validated['proposed_data']['region'] ?? null,
-                'destination' => $validated['proposed_data']['destination'] ?? null,
-                'risk_level' => $validated['proposed_data']['risk_level'] ?? null,
-                'strength' => $validated['proposed_data']['strength'] ?? null,
-                'requires_gps' => isset($validated['proposed_data']['requires_gps']) ? filter_var($validated['proposed_data']['requires_gps'], FILTER_VALIDATE_BOOLEAN) : null,
+                'region' => $proposedData['region'] ?? null,
+                'destination' => $proposedData['destination'] ?? null,
+                'risk_level' => $proposedData['risk_level'] ?? null,
+                'strength' => $proposedData['strength'] ?? null,
+                'requires_fork_seal' => isset($proposedData['requires_fork_seal']) ? filter_var($proposedData['requires_fork_seal'], FILTER_VALIDATE_BOOLEAN) : false,
+                'requires_gps' => isset($proposedData['requires_gps']) ? filter_var($proposedData['requires_gps'], FILTER_VALIDATE_BOOLEAN) : false,
             ];
 
             // Set status to pending
@@ -689,7 +667,7 @@ class ShipmentTransportController extends Controller
             // For delete operations
             $shippingRequirement = ShippingRequirement::findOrFail($validated['shipping_requirement_id']);
             $changeRequestData['shipping_requirement_id'] = $shippingRequirement->id;
-            $changeRequestData['original_data'] = $shippingRequirement->only(['region', 'destination', 'risk_level', 'strength', 'requires_gps']);
+            $changeRequestData['original_data'] = $shippingRequirement->only(['region', 'destination', 'risk_level', 'strength', 'requires_fork_seal', 'requires_gps']);
 
             // Set status to pending
             $shippingRequirement->update(['status' => 'pending']);
@@ -734,18 +712,20 @@ class ShipmentTransportController extends Controller
             'destination' => 'nullable|string',
             'risk_level' => 'nullable|string',
             'strength' => 'nullable|string',
-            'requires_gps' => 'nullable',
+            'requires_fork_seal' => 'nullable|boolean',
+            'requires_gps' => 'nullable|boolean',
             'attachment' => 'required|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120',
         ]);
 
-        // Convert requires_gps to boolean
+        // Convert boolean fields
+        $validated['requires_fork_seal'] = filter_var($validated['requires_fork_seal'], FILTER_VALIDATE_BOOLEAN);
         $validated['requires_gps'] = filter_var($validated['requires_gps'], FILTER_VALIDATE_BOOLEAN);
 
         // Check if at least one field has changed
         $hasChanges = false;
-        $currentData = $shippingRequirement->only(['region', 'destination', 'risk_level', 'strength', 'requires_gps']);
+        $currentData = $shippingRequirement->only(['region', 'destination', 'risk_level', 'strength', 'requires_fork_seal', 'requires_gps']);
 
-        foreach (['region', 'destination', 'risk_level', 'strength', 'requires_gps'] as $field) {
+        foreach (['region', 'destination', 'risk_level', 'strength', 'requires_fork_seal', 'requires_gps'] as $field) {
             if (isset($validated[$field]) && $validated[$field] != $currentData[$field]) {
                 $hasChanges = true;
                 break;
@@ -767,12 +747,13 @@ class ShipmentTransportController extends Controller
             'shipping_requirement_id' => $shippingRequirement->id,
             'requested_by' => $user->id,
             'change_type' => 'update',
-            'original_data' => $shippingRequirement->only(['region', 'destination', 'risk_level', 'strength', 'requires_gps']),
+            'original_data' => $shippingRequirement->only(['region', 'destination', 'risk_level', 'strength', 'requires_fork_seal', 'requires_gps']),
             'proposed_data' => [
                 'region' => $validated['region'],
                 'destination' => $validated['destination'],
                 'risk_level' => $validated['risk_level'],
                 'strength' => $validated['strength'],
+                'requires_fork_seal' => $validated['requires_fork_seal'],
                 'requires_gps' => $validated['requires_gps'],
             ],
             'attachment_path' => $attachmentPath,
@@ -854,7 +835,18 @@ class ShipmentTransportController extends Controller
         // Process the change based on type
         $shippingRequirement = $changeRequest->shippingRequirement;
 
-        if ($changeRequest->change_type === 'update') {
+        if ($changeRequest->change_type === 'create') {
+            // Create the new shipping requirement
+            $shippingRequirement = ShippingRequirement::create(array_merge($changeRequest->proposed_data, [
+                'last_updated_by' => $changeRequest->requested_by,
+                'attachment_path' => $changeRequest->attachment_path,
+                'change_requested_at' => $changeRequest->created_at,
+                'requires_approval' => false,
+                'approved_by' => $user->id,
+                'approved_at' => now(),
+                'status' => 'normal',
+            ]));
+        } elseif ($changeRequest->change_type === 'update') {
             // Apply the update
             $shippingRequirement->update(array_merge($changeRequest->proposed_data, [
                 'last_updated_by' => $changeRequest->requested_by,
@@ -1014,6 +1006,469 @@ class ShipmentTransportController extends Controller
     {
         // Return users with the specific permission
         return \App\Models\User::permission("container.{$department}_approve")->get();
+    }
+
+    /**
+     * Download container report as PDF.
+     */
+    public function downloadContainerReport(ShipmentTransport $shipmentTransport)
+    {
+        \Log::info("PDF Download: Starting download for container ID {$shipmentTransport->id}");
+
+        $user = auth()->user();
+
+        // Check if user has shipping access
+        if (!$user->hasPermissionTo('container.shipping.access')) {
+            \Log::warning("PDF Download: Access denied for user {$user->id} - no shipping access");
+            return response()->json(['message' => 'Unauthorized. Shipping department access required.'], 403);
+        }
+
+        // Check if shipment transport belongs to user's site (unless superadmin)
+        if (!$user->hasPermissionTo('superadmin') && $shipmentTransport->site_id !== $user->site_id) {
+            \Log::warning("PDF Download: Access denied for user {$user->id} - wrong site access");
+            return response()->json(['message' => 'Unauthorized access to shipment transport'], 403);
+        }
+
+        // Check if container is completed
+        if ($shipmentTransport->status !== 'completed') {
+            \Log::warning("PDF Download: Container {$shipmentTransport->id} not completed (status: {$shipmentTransport->status})");
+            return response()->json(['message' => 'Report can only be downloaded for completed containers'], 400);
+        }
+
+        \Log::info("PDF Download: Access checks passed for container {$shipmentTransport->id}");
+
+        // Check for cached PDF first
+        $cacheKey = 'container_report_' . $shipmentTransport->id . '_' . $shipmentTransport->updated_at->timestamp;
+        $cachePath = storage_path('app/pdf-cache/' . $cacheKey . '.pdf');
+
+        if (file_exists($cachePath) && filemtime($cachePath) > $shipmentTransport->updated_at->timestamp) {
+            \Log::info("PDF Download: Serving cached PDF for container {$shipmentTransport->id}");
+            // Return cached PDF
+            $filename = 'container-report-' . $shipmentTransport->transport_number . '.pdf';
+            return response()->file($cachePath, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            ]);
+        }
+
+        \Log::info("PDF Download: Cache miss, generating new PDF for container {$shipmentTransport->id}");
+
+        $startTime = microtime(true);
+
+        // Load all relations
+        \Log::info("PDF Download: Loading container data with relations");
+        $container = ShipmentTransport::with([
+            'inspection',
+            'photo',
+            'approvals',
+            'createdBy',
+            'holdBy',
+            'site',
+            'shipmentTransportDrivers.visitor'
+        ])->findOrFail($shipmentTransport->id);
+
+        $loadTime = microtime(true) - $startTime;
+        \Log::info("PDF Download: Data loaded in " . round($loadTime, 2) . " seconds. Photos: " . $container->photo->count());
+
+        // Generate PDF
+        \Log::info("PDF Download: Starting PDF generation");
+        $pdfStartTime = microtime(true);
+        $pdf = $this->generateContainerReportPDF($container);
+
+        // Try alternative output method
+        $tempPdfPath = storage_path('tmp/temp_' . $container->id . '_' . time() . '.pdf');
+        $pdf->Output($tempPdfPath, 'F'); // Save to file first
+
+        if (file_exists($tempPdfPath)) {
+            $pdfContent = file_get_contents($tempPdfPath);
+            unlink($tempPdfPath); // Clean up temp file
+        } else {
+            \Log::error("PDF Download: Failed to save PDF to temp file");
+            $pdfContent = $pdf->output(); // Fallback to direct output
+        }
+
+        $pdfGenTime = microtime(true) - $pdfStartTime;
+        \Log::info("PDF Download: PDF generated in " . round($pdfGenTime, 2) . " seconds");
+        \Log::info("PDF Download: PDF content size: " . strlen($pdfContent) . " bytes");
+
+        // Ensure cache directory exists
+        $cacheDir = storage_path('app/pdf-cache');
+        if (!file_exists($cacheDir)) {
+            mkdir($cacheDir, 0755, true);
+            \Log::info("PDF Download: Created cache directory");
+        }
+
+        // Save to cache
+        \Log::info("PDF Download: Saving to cache at: {$cachePath}");
+        $writeResult = file_put_contents($cachePath, $pdfContent);
+        \Log::info("PDF Download: Cache write result: {$writeResult} bytes written");
+        \Log::info("PDF Download: Cache file exists: " . (file_exists($cachePath) ? 'yes' : 'no'));
+        if (file_exists($cachePath)) {
+            \Log::info("PDF Download: Cache file size: " . filesize($cachePath) . " bytes");
+        }
+
+        $totalTime = microtime(true) - $startTime;
+        \Log::info("PDF Download: Total processing time: " . round($totalTime, 2) . " seconds for container {$shipmentTransport->id}");
+
+        // Return PDF as download
+        $filename = 'container-report-' . $container->transport_number . '.pdf';
+        return response($pdfContent, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
+    }
+
+    /**
+     * Generate PDF report for container.
+     */
+    private function generateContainerReportPDF(ShipmentTransport $container)
+    {
+        try {
+            \Log::info("PDF Generation: Starting MPDF initialization");
+
+            $mpdf = new Mpdf([
+                'mode' => 'utf-8',
+                'tempDir' => storage_path('tmp/mpdf'),
+                'setAutoTopMargin' => 'stretch',
+                'setAutoBottomMargin' => 'stretch',
+                'debug' => true
+            ]);
+
+            \Log::info("PDF Generation: MPDF initialized successfully");
+
+            // Build HTML content
+            \Log::info("PDF Generation: Building HTML content");
+            $html = $this->buildContainerReportHTML($container);
+            \Log::info("PDF Generation: HTML content built, length: " . strlen($html) . " characters");
+
+            \Log::info("PDF Generation: Writing HTML to PDF");
+            $mpdf->WriteHTML($html);
+            \Log::info("PDF Generation: HTML written successfully");
+
+            \Log::info("PDF Generation: PDF generation completed");
+            return $mpdf;
+
+        } catch (\Exception $e) {
+            \Log::error("PDF Generation: Exception during PDF creation: " . $e->getMessage());
+            \Log::error("PDF Generation: Stack trace: " . $e->getTraceAsString());
+            throw $e;
+        }
+    }
+
+    /**
+     * Build HTML content for container report.
+     */
+    private function buildContainerReportHTML(ShipmentTransport $container)
+    {
+        $html = '
+        <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
+            .section { margin-bottom: 20px; }
+            .section h3 { color: #333; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f5f5f5; font-weight: bold; }
+            .status-completed { color: green; font-weight: bold; }
+            .status-failed { color: red; font-weight: bold; }
+            .photo-list { margin: 10px 0; }
+            .photo-item { margin: 5px 0; padding: 5px; background-color: #f9f9f9; }
+        </style>
+
+        <div class="header">
+            <h1>Container Report</h1>
+            <h2>' . $container->transport_number . '</h2>
+            <p><strong>Report Generated:</strong> ' . now()->format('d/m/Y H:i:s') . '</p>
+        </div>
+
+        <div class="section">
+            <h3>Basic Information</h3>
+            <table>
+                <tr><th>Transport Type</th><td>' . ucfirst($container->transport_type) . '</td></tr>
+                <tr><th>Transport Number</th><td>' . $container->transport_number . '</td></tr>
+                <tr><th>Size</th><td>' . ($container->size ?? 'N/A') . '</td></tr>
+                <tr><th>SKU Number</th><td>' . $container->sku_number . '</td></tr>
+                <tr><th>Model/Project</th><td>' . $container->model_project . '</td></tr>
+                <tr><th>Forwarder</th><td>' . $container->forwarder . '</td></tr>
+                <tr><th>Hauler</th><td>' . $container->hauler . '</td></tr>
+                <tr><th>Country</th><td>' . $container->country . '</td></tr>
+                <tr><th>Work Order</th><td>' . $container->work_order . '</td></tr>
+                <tr><th>Site</th><td>' . ($container->site ? $container->site->name : 'N/A') . '</td></tr>
+                <tr><th>Created By</th><td>' . ($container->createdBy ? $container->createdBy->name : 'N/A') . '</td></tr>
+                <tr><th>Created Date</th><td>' . $container->created_at->format('d/m/Y H:i:s') . '</td></tr>
+                <tr><th>Status</th><td class="status-' . $container->status . '">' . ucfirst(str_replace('_', ' ', $container->status)) . '</td></tr>
+                <tr><th>Stage</th><td>' . ucfirst(str_replace('_', ' ', $container->stage)) . '</td></tr>
+            </table>
+        </div>';
+
+        // Seals & Security Section
+        $html .= '
+        <div class="section">
+            <h3>Seals & Security</h3>
+            <table>
+                <tr><th>High Security Seal</th><td>' . ($container->high_security_seal_sn ? 'Yes - ' . $container->high_security_seal_sn : 'No') . '</td></tr>
+                <tr><th>Fork Seal</th><td>' . ($container->fork_seal_sn ? 'Yes - ' . $container->fork_seal_sn . ' (Size: ' . ($container->fork_seal_size ?? 'N/A') . ')' : 'No') . '</td></tr>
+                <tr><th>Temporary Seal</th><td>' . ($container->temporary_seal_sn ? 'Yes - ' . $container->temporary_seal_sn : 'No') . '</td></tr>
+                <tr><th>Inside GPS</th><td>' . ($container->inside_gps_sn ? 'Yes - ' . $container->inside_gps_sn : 'No') . '</td></tr>
+                <tr><th>Outside GPS</th><td>' . ($container->outside_gps_sn ? 'Yes - ' . $container->outside_gps_sn : 'No') . '</td></tr>
+            </table>
+        </div>';
+
+        // Inspection Section
+        if ($container->inspection) {
+            $html .= '
+            <div class="section">
+                <h3>Inspection Details</h3>
+                <table>
+                    <tr><th>Inspection Status</th><td>' . ucfirst($container->inspection->status) . '</td></tr>
+                    <tr><th>Inspection Date</th><td>' . $container->inspection->created_at->format('d/m/Y H:i:s') . '</td></tr>
+                    <tr><th>Inspector</th><td>' . ($container->inspection->inspector ? $container->inspection->inspector->name : 'N/A') . '</td></tr>
+                </table>
+            </div>';
+        }
+
+        // Photos Section - Optimized for performance
+        if ($container->photo && $container->photo->count() > 0) {
+            $html .= '
+            <div class="section">
+                <h3>Uploaded Photos (' . $container->photo->count() . ')</h3>
+                <div class="photo-list">';
+
+            // Limit photos to first 15 for performance, or show summary
+            $photosToShow = $container->photo->take(15);
+            $remainingCount = $container->photo->count() - $photosToShow->count();
+
+            foreach ($photosToShow as $photo) {
+                // Format photo label: remove underscores and capitalize first letter
+                $formattedLabel = ucfirst(str_replace('_', ' ', $photo->label));
+
+                // Get base64 encoded image for better performance with size optimization
+                $imagePath = storage_path('app/public/' . $photo->photo_path);
+                $base64Image = '';
+                if (file_exists($imagePath)) {
+                    // Resize image to reduce memory usage
+                    $resizedImage = $this->resizeImageForPDF($imagePath);
+                    if ($resizedImage) {
+                        $base64Image = 'data:image/jpeg;base64,' . base64_encode($resizedImage);
+                    }
+                }
+
+                if ($base64Image) {
+                    $html .= '<div class="photo-item" style="margin-bottom: 20px; page-break-inside: avoid;">
+                        <strong>' . $formattedLabel . '</strong><br>
+                        <em>Uploaded: ' . $photo->created_at->format('d/m/Y H:i:s') . '</em><br>
+                        <img src="' . $base64Image . '" style="max-width: 400px; max-height: 250px; width: auto; height: auto; margin-top: 10px; border: 1px solid #ddd; padding: 5px;" alt="' . $formattedLabel . '">
+                    </div>';
+                } else {
+                    $html .= '<div class="photo-item" style="margin-bottom: 20px; page-break-inside: avoid;">
+                        <strong>' . $formattedLabel . '</strong><br>
+                        <em>Uploaded: ' . $photo->created_at->format('d/m/Y H:i:s') . '</em><br>
+                        <em style="color: #666;">[Image not available]</em>
+                    </div>';
+                }
+            }
+
+            if ($remainingCount > 0) {
+                $html .= '<div class="photo-item" style="margin-bottom: 10px; padding: 10px; background-color: #e8f4f8; border-left: 4px solid #2196F3;">
+                    <em>+' . $remainingCount . ' additional photos available but not displayed for optimal performance.</em>
+                </div>';
+            }
+
+            $html .= '</div></div>';
+        }
+
+        // Approvals Section
+        if ($container->approvals && $container->approvals->count() > 0) {
+            $html .= '
+            <div class="section">
+                <h3>Approval History</h3>
+                <table>
+                    <tr>
+                        <th>Department</th>
+                        <th>Approver</th>
+                        <th>Status</th>
+                        <th>Decision Date</th>
+                        <th>Comments</th>
+                    </tr>';
+
+            foreach ($container->approvals as $approval) {
+                $html .= '<tr>
+                    <td>' . ucfirst($approval->department) . '</td>
+                    <td>' . ($approval->approver ? $approval->approver->name : 'N/A') . '</td>
+                    <td>' . ucfirst($approval->approval_status) . '</td>
+                    <td>' . ($approval->approved_at ? $approval->approved_at->format('d/m/Y H:i:s') : 'N/A') . '</td>
+                    <td>' . ($approval->remarks ?? 'N/A') . '</td>
+                </tr>';
+            }
+
+            $html .= '</table></div>';
+        }
+
+        // Driver Information
+        if ($container->shipmentTransportDrivers && $container->shipmentTransportDrivers->count() > 0) {
+            $html .= '
+            <div class="section">
+                <h3>Driver Information</h3>';
+
+            foreach ($container->shipmentTransportDrivers as $driverAssignment) {
+                if ($driverAssignment->visitor) {
+                    $visitor = $driverAssignment->visitor;
+                    $html .= '
+                    <table>
+                        <tr><th>Name</th><td>' . $visitor->visitor_name . '</td></tr>
+                        <tr><th>IC Number</th><td>' . $visitor->ic_number . '</td></tr>
+                        <tr><th>Passport</th><td>' . ($visitor->passport ?? 'N/A') . '</td></tr>
+                        <tr><th>Company</th><td>' . $visitor->visitor_company . '</td></tr>
+                        <tr><th>Vehicle Number</th><td>' . $visitor->vehicle_number . '</td></tr>
+                        <tr><th>Phone</th><td>' . $visitor->phone_number . '</td></tr>
+                        <tr><th>Assigned Date</th><td>' . $driverAssignment->created_at->format('d/m/Y H:i:s') . '</td></tr>
+                    </table>';
+                }
+            }
+
+            $html .= '</div>';
+        }
+
+        // Hold Information
+        if ($container->is_on_hold) {
+            $html .= '
+            <div class="section">
+                <h3>Hold Information</h3>
+                <table>
+                    <tr><th>Hold Reason</th><td>' . $container->hold_reason . '</td></tr>
+                    <tr><th>Held By</th><td>' . ($container->holdBy ? $container->holdBy->name : 'N/A') . '</td></tr>
+                    <tr><th>Held Date</th><td>' . ($container->hold_at ? $container->hold_at->format('d/m/Y H:i:s') : 'N/A') . '</td></tr>
+                </table>
+            </div>';
+        }
+
+        $html .= '</body></html>';
+
+        return $html;
+    }
+
+    /**
+     * Resize and compress image for PDF to reduce memory usage.
+     */
+    private function resizeImageForPDF($imagePath, $maxWidth = 800, $maxHeight = 600, $quality = 75)
+    {
+        try {
+            \Log::info("Image processing: Starting for {$imagePath}");
+
+            // Check if file exists
+            if (!file_exists($imagePath)) {
+                \Log::error("Image processing: File does not exist: {$imagePath}");
+                return false;
+            }
+
+            // Get image info
+            $imageInfo = getimagesize($imagePath);
+            if (!$imageInfo) {
+                \Log::error("Image processing: Cannot get image info for {$imagePath}");
+                return false;
+            }
+
+            $width = $imageInfo[0];
+            $height = $imageInfo[1];
+            $mimeType = $imageInfo['mime'];
+
+            \Log::info("Image processing: Original size {$width}x{$height}, type: {$mimeType}");
+
+            // Calculate new dimensions
+            $aspectRatio = $width / $height;
+
+            if ($width > $height) {
+                // Landscape
+                if ($width > $maxWidth) {
+                    $newWidth = $maxWidth;
+                    $newHeight = $maxWidth / $aspectRatio;
+                } else {
+                    $newWidth = $width;
+                    $newHeight = $height;
+                }
+            } else {
+                // Portrait
+                if ($height > $maxHeight) {
+                    $newHeight = $maxHeight;
+                    $newWidth = $maxHeight * $aspectRatio;
+                } else {
+                    $newWidth = $width;
+                    $newHeight = $height;
+                }
+            }
+
+            // Ensure minimum dimensions
+            $newWidth = max($newWidth, 200);
+            $newHeight = max($newHeight, 150);
+
+            \Log::info("Image processing: New size {$newWidth}x{$newHeight}");
+
+            // Create image resource based on type
+            $sourceImage = null;
+            switch ($mimeType) {
+                case 'image/jpeg':
+                    $sourceImage = imagecreatefromjpeg($imagePath);
+                    break;
+                case 'image/png':
+                    $sourceImage = imagecreatefrompng($imagePath);
+                    break;
+                case 'image/gif':
+                    $sourceImage = imagecreatefromgif($imagePath);
+                    break;
+                default:
+                    \Log::error("Image processing: Unsupported image type: {$mimeType}");
+                    return false;
+            }
+
+            if (!$sourceImage) {
+                \Log::error("Image processing: Failed to create image resource");
+                return false;
+            }
+
+            // Create new resized image
+            $resizedImage = imagecreatetruecolor($newWidth, $newHeight);
+
+            // Preserve transparency for PNG
+            if ($mimeType === 'image/png') {
+                imagealphablending($resizedImage, false);
+                imagesavealpha($resizedImage, true);
+                $transparent = imagecolorallocatealpha($resizedImage, 255, 255, 255, 127);
+                imagefill($resizedImage, 0, 0, $transparent);
+            }
+
+            // Resize the image
+            $resizeResult = imagecopyresampled($resizedImage, $sourceImage, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+
+            if (!$resizeResult) {
+                \Log::error("Image processing: Failed to resize image");
+                imagedestroy($sourceImage);
+                return false;
+            }
+
+            // Output to buffer
+            ob_start();
+            $outputResult = imagejpeg($resizedImage, null, $quality);
+            $compressedImage = ob_get_clean();
+
+            if (!$outputResult || empty($compressedImage)) {
+                \Log::error("Image processing: Failed to output compressed image");
+                imagedestroy($sourceImage);
+                imagedestroy($resizedImage);
+                return false;
+            }
+
+            // Clean up memory
+            imagedestroy($sourceImage);
+            imagedestroy($resizedImage);
+
+            \Log::info("Image processing: Successfully processed image, size: " . strlen($compressedImage) . " bytes");
+
+            return $compressedImage;
+
+        } catch (\Exception $e) {
+            \Log::error("Image processing: Exception for {$imagePath}: " . $e->getMessage());
+            return false;
+        }
     }
 
     /**

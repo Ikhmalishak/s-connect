@@ -175,8 +175,12 @@
                                 >
                                     <TableCell class="py-4">
                                         <div class="space-y-1">
-                                            <div class="font-semibold text-blue-600">{{ request.shipping_requirement.destination }}</div>
-                                            <div class="text-xs text-gray-500">{{ request.shipping_requirement.region }}</div>
+                                            <div class="font-semibold text-blue-600">
+                                                {{ request.shipping_requirement ? request.shipping_requirement.destination : request.proposed_data.destination }}
+                                            </div>
+                                            <div class="text-xs text-gray-500">
+                                                {{ request.shipping_requirement ? request.shipping_requirement.region : request.proposed_data.region }}
+                                            </div>
                                         </div>
                                     </TableCell>
                                     <TableCell class="py-4">
@@ -365,8 +369,12 @@
                                 >
                                     <TableCell class="py-4">
                                         <div class="space-y-1">
-                                            <div class="font-semibold text-blue-600">{{ request.shipping_requirement.destination }}</div>
-                                            <div class="text-xs text-gray-500">{{ request.shipping_requirement.region }}</div>
+                                            <div class="font-semibold text-blue-600">
+                                                {{ request.shipping_requirement ? request.shipping_requirement.destination : request.proposed_data.destination }}
+                                            </div>
+                                            <div class="text-xs text-gray-500">
+                                                {{ request.shipping_requirement ? request.shipping_requirement.region : request.proposed_data.region }}
+                                            </div>
                                         </div>
                                     </TableCell>
                                     <TableCell class="py-4">
@@ -445,15 +453,20 @@
 
                 <div v-if="selectedRequest" class="space-y-6">
                     <!-- Current Values -->
-                    <div class="bg-gray-50 p-4 rounded-lg">
+                    <div v-if="selectedRequest.shipping_requirement" class="bg-gray-50 p-4 rounded-lg">
                         <h4 class="text-sm font-medium text-gray-900 mb-3">Current Shipping Requirement</h4>
                         <div class="grid grid-cols-2 gap-4 text-sm">
                             <div><strong>Region:</strong> {{ selectedRequest.shipping_requirement.region }}</div>
                             <div><strong>Destination:</strong> {{ selectedRequest.shipping_requirement.destination }}</div>
                             <div><strong>Risk Level:</strong> {{ selectedRequest.shipping_requirement.risk_level }}</div>
-                            <div><strong>Strength:</strong> {{ selectedRequest.shipping_requirement.strength_mm }}</div>
-                            <div class="col-span-2"><strong>Requires Seals:</strong> {{ selectedRequest.shipping_requirement.requires_seals ? 'Yes' : 'No' }}</div>
+                            <div><strong>Strength:</strong> {{ selectedRequest.shipping_requirement.strength }}</div>
+                            <div><strong>Requires Fork Seal:</strong> {{ selectedRequest.shipping_requirement.requires_fork_seal ? 'Yes' : 'No' }}</div>
+                            <div><strong>Requires GPS:</strong> {{ selectedRequest.shipping_requirement.requires_gps ? 'Yes' : 'No' }}</div>
                         </div>
+                    </div>
+                    <div v-else class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="text-sm font-medium text-gray-900 mb-3">New Shipping Requirement</h4>
+                        <p class="text-sm text-gray-600">This is a request to create a new shipping requirement.</p>
                     </div>
 
                     <!-- Proposed Changes -->
@@ -463,8 +476,9 @@
                             <div><strong>Region:</strong> {{ selectedRequest.proposed_data.region }}</div>
                             <div><strong>Destination:</strong> {{ selectedRequest.proposed_data.destination }}</div>
                             <div><strong>Risk Level:</strong> {{ selectedRequest.proposed_data.risk_level }}</div>
-                            <div><strong>Strength:</strong> {{ selectedRequest.proposed_data.strength_mm }}</div>
-                            <div class="col-span-2"><strong>Requires Seals:</strong> {{ selectedRequest.proposed_data.requires_seals ? 'Yes' : 'No' }}</div>
+                            <div><strong>Strength:</strong> {{ selectedRequest.proposed_data.strength }}</div>
+                            <div><strong>Requires Fork Seal:</strong> {{ selectedRequest.proposed_data.requires_fork_seal ? 'Yes' : 'No' }}</div>
+                            <div><strong>Requires GPS:</strong> {{ selectedRequest.proposed_data.requires_gps ? 'Yes' : 'No' }}</div>
                         </div>
                     </div>
 

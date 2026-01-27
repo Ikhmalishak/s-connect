@@ -271,7 +271,7 @@ class VisitorController extends Controller
         // Additional validation for shipping visitors
         if ($validated['visitor_type'] === 'shipping') {
             $request->validate([
-                'container_number' => 'required|string|regex:/^[A-Z]{4}\d{7}$/',
+                'container_number' => 'required|string',
             ]);
 
             // Check if container exists and has correct stage

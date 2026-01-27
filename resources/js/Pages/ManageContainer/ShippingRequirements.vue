@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import axios from "axios";
 import { useToast } from "@/components/ui/toast";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
@@ -81,8 +81,16 @@ const formData = ref({
     destination: "",
     risk_level: "",
     strength: "",
+    requires_fork_seal: true,
     requires_gps: false,
     attachment: null,
+});
+
+// Watch for requires_fork_seal changes to clear strength when unchecked
+watch(() => formData.value.requires_fork_seal, (newValue) => {
+    if (!newValue) {
+        formData.value.strength = "";
+    }
 });
 const formLoading = ref(false);
 const formMessage = ref("");
@@ -170,6 +178,7 @@ const openCreateDialog = () => {
         destination: "",
         risk_level: "",
         strength: "",
+        requires_fork_seal: true,
         requires_gps: false,
         attachment: null,
     };
@@ -183,6 +192,7 @@ const openEditDialog = (requirement: any) => {
         destination: requirement.destination,
         risk_level: requirement.risk_level,
         strength: requirement.strength,
+        requires_fork_seal: requirement.requires_fork_seal,
         requires_gps: requirement.requires_gps,
         attachment: null,
     };
@@ -200,7 +210,8 @@ const createRequirement = async () => {
         formDataToSend.append('proposed_data[destination]', formData.value.destination);
         formDataToSend.append('proposed_data[risk_level]', formData.value.risk_level);
         formDataToSend.append('proposed_data[strength]', formData.value.strength);
-        formDataToSend.append('proposed_data[requires_gps]', formData.value.requires_gps ? '1' : '0');
+        formDataToSend.append('proposed_data[requires_fork_seal]', formData.value.requires_fork_seal === true ? '1' : '0');
+        formDataToSend.append('proposed_data[requires_gps]', formData.value.requires_gps === true ? '1' : '0');
 
         if (formData.value.attachment) {
             formDataToSend.append('attachment', formData.value.attachment);
@@ -247,6 +258,7 @@ const updateRequirement = async () => {
         formDataToSend.append('proposed_data[destination]', formData.value.destination);
         formDataToSend.append('proposed_data[risk_level]', formData.value.risk_level);
         formDataToSend.append('proposed_data[strength]', formData.value.strength);
+        formDataToSend.append('proposed_data[requires_fork_seal]', formData.value.requires_fork_seal ? '1' : '0');
         formDataToSend.append('proposed_data[requires_gps]', formData.value.requires_gps ? '1' : '0');
 
         if (formData.value.attachment) {
@@ -557,7 +569,11 @@ onMounted(() => {
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <div>
+                            <div class="flex items-center space-x-2">
+                                <Checkbox id="requires_fork_seal" v-model="formData.requires_fork_seal" />
+                                <Label for="requires_fork_seal">Requires Fork Seal</Label>
+                            </div>
+                            <div v-if="formData.requires_fork_seal">
                                 <Label for="strength">Strength *</Label>
                                 <Input id="strength" v-model="formData.strength" placeholder="e.g., 8, 3" />
                             </div>
@@ -753,7 +769,7 @@ onMounted(() => {
                                     {{ requirement.risk_level }}
                                 </Badge>
                             </TableCell>
-                            <TableCell>{{ requirement.strength }}</TableCell>
+                            <TableCell>{{ requirement.strength ? requirement.strength : 'N/A' }}</TableCell>
                             <TableCell>
                                 <Badge :variant="getSealsBadgeVariant(requirement.requires_gps)">
                                     {{ requirement.requires_gps ? 'Yes' : 'No' }}
@@ -980,7 +996,11 @@ onMounted(() => {
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <div>
+                            <div class="flex items-center space-x-2">
+                                <Checkbox id="edit-requires_fork_seal" v-model="formData.requires_fork_seal" />
+                                <Label for="edit-requires_fork_seal">Requires Fork Seal</Label>
+                            </div>
+                            <div v-if="formData.requires_fork_seal">
                                 <Label for="edit-strength">Strength *</Label>
                                 <Input id="edit-strength" v-model="formData.strength" placeholder="e.g., 8, 3" />
                             </div>

@@ -13,6 +13,7 @@ class ShippingRequirement extends Model
         'destination',
         'risk_level',
         'strength',
+        'requires_fork_seal',
         'requires_gps',
         'last_updated_by',
         'attachment_path',
@@ -25,6 +26,7 @@ class ShippingRequirement extends Model
 
     protected $casts = [
         'strength' => 'integer',
+        'requires_fork_seal' => 'boolean',
         'requires_gps' => 'boolean',
         'requires_approval' => 'boolean',
         'change_requested_at' => 'datetime',

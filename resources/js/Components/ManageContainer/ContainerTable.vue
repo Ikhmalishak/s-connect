@@ -62,6 +62,7 @@ const canCreateRecord = computed(() => userPermissions.value.includes('container
 const canDoSecurityCheck = computed(() => userPermissions.value.includes('container.security_approve'));
 const canCreateContainer = computed(() => userPermissions.value.includes('container.shipping_approve'));
 const canHoldContainer = computed(() => userPermissions.value.includes('container.quality_approve'));
+const canDownloadReport = computed(() => userPermissions.value.includes('container.shipping.access'));
 
 // Filter reactive variables
 const searchQuery = ref("");
@@ -199,6 +200,64 @@ async function confirmReleaseContainer() {
 function cancelReleaseContainer() {
     showReleaseModal.value = false;
     releaseContainerId.value = null;
+}
+
+async function downloadContainerReport(containerId) {
+    try {
+        console.log("Starting download for container:", containerId);
+
+        const response = await axios.get(`/containers/${containerId}/download-report`, {
+            responseType: 'blob'
+        });
+
+        console.log("Response received:", response);
+        console.log("Response data size:", response.data.size);
+
+        // Check if response is actually a PDF (not an error message)
+        if (response.data.size === 0) {
+            console.error("Received empty response");
+            alert("Download failed: Server returned empty file. Please try again.");
+            return;
+        }
+
+        // Create blob link to download
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `container-report-${containerId}.pdf`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+
+        console.log("Download initiated successfully");
+    } catch (error) {
+        console.error("Error downloading container report:", error);
+
+        // Try to read the error response if it's a blob
+        if (error.response && error.response.data instanceof Blob) {
+            const reader = new FileReader();
+            reader.onload = function() {
+                try {
+                    const result = reader.result;
+                    if (typeof result === 'string') {
+                        const errorText = JSON.parse(result);
+                        console.error("Server error:", errorText);
+                        alert("Download failed: " + (errorText.message || "Unknown error"));
+                    } else {
+                        console.error("Could not parse error response - not a string");
+                        alert("Download failed: Server error occurred");
+                    }
+                } catch (e) {
+                    console.error("Could not parse error response");
+                    alert("Download failed: Server error occurred");
+                }
+            };
+            reader.readAsText(error.response.data);
+        } else {
+            alert("Failed to download container report. Please try again.");
+        }
+    }
 }
 
 
@@ -374,6 +433,11 @@ function isRecordComplete(photos) {
                                 class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
                             >
                                 Hold Actions
+                            </th>
+                            <th
+                                class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
+                            >
+                                Actions
                             </th>
                         </tr>
                     </thead>
@@ -646,6 +710,29 @@ function isRecordComplete(photos) {
                                     </Button>
                                 </div>
                                 <span v-else class="text-gray-400 text-xs">Quality Only</span>
+                            </td>
+                            <td class="p-2">
+                                <CustomTooltip
+                                    v-if="container.status === 'completed' && canDownloadReport"
+                                    text="Download container report"
+                                    position="top"
+                                >
+                                    <Button
+                                        v-if="container.status === 'completed' && canDownloadReport"
+                                        variant="outline"
+                                        size="sm"
+                                        class="bg-purple-600 hover:bg-purple-700 text-white text-xs"
+                                        @click="downloadContainerReport(container.id)"
+                                    >
+                                        Download Report
+                                    </Button>
+                                </CustomTooltip>
+                                <div v-else-if="container.status === 'completed' && !canDownloadReport" class="text-gray-400 text-xs">
+                                    No Permission
+                                </div>
+                                <div v-else class="text-gray-400 text-xs">
+                                    Status: {{ container.status }}
+                                </div>
                             </td>
                         </tr>
                     </tbody>

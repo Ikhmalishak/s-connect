@@ -25,4 +25,9 @@ class ShipmentTransportInspection extends Model
     {
         return $this->hasMany(InspectionAnswer::class);
     }
+
+    public function inspector()
+    {
+        return $this->belongsTo(User::class, 'inspected_by');
+    }
 }

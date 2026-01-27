@@ -34,8 +34,11 @@ const requiresGPS = computed(() => {
 });
 
 const forkSealSize = computed(() => {
-    const strength = countryRequirements.value?.strength;
-    return strength ? `${strength}mm` : '';
+    const requirements = countryRequirements.value;
+    if (requirements?.requires_fork_seal && requirements?.strength) {
+        return `${requirements.strength}mm`;
+    }
+    return '';
 });
 
 const formSchema = toTypedSchema(
@@ -94,8 +97,10 @@ watch(transportType, (val) => {
 
 // Auto-populate fork seal size when country requirements change
 watch(countryRequirements, (newRequirements) => {
-    if (newRequirements?.strength) {
+    if (newRequirements?.requires_fork_seal && newRequirements?.strength) {
         form.setFieldValue("fork_seal_size", `${newRequirements.strength}mm`);
+    } else {
+        form.setFieldValue("fork_seal_size", "");
     }
 });
 
@@ -429,7 +434,7 @@ const onSubmit = handleSubmit(async (values) => {
                             </FormField>
 
                             <FormField
-                                v-if="transportType === 'Container'"
+                                v-if="transportType === 'Container' && countryRequirements?.requires_fork_seal"
                                 v-slot="{ componentField }"
                                 name="fork_seal_sn"
                             >
@@ -446,7 +451,7 @@ const onSubmit = handleSubmit(async (values) => {
                             </FormField>
 
                             <FormField
-                                v-if="transportType === 'Container'"
+                                v-if="transportType === 'Container' && countryRequirements?.requires_fork_seal"
                                 v-slot="{ componentField }"
                                 name="fork_seal_size"
                             >

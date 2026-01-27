@@ -17,13 +17,13 @@ class ShippingRequirementChangeProcessed implements ShouldBroadcastNow
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public ShippingRequirementChange $changeRequest;
-    public ShippingRequirement $shippingRequirement;
+    public ?ShippingRequirement $shippingRequirement;
     public string $action; // 'approved' or 'rejected'
 
     /**
      * Create a new event instance.
      */
-    public function __construct(ShippingRequirementChange $changeRequest, ShippingRequirement $shippingRequirement, string $action)
+    public function __construct(ShippingRequirementChange $changeRequest, ?ShippingRequirement $shippingRequirement, string $action)
     {
         $this->changeRequest = $changeRequest;
         $this->shippingRequirement = $shippingRequirement;

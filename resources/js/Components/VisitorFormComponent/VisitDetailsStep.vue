@@ -74,41 +74,8 @@ const validationErrors = ref<{ [key: string]: string }>({});
 const containerValidationState = ref<'idle' | 'validating' | 'valid' | 'invalid'>('idle');
 const containerValidationMessage = ref('');
 
-// Shipment transports data
-const shipmentTransports = ref<ShipmentTransport[]>([]);
-const loadingShipments = ref(false);
-
 // Debounce timer for container validation
 let containerValidationTimer: ReturnType<typeof setTimeout> | null = null;
-
-// Fetch shipment transports for the site
-const fetchShipmentTransports = async () => {
-    if (!props.siteId) return;
-
-    loadingShipments.value = true;
-    try {
-        const response = await axios.get(`/containers/for-visitor?site_id=${props.siteId}`);
-        shipmentTransports.value = response.data.data || [];
-    } catch (error) {
-        console.error('Failed to fetch shipment transports:', error);
-        shipmentTransports.value = [];
-    } finally {
-        loadingShipments.value = false;
-    }
-};
-
-// Fetch shipments when component mounts or siteId changes
-onMounted(() => {
-    if (props.siteId) {
-        fetchShipmentTransports();
-    }
-});
-
-watch(() => props.siteId, (newSiteId) => {
-    if (newSiteId) {
-        fetchShipmentTransports();
-    }
-});
 
 // Validation functions
 const validateVehicleNumber = (vehicleNumber: string): string => {
@@ -195,12 +162,6 @@ const validateContainerNumber = (containerNumber: string, visitorType: string): 
     if (visitorType === "shipping") {
         if (!containerNumber?.trim()) {
             return t('visitor.visitDetails.validation.containerNumberRequired');
-        }
-
-        // Basic container number validation (ISO 6346 format)
-        const containerPattern = /^[A-Z]{4}\d{7}$/;
-        if (!containerPattern.test(containerNumber.trim().toUpperCase())) {
-            return t('visitor.visitDetails.validation.containerNumberInvalid');
         }
     }
 
@@ -352,15 +313,6 @@ const handleContainerNumberInput = (event: Event) => {
         return;
     }
 
-    // Basic format validation first
-    const containerPattern = /^[A-Z]{4}\d{7}$/;
-    if (!containerPattern.test(value.trim())) {
-        validationErrors.value['container_number'] = t('visitor.visitDetails.validation.containerNumberInvalid');
-        containerValidationState.value = 'invalid';
-        containerValidationMessage.value = t('visitor.visitDetails.validation.containerNumberInvalid');
-        return;
-    }
-
     // Set validating state
     containerValidationState.value = 'validating';
 
@@ -373,9 +325,13 @@ const handleContainerNumberInput = (event: Event) => {
             });
 
             if (response.data.valid) {
+                // Container is valid - can proceed
                 containerValidationState.value = 'valid';
-                containerValidationMessage.value = '';
+                containerValidationMessage.value = response.data.message || 'Container validated - you can proceed';
+                // Clear any validation errors for container
+                delete validationErrors.value['container_number'];
             } else {
+                // This shouldn't happen anymore since we allow proceeding
                 containerValidationState.value = 'invalid';
                 containerValidationMessage.value = response.data.message;
                 validationErrors.value['container_number'] = response.data.message;
