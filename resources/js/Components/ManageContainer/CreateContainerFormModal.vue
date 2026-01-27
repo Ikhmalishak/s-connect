@@ -23,6 +23,15 @@ import { Input } from "@/components/ui/input";
 import { ref, watch, computed } from "vue";
 import axios from "axios";
 
+// Simple debounce utility
+function debounce(func, delay) {
+    let timeoutId;
+    return function (...args) {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => func.apply(this, args), delay);
+    };
+}
+
 const transportType = ref<"Truck" | "Container" | "">("");
 const isLoading = ref(false);
 const errorMessage = ref("");
@@ -104,20 +113,23 @@ watch(countryRequirements, (newRequirements) => {
     }
 });
 
-// Watch for country changes to fetch requirements
-watch(() => form.values.country, async (newCountry) => {
-    if (newCountry && newCountry.trim()) {
+// Debounced function to fetch country requirements
+const debouncedFetchRequirements = debounce(async (newCountry) => {
+    if (newCountry && newCountry.trim().length >= 2) {
         try {
             const response = await axios.get(`/containers/country-requirements?country=${encodeURIComponent(newCountry)}`);
             countryRequirements.value = response.data.data;
         } catch (error) {
             console.error('Failed to fetch country requirements:', error);
-            countryRequirements.value = null;
+            // Don't clear requirements on error - keep previous valid data
         }
-    } else {
+    } else if (!newCountry || !newCountry.trim()) {
         countryRequirements.value = null;
     }
-});
+}, 500);
+
+// Watch for country changes to fetch requirements (debounced)
+watch(() => form.values.country, debouncedFetchRequirements);
 
 // Clear messages when modal is closed or reopened
 watch(() => props.show, (newVal) => {
@@ -422,7 +434,7 @@ const onSubmit = handleSubmit(async (values) => {
                                 name="outside_gps_sn"
                             >
                                 <FormItem>
-                                    <FormLabel>Outside GPS Serial Number</FormLabel>
+                                    <FormLabel>Outside GPS Serial Number<span class="text-red-500">*</span></FormLabel>
                                     <FormControl>
                                         <Input
                                             type="text"
@@ -460,7 +472,7 @@ const onSubmit = handleSubmit(async (values) => {
                                     <FormControl>
                                         <Input
                                             type="text"
-                                            :value="forkSealSize"
+                                            v-bind="componentField"
                                             readonly
                                             placeholder="Auto-populated from country requirements"
                                         />
