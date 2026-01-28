@@ -71,6 +71,47 @@ class ShipmentTransportApprovalController extends Controller
 
         $approvals = $query->latest()->paginate(20);
 
+        // Apply sequential approval filtering for loading approvals
+        $filteredApprovals = collect();
+        $approvals->getCollection()->each(function ($approval) use (&$filteredApprovals) {
+            // Always include inspection approvals (no sequential requirement)
+            if ($approval->approval_type === 'inspection') {
+                if ($approval->approval_status === 'pending') {
+                    $filteredApprovals->push($approval);
+                }
+                return;
+            }
+
+            // For loading approvals, apply sequential logic
+            if ($approval->approval_type === 'loading' && $approval->approval_status === 'pending') {
+                $container = $approval->shipmentTransport;
+                $currentDeptIndex = array_search($approval->department, $this->loadingApprovalSequence);
+
+                if ($currentDeptIndex !== false) {
+                    // Check if all previous departments in sequence have approved
+                    $allPrevApproved = true;
+                    for ($i = 0; $i < $currentDeptIndex; $i++) {
+                        $prevDept = $this->loadingApprovalSequence[$i];
+                        $prevApproval = $container->approvals->where('department', $prevDept)
+                            ->where('approval_type', 'loading')
+                            ->first();
+
+                        if (!$prevApproval || $prevApproval->approval_status !== 'approved') {
+                            $allPrevApproved = false;
+                            break;
+                        }
+                    }
+
+                    if ($allPrevApproved) {
+                        $filteredApprovals->push($approval);
+                    }
+                }
+            }
+        });
+
+        // Replace the collection with filtered results
+        $approvals->setCollection($filteredApprovals);
+
         // Add approved_by_name to each approval
         $approvals->getCollection()->transform(function ($approval) {
             $approval->approved_by_name = $approval->approver ? $approval->approver->name : null;

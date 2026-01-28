@@ -424,60 +424,13 @@ const stats = computed(() => {
     };
 });
 
-// Sequential approval logic
-const approvalSequence = ['warehouse', 'quality', 'shipping', 'security'];
-
+// Approvals are now filtered by the backend, so we can use them directly
 const availableApprovals = computed(() => {
-    // Group approvals by container
-    const containerGroups = {};
-    approvals.value.forEach(approval => {
-        const containerId = approval.shipment_transport.id;
-        if (!containerGroups[containerId]) {
-            containerGroups[containerId] = {
-                container: approval.shipment_transport,
-                approvals: []
-            };
-        }
-        containerGroups[containerId].approvals.push(approval);
-    });
-
-    const available = [];
-
-    // For each container, determine which approvals are available
-    Object.values(containerGroups).forEach(group => {
-        // Handle inspection approvals (not sequential)
-        const inspectionApprovals = group.approvals.filter(a => a.approval_type === 'inspection');
-        inspectionApprovals.forEach(approval => {
-            if (approval.approval_status === 'pending') {
-                available.push(approval);
-            }
-        });
-
-        // Handle loading approvals (sequential)
-        const containerApprovals = group.approvals.filter(a => a.approval_type === 'loading');
-
-        approvalSequence.forEach(dept => {
-            const deptApproval = containerApprovals.find(a => a.department === dept);
-
-            if (deptApproval && deptApproval.approval_status === 'pending') {
-                // Check if all previous departments have approved
-                const deptIndex = approvalSequence.indexOf(dept);
-                const prevDepts = approvalSequence.slice(0, deptIndex);
-
-                const allPrevApproved = prevDepts.every(prevDept => {
-                    const prevApproval = containerApprovals.find(a => a.department === prevDept);
-                    return prevApproval && prevApproval.approval_status === 'approved';
-                });
-
-                if (allPrevApproved) {
-                    available.push(deptApproval);
-                }
-            }
-        });
-    });
-
-    return available;
+    return approvals.value;
 });
+
+// Sequential approval order for step display
+const approvalSequence = ['warehouse', 'quality', 'shipping', 'security'];
 
 const getApprovalStep = (department) => {
     return approvalSequence.indexOf(department) + 1;
