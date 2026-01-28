@@ -229,6 +229,7 @@ const photos = ref({
     one_side_door_closed_with_container_number_photo: null,
     complete_loaded_photo: null,
     outside_gps_photo: null,
+    fork_seal_photo:null,
     security_seal_photo: null,
     container_full_seal_photo: null,
 })
@@ -504,6 +505,7 @@ async function submitPhotos() {
             one_side_door_closed_with_container_number_photo: null,
             complete_loaded_photo: null,
             outside_gps_photo: null,
+            fork_seal_photo:null,
             security_seal_photo: null,
             container_full_seal_photo: null,
         }
@@ -583,6 +585,7 @@ watch(() => props.show, async (newVal) => {
             one_side_door_closed_with_container_number_photo: null,
             complete_loaded_photo: null,
             outside_gps_photo: null,
+            fork_seal_photo:null,
             security_seal_photo: null,
             container_full_seal_photo: null,
         }
@@ -614,6 +617,7 @@ async function loadExistingPhotos() {
             one_side_door_closed_with_container_number_photo: null,
             complete_loaded_photo: null,
             outside_gps_photo: null,
+            fork_seal_photo:null,
             security_seal_photo: null,
             container_full_seal_photo: null,
         }
@@ -672,6 +676,7 @@ async function loadRequiredPhotos() {
             { key: 'half_loaded_photo', label: 'Half Loaded' },
             { key: 'one_side_door_closed_with_container_number_photo', label: 'Door Closed' },
             { key: 'complete_loaded_photo', label: 'Complete Loaded' },
+            { key: 'container_full_seal', label: 'Container Full Seal' },
         ]
     }
 }

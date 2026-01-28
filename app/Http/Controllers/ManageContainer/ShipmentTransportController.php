@@ -378,6 +378,7 @@ class ShipmentTransportController extends Controller
             ['key' => 'half_loaded_photo', 'label' => 'Half Loaded'],
             ['key' => 'one_side_door_closed_with_container_number_photo', 'label' => 'Door Closed'],
             ['key' => 'complete_loaded_photo', 'label' => 'Complete Loaded'],
+            ['key' => 'container_full_seal_photo', 'label' => 'Container Full Seal'],
         ];
 
         // GPS photos - required if GPS serial numbers are present
@@ -389,13 +390,19 @@ class ShipmentTransportController extends Controller
             ]);
         }
 
+        // GPS photos - required if GPS serial numbers are present
+        if (!empty($shipmentTransport->fork_seal_sn)) {
+            $requiredPhotos = array_merge($requiredPhotos, [
+                ['key' => 'fork_seal_photo', 'label' => 'Fork Seal Photo'],
+            ]);
+        }
+
         // Seal photos - required if seal serial numbers are present
         if (!empty($shipmentTransport->high_security_seal_sn) ||
             !empty($shipmentTransport->fork_seal_sn) ||
             !empty($shipmentTransport->temporary_seal_sn)) {
             $requiredPhotos = array_merge($requiredPhotos, [
                 ['key' => 'security_seal_photo', 'label' => 'Security Seal'],
-                ['key' => 'container_full_seal_photo', 'label' => 'Container Full Seal'],
             ]);
         }
 
