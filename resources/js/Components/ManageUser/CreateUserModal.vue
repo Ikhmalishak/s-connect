@@ -28,7 +28,7 @@ const formSchema = toTypedSchema(
             name: z.string().min(2).max(50),
             email: z.string().toLowerCase().email(),
             site_id: z.string(),
-            role: z.enum(["admin", "guard", "receptionist"]),
+            role: z.enum(["admin", "guard", "receptionist","staff"]),
             password: z
                 .string()
                 .min(1, "Password must be at least 6 characters"),
@@ -165,6 +165,9 @@ const onSubmit = form.handleSubmit(async (values) => {
                                             <SelectGroup>
                                                 <SelectItem value="admin">
                                                     Admin
+                                                </SelectItem>
+                                                <SelectItem value="staff">
+                                                    Staff
                                                 </SelectItem>
                                                 <SelectItem value="guard">
                                                     Guard

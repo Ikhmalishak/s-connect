@@ -249,7 +249,7 @@ class SyncExternalApprovals extends Command
     {
         try {
             // Get department users who can approve
-            $departmentUsers = \App\Models\User::permission("container.{$approval->department}_approve")->get();
+            $departmentUsers = \App\Models\User::permission("container.{$approval->department}.approve")->get();
 
             if ($departmentUsers->isEmpty()) {
                 Log::warning("No users found for department {$approval->department}, skipping notifications");
@@ -412,7 +412,7 @@ class SyncExternalApprovals extends Command
     private function getDepartmentUsers($department)
     {
         // Return users with the specific permission
-        return \App\Models\User::permission("container.{$department}_approve")->get();
+        return \App\Models\User::permission("container.{$department}.approve")->get();
     }
 
     private function cleanupProcessedApprovals(array $processedIds, string $cleanupUrl): void

@@ -463,7 +463,7 @@ class ShipmentTransportController extends Controller
         $user = auth()->user();
 
         // Check if user has quality permissions
-        if (!$user->hasPermissionTo('container.quality_approve')) {
+        if (!$user->hasPermissionTo('container.quality.access')) {
             return response()->json(['message' => 'Unauthorized. Quality department access required.'], 403);
         }
 
@@ -510,7 +510,7 @@ class ShipmentTransportController extends Controller
         $user = auth()->user();
 
         // Check if user has quality permissions
-        if (!$user->hasPermissionTo('container.quality_approve')) {
+        if (!$user->hasPermissionTo('container.quality.access')) {
             return response()->json(['message' => 'Unauthorized. Quality department access required.'], 403);
         }
 
@@ -1014,7 +1014,7 @@ class ShipmentTransportController extends Controller
     private function getDepartmentUsers($department)
     {
         // Return users with the specific permission
-        return \App\Models\User::permission("container.{$department}_approve")->get();
+        return \App\Models\User::permission("container.{$department}.approve")->get();
     }
 
     /**

@@ -57,11 +57,11 @@ const userPermissions = computed(() => {
 });
 
 // Permission check functions
-const canDoInspection = computed(() => userPermissions.value.includes('container.quality_approve'));
-const canCreateRecord = computed(() => userPermissions.value.includes('container.warehouse_approve'));
-const canDoSecurityCheck = computed(() => userPermissions.value.includes('container.security_approve'));
-const canCreateContainer = computed(() => userPermissions.value.includes('container.shipping_approve'));
-const canHoldContainer = computed(() => userPermissions.value.includes('container.quality_approve'));
+const canDoInspection = computed(() => userPermissions.value.includes('container.warehouse.access'));
+const canCreateRecord = computed(() => userPermissions.value.includes('container.quality.access'));
+const canDoSecurityCheck = computed(() => userPermissions.value.includes('container.security.access'));
+const canCreateContainer = computed(() => userPermissions.value.includes('container.shipping.access'));
+const canHoldContainer = computed(() => userPermissions.value.includes('container.quality.access'));
 const canDownloadReport = computed(() => userPermissions.value.includes('container.shipping.access'));
 
 // Filter reactive variables

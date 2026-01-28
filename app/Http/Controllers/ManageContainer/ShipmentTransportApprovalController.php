@@ -39,19 +39,16 @@ class ShipmentTransportApprovalController extends Controller
                 $q->where('approved_by', $user->id);
 
                 // Add department-specific approvals based on permissions
-                if ($user->hasPermissionTo('container.management_approve')) {
-                    $q->orWhere('department', 'management');
-                }
-                if ($user->hasPermissionTo('container.warehouse_approve')) {
+                if ($user->hasPermissionTo('container.warehouse.approve')) {
                     $q->orWhere('department', 'warehouse');
                 }
-                if ($user->hasPermissionTo('container.shipping_approve')) {
+                if ($user->hasPermissionTo('container.shipping.approve')) {
                     $q->orWhere('department', 'shipping');
                 }
-                if ($user->hasPermissionTo('container.quality_approve')) {
+                if ($user->hasPermissionTo('container.quality.approve')) {
                     $q->orWhere('department', 'quality');
                 }
-                if ($user->hasPermissionTo('container.security_approve')) {
+                if ($user->hasPermissionTo('container.security.approve')) {
                     $q->orWhere('department', 'security');
                 }
             });
@@ -94,8 +91,8 @@ class ShipmentTransportApprovalController extends Controller
         }
 
         // Check permissions based on department
-        $requiredPermission = "container.{$approval->department}_approve";
-        if (!$user->hasPermissionTo($requiredPermission) && !$user->hasPermissionTo('container.management_approve')) {
+        $requiredPermission = "container.{$approval->department}.approve";
+        if (!$user->hasPermissionTo($requiredPermission)) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -155,8 +152,8 @@ class ShipmentTransportApprovalController extends Controller
         }
 
         // Check permissions based on department
-        $requiredPermission = "container.{$approval->department}_approve";
-        if (!$user->hasPermissionTo($requiredPermission) && !$user->hasPermissionTo('container.management_approve')) {
+        $requiredPermission = "container.{$approval->department}.approve";
+        if (!$user->hasPermissionTo($requiredPermission)) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -388,11 +385,6 @@ class ShipmentTransportApprovalController extends Controller
         $approval = ShipmentTransportApproval::findOrFail($approvalId);
         $user = auth()->user();
 
-        // Check permissions
-        if (!$user->hasPermissionTo('container.management_approve')) {
-            return redirect('/container/dashboard')->with('error', 'Unauthorized to approve this container');
-        }
-
         // Check if already approved
         if ($approval->approval_status === 'approved') {
             return redirect('/container/dashboard')->with('info', 'Container already approved');
@@ -412,7 +404,7 @@ class ShipmentTransportApprovalController extends Controller
     private function getDepartmentUsers($department)
     {
         // Return users with the specific permission
-        return \App\Models\User::permission("container.{$department}_approve")->get();
+        return \App\Models\User::permission("container.{$department}.approve")->get();
     }
 
     public function receiveApprovalResult(Request $request)
