@@ -1294,6 +1294,7 @@ class ShipmentTransportController extends Controller
                 <table>
                     <tr>
                         <th>Department</th>
+                        <th>Type</th/>
                         <th>Approver</th>
                         <th>Status</th>
                         <th>Decision Date</th>
@@ -1304,6 +1305,7 @@ class ShipmentTransportController extends Controller
                 $html .= '<tr>
                     <td>' . ucfirst($approval->department) . '</td>
                     <td>' . ($approval->approver ? $approval->approver->name : 'N/A') . '</td>
+                    <td>' . ($approval->approver ? $approval->approval_type : 'N/A') . '</td>
                     <td>' . ucfirst($approval->approval_status) . '</td>
                     <td>' . ($approval->approved_at ? $approval->approved_at->format('d/m/Y H:i:s') : 'N/A') . '</td>
                     <td>' . ($approval->remarks ?? 'N/A') . '</td>
