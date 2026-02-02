@@ -193,7 +193,7 @@ const handleUpdateRemarks = async (data) => {
     try {
         console.log(data);
         const response = await axios.post(
-            `/visitors/${data.visitorId}/remarks`,
+            `/visitor/${data.visitorId}/remarks`,
             {
                 remarks: data.remarks,
             }
