@@ -30,7 +30,7 @@ const formSchema = toTypedSchema(
         email: z.string().toLowerCase().email(),
         site_id: z.string(),
         role: z.enum(["admin", "guard", "receptionist", "staff"]),
-    })
+    }),
 );
 
 const form = useForm({
@@ -57,7 +57,7 @@ watch(
             });
         }
     },
-    { immediate: true }
+    { immediate: true },
 );
 
 const emit = defineEmits(["close", "saved"]);
@@ -214,6 +214,9 @@ const resetPassword = async () => {
                                                     value="receptionist"
                                                 >
                                                     Receptionist
+                                                </SelectItem>
+                                                <SelectItem value="staff">
+                                                    Staff
                                                 </SelectItem>
                                             </SelectGroup>
                                         </SelectContent>
