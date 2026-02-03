@@ -28,6 +28,7 @@ const emit = defineEmits([
     "openContainerSecurityCheckingModal",
     "openViewContainerSecurityCheckingModal",
     "updateContainers",
+    "openEditContainerFormModal",
 ]);
 
 interface Container {
@@ -57,12 +58,24 @@ const userPermissions = computed(() => {
 });
 
 // Permission check functions
-const canDoInspection = computed(() => userPermissions.value.includes('container.warehouse.access'));
-const canCreateRecord = computed(() => userPermissions.value.includes('container.quality.access'));
-const canDoSecurityCheck = computed(() => userPermissions.value.includes('container.security.access'));
-const canCreateContainer = computed(() => userPermissions.value.includes('container.shipping.access'));
-const canHoldContainer = computed(() => userPermissions.value.includes('container.quality.access'));
-const canDownloadReport = computed(() => userPermissions.value.includes('container.shipping.access'));
+const canDoInspection = computed(() =>
+    userPermissions.value.includes("container.warehouse.access"),
+);
+const canCreateRecord = computed(() =>
+    userPermissions.value.includes("container.quality.access"),
+);
+const canDoSecurityCheck = computed(() =>
+    userPermissions.value.includes("container.security.access"),
+);
+const canCreateContainer = computed(() =>
+    userPermissions.value.includes("container.shipping.access"),
+);
+const canHoldContainer = computed(() =>
+    userPermissions.value.includes("container.quality.access"),
+);
+const canDownloadReport = computed(() =>
+    userPermissions.value.includes("container.shipping.access"),
+);
 
 // Filter reactive variables
 const searchQuery = ref("");
@@ -124,22 +137,23 @@ watch([limit, statusFilter], () => {
 });
 
 function capitalizeFirstLetter(string) {
-  if (string.length === 0) { // Handle empty strings
-    return "";
-  }
-  // Get the first character and uppercase it
-  const firstLetter = string.charAt(0).toUpperCase();
-  // Get the rest of the string
-  const restOfString = string.slice(1);
-  // Combine them
-  return firstLetter + restOfString;
+    if (string.length === 0) {
+        // Handle empty strings
+        return "";
+    }
+    // Get the first character and uppercase it
+    const firstLetter = string.charAt(0).toUpperCase();
+    // Get the rest of the string
+    const restOfString = string.slice(1);
+    // Combine them
+    return firstLetter + restOfString;
 }
 
 function formatDate(dateString) {
-    if (!dateString) return '';
+    if (!dateString) return "";
     const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
 }
@@ -206,9 +220,12 @@ async function downloadContainerReport(containerId) {
     try {
         console.log("Starting download for container:", containerId);
 
-        const response = await axios.get(`/containers/${containerId}/download-report`, {
-            responseType: 'blob'
-        });
+        const response = await axios.get(
+            `/containers/${containerId}/download-report`,
+            {
+                responseType: "blob",
+            },
+        );
 
         console.log("Response received:", response);
         console.log("Response data size:", response.data.size);
@@ -216,15 +233,17 @@ async function downloadContainerReport(containerId) {
         // Check if response is actually a PDF (not an error message)
         if (response.data.size === 0) {
             console.error("Received empty response");
-            alert("Download failed: Server returned empty file. Please try again.");
+            alert(
+                "Download failed: Server returned empty file. Please try again.",
+            );
             return;
         }
 
         // Create blob link to download
         const url = window.URL.createObjectURL(new Blob([response.data]));
-        const link = document.createElement('a');
+        const link = document.createElement("a");
         link.href = url;
-        link.setAttribute('download', `container-report-${containerId}.pdf`);
+        link.setAttribute("download", `container-report-${containerId}.pdf`);
         document.body.appendChild(link);
         link.click();
         link.remove();
@@ -237,15 +256,20 @@ async function downloadContainerReport(containerId) {
         // Try to read the error response if it's a blob
         if (error.response && error.response.data instanceof Blob) {
             const reader = new FileReader();
-            reader.onload = function() {
+            reader.onload = function () {
                 try {
                     const result = reader.result;
-                    if (typeof result === 'string') {
+                    if (typeof result === "string") {
                         const errorText = JSON.parse(result);
                         console.error("Server error:", errorText);
-                        alert("Download failed: " + (errorText.message || "Unknown error"));
+                        alert(
+                            "Download failed: " +
+                                (errorText.message || "Unknown error"),
+                        );
                     } else {
-                        console.error("Could not parse error response - not a string");
+                        console.error(
+                            "Could not parse error response - not a string",
+                        );
                         alert("Download failed: Server error occurred");
                     }
                 } catch (e) {
@@ -260,8 +284,6 @@ async function downloadContainerReport(containerId) {
     }
 }
 
-
-
 function completeOnboarding(containerId) {
     emit("openContainerSecurityCheckingModal", containerId);
 }
@@ -269,8 +291,8 @@ function completeOnboarding(containerId) {
 function isRecordComplete(photos) {
     // Temporarily only require 2 photos for testing (pallet condition and pallet label)
     const requiredPhotoTypes = [
-        'pallet_condition_photo',
-        'pallet_label_photo'
+        "pallet_condition_photo",
+        "pallet_label_photo",
         // Temporarily disabled for testing
         // 'gps_photo_before_installation',
         // 'container_truck_photo',
@@ -289,10 +311,9 @@ function isRecordComplete(photos) {
     }
 
     // Check if all required photo types are present
-    const uploadedLabels = photos.map(photo => photo.label);
-    return requiredPhotoTypes.every(type => uploadedLabels.includes(type));
+    const uploadedLabels = photos.map((photo) => photo.label);
+    return requiredPhotoTypes.every((type) => uploadedLabels.includes(type));
 }
-
 </script>
 
 <template>
@@ -359,15 +380,26 @@ function isRecordComplete(photos) {
                     </div>
 
                     <div>
-                        <CustomTooltip :text="canCreateContainer ? 'New Container' : 'Create Container (Shipping Only)'" position="top">
+                        <CustomTooltip
+                            :text="
+                                canCreateContainer
+                                    ? 'New Container'
+                                    : 'Create Container (Shipping Only)'
+                            "
+                            position="top"
+                        >
                             <Plus
                                 class="w-9 h-9"
                                 :class="[
                                     canCreateContainer
                                         ? 'cursor-pointer text-black hover:text-blue-600'
-                                        : 'cursor-not-allowed text-gray-400'
+                                        : 'cursor-not-allowed text-gray-400',
                                 ]"
-                                @click="canCreateContainer ? $emit('openCreateContainerModal') : null"
+                                @click="
+                                    canCreateContainer
+                                        ? $emit('openCreateContainerModal')
+                                        : null
+                                "
                             />
                         </CustomTooltip>
                     </div>
@@ -450,12 +482,26 @@ function isRecordComplete(photos) {
                             class="text-center text-sm border border-gray-300 divide-x divide-gray-300 p-2"
                             :class="{
                                 'bg-orange-600': container.is_on_hold,
-                                'bg-green-100': (container.status === 'in_progress' || container.status === 'completed') && !container.is_on_hold,
-                                'text-white bg-red-400': container.status === 'failed' && !container.is_on_hold
+                                'bg-green-100':
+                                    (container.status === 'in_progress' ||
+                                        container.status === 'completed') &&
+                                    !container.is_on_hold,
+                                'text-white bg-red-400':
+                                    container.status === 'failed' &&
+                                    !container.is_on_hold,
                             }"
                         >
                             <td class="p-2">{{ index + 1 }}</td>
-                            <td class="p-2">{{ container.transport_type === 'Truck' ? 'T' : container.transport_type === 'Container' ? 'C' : container.transport_type }}</td>
+                            <td class="p-2">
+                                {{
+                                    container.transport_type === "Truck"
+                                        ? "T"
+                                        : container.transport_type ===
+                                            "Container"
+                                          ? "C"
+                                          : container.transport_type
+                                }}
+                            </td>
                             <td class="p-2">
                                 <button
                                     @click="openContainerDetails(container)"
@@ -465,12 +511,25 @@ function isRecordComplete(photos) {
                                 </button>
                             </td>
                             <td class="p-2">
-                                {{ formatDate(container.created_at || container.shipment_date) }}
+                                {{
+                                    formatDate(
+                                        container.created_at ||
+                                            container.shipment_date,
+                                    )
+                                }}
                             </td>
                             <td class="p-2">
                                 <CustomTooltip
-                                    v-if="container.inspection === null || container.inspection.status === 'pending'"
-                                    :text="canDoInspection ? 'Start container inspection' : 'Requires Quality department permission'"
+                                    v-if="
+                                        container.inspection === null ||
+                                        container.inspection.status ===
+                                            'pending'
+                                    "
+                                    :text="
+                                        canDoInspection
+                                            ? 'Start container inspection'
+                                            : 'Requires Quality department permission'
+                                    "
                                     position="top"
                                 >
                                     <Button
@@ -484,12 +543,24 @@ function isRecordComplete(photos) {
                                             'text-white',
                                             canDoInspection
                                                 ? 'bg-blue-600 hover:bg-blue-700'
-                                                : 'bg-gray-400 cursor-not-allowed'
+                                                : 'bg-gray-400 cursor-not-allowed',
                                         ]"
-                                        :disabled="!canDoInspection || container.is_on_hold"
-                                        @click="canDoInspection && !container.is_on_hold ? createInspection(container.id) : null"
+                                        :disabled="
+                                            !canDoInspection ||
+                                            container.is_on_hold
+                                        "
+                                        @click="
+                                            canDoInspection &&
+                                            !container.is_on_hold
+                                                ? createInspection(container.id)
+                                                : null
+                                        "
                                     >
-                                        {{ canDoInspection ? 'Start Inspection' : 'Inspection (Quality Only)' }}
+                                        {{
+                                            canDoInspection
+                                                ? "Start Inspection"
+                                                : "Inspection (Quality Only)"
+                                        }}
                                     </Button>
                                 </CustomTooltip>
 
@@ -497,7 +568,7 @@ function isRecordComplete(photos) {
                                     v-else-if="
                                         container.inspection &&
                                         ['passed', 'failed'].includes(
-                                            container.inspection.status
+                                            container.inspection.status,
                                         )
                                     "
                                     variant="outline"
@@ -505,7 +576,7 @@ function isRecordComplete(photos) {
                                     @click="
                                         $emit(
                                             'openViewInspectionModal',
-                                            container.id
+                                            container.id,
                                         )
                                     "
                                 >
@@ -516,12 +587,24 @@ function isRecordComplete(photos) {
                             <td class="p-2">
                                 <!-- Priority 1: View Report Button (when record is submitted and in approval/onboarding stages) -->
                                 <Button
-                                    v-if="container.inspection && container.inspection.status === 'passed' && isRecordComplete(container.photo || []) && (container.stage === 'container_loading_report_approval' || container.stage === 'onboarding_ready' || container.stage === 'onboarded')"
+                                    v-if="
+                                        container.inspection &&
+                                        container.inspection.status ===
+                                            'passed' &&
+                                        isRecordComplete(
+                                            container.photo || [],
+                                        ) &&
+                                        (container.stage ===
+                                            'container_loading_report_approval' ||
+                                            container.stage ===
+                                                'onboarding_ready' ||
+                                            container.stage === 'onboarded')
+                                    "
                                     class="text-white w-[150px] bg-green-600 hover:bg-green-700"
                                     @click="
                                         $emit(
                                             'openViewContainerRecordModal',
-                                            container.id
+                                            container.id,
                                         )
                                     "
                                 >
@@ -530,64 +613,140 @@ function isRecordComplete(photos) {
 
                                 <!-- Priority 2: Complete Record Button (when all photos uploaded and ready to submit) -->
                                 <CustomTooltip
-                                    v-else-if="container.inspection && container.inspection.status === 'passed' && isRecordComplete(container.photo || []) && container.stage === 'container_loading_report'"
-                                    :text="canCreateRecord ? 'All photos uploaded - create final record for approval' : 'Requires Warehouse department permission'"
+                                    v-else-if="
+                                        container.inspection &&
+                                        container.inspection.status ===
+                                            'passed' &&
+                                        isRecordComplete(
+                                            container.photo || [],
+                                        ) &&
+                                        container.stage ===
+                                            'container_loading_report'
+                                    "
+                                    :text="
+                                        canCreateRecord
+                                            ? 'All photos uploaded - create final record for approval'
+                                            : 'Requires Warehouse department permission'
+                                    "
                                     position="top"
                                 >
                                     <Button
                                         variant="outline"
                                         :class="[
                                             'text-white w-[150px]',
-                                            canCreateRecord && !container.is_on_hold
+                                            canCreateRecord &&
+                                            !container.is_on_hold
                                                 ? 'bg-green-600 hover:bg-green-700'
                                                 : 'bg-gray-400 cursor-not-allowed',
                                         ]"
-                                        :disabled="!canCreateRecord || container.is_on_hold"
-                                        @click="canCreateRecord && !container.is_on_hold ? $emit('openCreateContainerRecordModal', container.id) : null"
+                                        :disabled="
+                                            !canCreateRecord ||
+                                            container.is_on_hold
+                                        "
+                                        @click="
+                                            canCreateRecord &&
+                                            !container.is_on_hold
+                                                ? $emit(
+                                                      'openCreateContainerRecordModal',
+                                                      container.id,
+                                                  )
+                                                : null
+                                        "
                                     >
-                                        {{ canCreateRecord ? 'Create Record' : 'Report (Warehouse Only)' }}
+                                        {{
+                                            canCreateRecord
+                                                ? "Create Record"
+                                                : "Report (Warehouse Only)"
+                                        }}
                                     </Button>
                                 </CustomTooltip>
 
                                 <!-- Priority 3: Continue Button (when some photos uploaded) -->
                                 <CustomTooltip
-                                    v-else-if="container.inspection && container.inspection.status === 'passed' && (container.photo || []).length > 0 && container.stage === 'container_loading_report'"
-                                    :text="'Continue uploading photos: ' + (container.photo || []).length + '/12 completed'"
+                                    v-else-if="
+                                        container.inspection &&
+                                        container.inspection.status ===
+                                            'passed' &&
+                                        (container.photo || []).length > 0 &&
+                                        container.stage ===
+                                            'container_loading_report'
+                                    "
+                                    :text="
+                                        'Continue uploading photos: ' +
+                                        (container.photo || []).length +
+                                        '/12 completed'
+                                    "
                                     position="top"
                                 >
                                     <Button
                                         variant="outline"
                                         class="text-white w-[150px] bg-blue-600 hover:bg-blue-700"
-                                        @click="$emit('openCreateContainerRecordModal', container.id)"
+                                        @click="
+                                            $emit(
+                                                'openCreateContainerRecordModal',
+                                                container.id,
+                                            )
+                                        "
                                     >
-                                        Continue ({{ (container.photo || []).length }}/12)
+                                        Continue ({{
+                                            (container.photo || []).length
+                                        }}/12)
                                     </Button>
                                 </CustomTooltip>
 
                                 <!-- Priority 4: Start Create Record Button (when no photos uploaded yet) -->
                                 <CustomTooltip
-                                    v-else-if="container.inspection && container.inspection.status === 'passed' && container.stage === 'container_loading_report'"
-                                    :text="canCreateRecord ? 'Start uploading container photos' : 'Requires Warehouse department permission'"
+                                    v-else-if="
+                                        container.inspection &&
+                                        container.inspection.status ===
+                                            'passed' &&
+                                        container.stage ===
+                                            'container_loading_report'
+                                    "
+                                    :text="
+                                        canCreateRecord
+                                            ? 'Start uploading container photos'
+                                            : 'Requires Warehouse department permission'
+                                    "
                                     position="top"
                                 >
                                     <Button
                                         variant="outline"
                                         :class="[
                                             'text-white w-[150px]',
-                                            canCreateRecord && !container.is_on_hold
+                                            canCreateRecord &&
+                                            !container.is_on_hold
                                                 ? 'bg-blue-600 hover:bg-blue-700'
-                                                : 'bg-gray-400 cursor-not-allowed'
+                                                : 'bg-gray-400 cursor-not-allowed',
                                         ]"
-                                        :disabled="!canCreateRecord || container.is_on_hold"
-                                        @click="canCreateRecord && !container.is_on_hold ? $emit('openCreateContainerRecordModal', container.id) : null"
+                                        :disabled="
+                                            !canCreateRecord ||
+                                            container.is_on_hold
+                                        "
+                                        @click="
+                                            canCreateRecord &&
+                                            !container.is_on_hold
+                                                ? $emit(
+                                                      'openCreateContainerRecordModal',
+                                                      container.id,
+                                                  )
+                                                : null
+                                        "
                                     >
-                                        {{ canCreateRecord ? 'Create Record' : 'Record (Warehouse Only)' }}
+                                        {{
+                                            canCreateRecord
+                                                ? "Create Record"
+                                                : "Record (Warehouse Only)"
+                                        }}
                                     </Button>
                                 </CustomTooltip>
 
                                 <!-- Priority 5: Disabled button when inspection passed but stage not ready -->
                                 <CustomTooltip
-                                    v-else-if="container.inspection && container.inspection.status === 'passed'"
+                                    v-else-if="
+                                        container.inspection &&
+                                        container.inspection.status === 'passed'
+                                    "
                                     :text="'Container inspection approval is still pending. Cannot create record yet.'"
                                     position="top"
                                 >
@@ -624,30 +783,53 @@ function isRecordComplete(photos) {
                                     @click="
                                         $emit(
                                             'openViewContainerSecurityCheckingModal',
-                                            container.id
+                                            container.id,
                                         )
                                     "
                                     >View Security Check</Button
                                 >
 
                                 <CustomTooltip
-                                    v-else-if="container.stage === 'onboarding_ready'"
-                                    :text="canDoSecurityCheck ? 'Complete final security check for onboarding' : 'Requires Security department permission'"
+                                    v-else-if="
+                                        container.stage === 'onboarding_ready'
+                                    "
+                                    :text="
+                                        canDoSecurityCheck
+                                            ? 'Complete final security check for onboarding'
+                                            : 'Requires Security department permission'
+                                    "
                                     position="top"
                                 >
                                     <Button
-                                        v-if="container.stage === 'onboarding_ready'"
+                                        v-if="
+                                            container.stage ===
+                                            'onboarding_ready'
+                                        "
                                         variant="outline"
                                         :class="[
                                             'text-white',
                                             canDoSecurityCheck
                                                 ? 'bg-blue-600 hover:bg-blue-700'
-                                                : 'bg-gray-400 cursor-not-allowed'
+                                                : 'bg-gray-400 cursor-not-allowed',
                                         ]"
-                                        :disabled="!canDoSecurityCheck || container.is_on_hold"
-                                        @click="canDoSecurityCheck && !container.is_on_hold ? completeOnboarding(container.id) : null"
+                                        :disabled="
+                                            !canDoSecurityCheck ||
+                                            container.is_on_hold
+                                        "
+                                        @click="
+                                            canDoSecurityCheck &&
+                                            !container.is_on_hold
+                                                ? completeOnboarding(
+                                                      container.id,
+                                                  )
+                                                : null
+                                        "
                                     >
-                                        {{ canDoSecurityCheck ? 'Complete Onboarding' : 'Security Check (Security Only)' }}
+                                        {{
+                                            canDoSecurityCheck
+                                                ? "Complete Onboarding"
+                                                : "Security Check (Security Only)"
+                                        }}
                                     </Button>
                                 </CustomTooltip>
 
@@ -661,18 +843,37 @@ function isRecordComplete(photos) {
                                 </Button>
                             </td>
                             <td class="p-2">
-                                <span v-if="container.is_on_hold" class="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-medium">
+                                <span
+                                    v-if="container.is_on_hold"
+                                    class="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-medium"
+                                >
                                     ON HOLD
                                 </span>
                                 <span v-else>
-                                    {{ capitalizeFirstLetter(container.status.replace(/_/g," ")) }}
+                                    {{
+                                        capitalizeFirstLetter(
+                                            container.status.replace(/_/g, " "),
+                                        )
+                                    }}
                                 </span>
                             </td>
-                            <td class="p-2">{{ capitalizeFirstLetter(container.stage.replace(/_/g," ")) }}</td>
                             <td class="p-2">
-                                <div v-if="canHoldContainer" class="flex gap-1 justify-center">
+                                {{
+                                    capitalizeFirstLetter(
+                                        container.stage.replace(/_/g, " "),
+                                    )
+                                }}
+                            </td>
+                            <td class="p-2">
+                                <div
+                                    v-if="canHoldContainer"
+                                    class="flex gap-1 justify-center"
+                                >
                                     <CustomTooltip
-                                        v-if="!container.is_on_hold && container.status === 'in_progress'"
+                                        v-if="
+                                            !container.is_on_hold &&
+                                            container.status === 'in_progress'
+                                        "
                                         text="Hold container - requires reason"
                                         position="top"
                                     >
@@ -694,13 +895,17 @@ function isRecordComplete(photos) {
                                             variant="outline"
                                             size="sm"
                                             class="bg-blue-600 hover:bg-blue-700 text-white text-xs"
-                                            @click="releaseContainer(container.id)"
+                                            @click="
+                                                releaseContainer(container.id)
+                                            "
                                         >
                                             Release
                                         </Button>
                                     </CustomTooltip>
                                     <Button
-                                        v-else-if="container.status !== 'in_progress'"
+                                        v-else-if="
+                                            container.status !== 'in_progress'
+                                        "
                                         variant="outline"
                                         size="sm"
                                         class="bg-gray-400 text-white text-xs cursor-not-allowed"
@@ -709,29 +914,102 @@ function isRecordComplete(photos) {
                                         Completed
                                     </Button>
                                 </div>
-                                <span v-else class="text-gray-400 text-xs">Quality Only</span>
-                            </td>
-                            <td class="p-2">
-                                <CustomTooltip
-                                    v-if="container.status === 'completed' && canDownloadReport"
-                                    text="Download container report"
-                                    position="top"
+                                <span v-else class="text-gray-400 text-xs"
+                                    >Quality Only</span
                                 >
-                                    <Button
-                                        v-if="container.status === 'completed' && canDownloadReport"
-                                        variant="outline"
-                                        size="sm"
-                                        class="bg-purple-600 hover:bg-purple-700 text-white text-xs"
-                                        @click="downloadContainerReport(container.id)"
+                            </td>
+                            <td class="p-2 flex flex-row spec">
+                                <div>
+                                    <div
+                                        v-if="
+                                            container.status === 'completed' &&
+                                            canDownloadReport
+                                        "
                                     >
-                                        Download Report
-                                    </Button>
-                                </CustomTooltip>
-                                <div v-else-if="container.status === 'completed' && !canDownloadReport" class="text-gray-400 text-xs">
-                                    No Permission
+                                        <CustomTooltip
+                                            v-if="
+                                                container.status ===
+                                                    'completed' &&
+                                                canDownloadReport
+                                            "
+                                            text="Download container report"
+                                            position="top"
+                                        >
+                                            <Button
+                                                v-if="
+                                                    container.status ===
+                                                        'completed' &&
+                                                    canDownloadReport
+                                                "
+                                                variant="outline"
+                                                size="sm"
+                                                class="bg-purple-600 hover:bg-purple-700 text-white text-xs"
+                                                @click="
+                                                    downloadContainerReport(
+                                                        container.id,
+                                                    )
+                                                "
+                                            >
+                                                Download Report
+                                            </Button>
+                                        </CustomTooltip>
+                                    </div>
+                                    <div v-else class="text-gray-400 text-xs">
+                                        <CustomTooltip
+                                            v-if="
+                                                container.status ===
+                                                    'in_progress' &&
+                                                canDownloadReport
+                                            "
+                                            text="The container is still not completed"
+                                            position="top"
+                                        >
+                                            <Button
+                                                v-if="
+                                                    container.status ===
+                                                        'in_progress' &&
+                                                    canDownloadReport
+                                                "
+                                                disabled
+                                                variant="outline"
+                                                size="sm"
+                                                class="bg-purple-600 hover:bg-purple-700 text-white text-xs"
+                                                @click="
+                                                    downloadContainerReport(
+                                                        container.id,
+                                                    )
+                                                "
+                                            >
+                                                Download Report
+                                            </Button>
+                                        </CustomTooltip>
+                                    </div>
                                 </div>
-                                <div v-else class="text-gray-400 text-xs">
-                                    Status: {{ container.status }}
+                                <div>
+                                    <div>
+                                        <CustomTooltip
+                                            v-if="canDownloadReport"
+                                            text="Download container report"
+                                            position="top"
+                                        >
+                                            <Button
+                                                v-if="canDownloadReport"
+                                                variant="outline"
+                                                size="sm"
+                                                class="bg-purple-600 hover:bg-purple-700 text-white text-xs"
+                                                @click="
+                                                    canCreateContainer
+                                                        ? $emit(
+                                                              'openEditContainerFormModal',
+                                                              container.id,
+                                                          )
+                                                        : null
+                                                "
+                                            >
+                                                Edit
+                                            </Button>
+                                        </CustomTooltip>
+                                    </div>
                                 </div>
                             </td>
                         </tr>
@@ -774,8 +1052,11 @@ function isRecordComplete(photos) {
 
                             <div class="space-y-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                                        Reason for holding container <span class="text-red-500">*</span>
+                                    <label
+                                        class="block text-sm font-medium text-gray-700 mb-2"
+                                    >
+                                        Reason for holding container
+                                        <span class="text-red-500">*</span>
                                     </label>
                                     <textarea
                                         v-model="holdReason"
@@ -839,7 +1120,8 @@ function isRecordComplete(photos) {
                             <div class="space-y-4">
                                 <div class="text-center">
                                     <p class="text-gray-700 text-lg">
-                                        Are you sure you want to release this container?
+                                        Are you sure you want to release this
+                                        container?
                                     </p>
                                     <p class="text-gray-500 text-sm mt-2">
                                         This action cannot be undone.
@@ -866,9 +1148,5 @@ function isRecordComplete(photos) {
                 </div>
             </Transition>
         </Teleport>
-
-
-
-
     </div>
 </template>

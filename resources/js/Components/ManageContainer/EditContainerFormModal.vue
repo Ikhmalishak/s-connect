@@ -94,6 +94,7 @@ const form = useForm({
 
 const props = defineProps<{
     show: boolean;
+    containerId: number | null;
 }>();
 
 const emit = defineEmits(["close", "save"]);
@@ -186,6 +187,17 @@ watch(() => props.show, (newVal) => {
     } else if (newVal) {
         // Modal is opening - fetch sites
         fetchSites();
+        if (props.containerId) {
+            // Modal is opening with a container ID - fetch data
+            fetchContainerData();
+        }
+    }
+});
+
+// Watch for containerId changes (when switching between different containers)
+watch(() => props.containerId, (newId) => {
+    if (newId && props.show) {
+        fetchContainerData();
     }
 });
 
@@ -196,6 +208,53 @@ async function fetchSites() {
         sites.value = response.data;
     } catch (error) {
         console.error('Failed to fetch sites:', error);
+    }
+}
+
+// Fetch container data for editing
+async function fetchContainerData() {
+    if (!props.containerId) return;
+
+    isLoading.value = true;
+    errorMessage.value = "";
+    successMessage.value = "";
+
+    try {
+        const response = await axios.get(`/containers/${props.containerId}`);
+        const container = response.data;
+
+        // Pre-fill form with container data
+        form.setValues({
+            site_id: container.site_id,
+            transport_type: container.transport_type,
+            size: container.size || undefined,
+            transport_number: container.transport_number,
+            sku_number: container.sku_number,
+            model_project: container.model_project,
+            forwarder: container.forwarder,
+            country: container.country,
+            work_order: container.work_order,
+            hauler: container.hauler,
+            high_security_seal_sn: container.high_security_seal_sn || "",
+            inside_gps_sn: container.inside_gps_sn || "",
+            outside_gps_sn: container.outside_gps_sn || "",
+            fork_seal_sn: container.fork_seal_sn || "",
+            fork_seal_size: container.fork_seal_size || "",
+            temporary_seal_sn: container.temporary_seal_sn || "",
+        });
+
+        transportType.value = container.transport_type;
+
+        // Fetch country requirements if country is set
+        if (container.country) {
+            debouncedFetchRequirements(container.country);
+        }
+
+    } catch (error: any) {
+        console.error("Failed to fetch container data:", error);
+        errorMessage.value = "Failed to load container data. Please try again.";
+    } finally {
+        isLoading.value = false;
     }
 }
 
@@ -218,11 +277,19 @@ const onSubmit = handleSubmit(async (values) => {
 
     console.log("Form Values:", values);
     try {
-        const response = await axios.post("/containers/create", values);
+        let response;
+        if (props.containerId) {
+            // Update existing container
+            response = await axios.put(`/containers/${props.containerId}`, values);
+            successMessage.value = "Container updated successfully!";
+        } else {
+            // Create new container (fallback)
+            response = await axios.post("/containers/create", values);
+            successMessage.value = "Container created successfully!";
+        }
+
         const data = response.data;
         console.log("Success:", data);
-
-        successMessage.value = "Container created successfully!";
 
         // Auto-close after success
         setTimeout(() => {
@@ -235,7 +302,9 @@ const onSubmit = handleSubmit(async (values) => {
         if (error.response?.data?.message) {
             errorMessage.value = error.response.data.message;
         } else {
-            errorMessage.value = "Failed to create container. Please try again.";
+            errorMessage.value = props.containerId
+                ? "Failed to update container. Please try again."
+                : "Failed to create container. Please try again.";
         }
     } finally {
         isLoading.value = false;
@@ -258,7 +327,7 @@ const onSubmit = handleSubmit(async (values) => {
                     >
                         <div class="flex justify-between items-center mb-4">
                             <h2 class="text-xl font-bold text-red-700">
-                                Create New Shipment Container
+                                Edit Shipment Container
                             </h2>
 
                             <button
@@ -632,9 +701,9 @@ const onSubmit = handleSubmit(async (values) => {
                                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                         </svg>
-                                        Creating...
+                                        {{ containerId ? 'Updating...' : 'Creating...' }}
                                     </span>
-                                    <span v-else>Submit</span>
+                                    <span v-else>{{ containerId ? 'Update' : 'Submit' }}</span>
                                 </Button>
                             </div>
                         </form>

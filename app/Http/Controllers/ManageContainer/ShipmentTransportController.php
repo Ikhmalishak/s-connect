@@ -75,9 +75,9 @@ class ShipmentTransportController extends Controller
                 'total' => (clone $query)
                     ->where(function ($q) {
                         $q->whereDoesntHave('inspection')
-                          ->orWhereHas('inspection', function ($subQ) {
-                              $subQ->where('status', 'pending');
-                          });
+                            ->orWhereHas('inspection', function ($subQ) {
+                                $subQ->where('status', 'pending');
+                            });
                     })->count()
             ],
             [
@@ -144,7 +144,10 @@ class ShipmentTransportController extends Controller
         ]);
     }
 
-
+    public function getShipmentTransportInfoById(ShipmentTransport $shipmentTransport)
+    {
+        return $shipmentTransport;
+    }
 
     /**
      * Validate container number for visitor registration (public access for visitor form).
@@ -248,17 +251,136 @@ class ShipmentTransportController extends Controller
 
     public function store(Request $request)
     {
-        $site_id = auth()->user()->site_id;
-
         // Get base validation rules
         $rules = [
+            'site_id' => 'required|exists:sites,id',
             'transport_type' => 'required|string',
             'size' => 'nullable|string|in:20GP,40HC',
             'transport_number' => 'required|string',
             'sku_number' => 'required|string',
             'model_project' => 'required|string',
             'forwarder' => 'required|string',
-            'country' => 'required|string',
+            'country' => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) use ($request) {
+                    // Only validate country for Container transport type
+                    $transportType = $request->input('transport_type');
+                    if ($transportType !== 'Container') {
+                        return; // Skip validation for non-container types
+                    }
+
+                    // Check if country exists in shipping requirements
+                    $requirement = ShippingRequirement::whereRaw('LOWER(destination) = ?', [strtolower($value)])->first();
+                    if (!$requirement) {
+                        $requirement = ShippingRequirement::whereRaw('LOWER(destination) LIKE ?', ['%' . strtolower($value) . '%'])->first();
+                    }
+
+                    if (!$requirement) {
+                        $availableCountries = ShippingRequirement::pluck('destination')->toArray();
+                        $fail("Country '{$value}' is not found in shipping requirements. Available destinations: " . implode(', ', $availableCountries));
+                    }
+                },
+            ],
+            'work_order' => 'required|string',
+            'hauler' => 'required|string',
+            'driver_name' => 'nullable|string',
+            'driver_id' => 'nullable|string',
+            'high_security_seal_sn' => 'nullable|string',
+            'inside_gps_sn' => 'nullable|string',
+            'outside_gps_sn' => 'nullable|string',
+            'fork_seal_sn' => 'nullable|string',
+            'fork_seal_size' => 'nullable|string',
+            'temporary_seal_sn' => 'nullable|string',
+        ];
+
+        // Check if transport type is Container - make high_security_seal_sn and size required
+        $transportType = $request->input('transport_type');
+        if ($transportType === 'Container') {
+            $rules['size'] = 'required|string|in:20GP,40HC';
+            $rules['high_security_seal_sn'] = 'required|string';
+        }
+
+        // Check country-specific requirements (only for containers)
+        if ($transportType === 'Container') {
+            $country = $request->input('country');
+            if ($country) {
+                $requirement = ShippingRequirement::whereRaw('LOWER(destination) = ?', [strtolower($country)])->first();
+                if (!$requirement) {
+                    $requirement = ShippingRequirement::whereRaw('LOWER(destination) LIKE ?', ['%' . strtolower($country) . '%'])->first();
+                }
+
+                if ($requirement) {
+                    // Require fork seal only if country requires it
+                    if ($requirement->requires_fork_seal) {
+                        $rules['fork_seal_sn'] = 'required|string';
+                    }
+
+                    // Require GPS for high/medium risk countries
+                    if (in_array($requirement->risk_level, ['high', 'medium'])) {
+                        $rules['inside_gps_sn'] = 'required|string';
+                    }
+                } else {
+                    // Country not found in requirements - this will be caught by the country validation rule
+                }
+            }
+        }
+
+        $validated = $request->validate($rules);
+
+        $shipment = ShipmentTransport::create(array_merge($validated, [
+            'date' => now()->toDateString(),
+            'status' => 'pending',
+            'stage' => 'container_checking',
+            'created_by' => auth()->id(),
+        ]));
+
+        return response()->json([
+            'message' => 'Shipment Transport created successfully.',
+            'data' => $shipment,
+        ]);
+    }
+
+    public function update(Request $request, ShipmentTransport $shipmentTransport)
+    {
+        $user = auth()->user();
+
+        // Check if shipment transport belongs to user's site (unless superadmin)
+        if (!$user->hasPermissionTo('superadmin') && $shipmentTransport->site_id !== $user->site_id) {
+            return response()->json(['message' => 'Unauthorized access to shipment transport'], 403);
+        }
+
+        // Get base validation rules
+        $rules = [
+            'site_id' => 'required|exists:sites,id',
+            'transport_type' => 'required|string',
+            'size' => 'nullable|string|in:20GP,40HC',
+            'transport_number' => 'required|string',
+            'sku_number' => 'required|string',
+            'model_project' => 'required|string',
+            'forwarder' => 'required|string',
+            'country' => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) use ($request) {
+                    // Only validate country for Container transport type
+                    $transportType = $request->input('transport_type');
+                    if ($transportType !== 'Container') {
+                        return; // Skip validation for non-container types
+                    }
+
+                    // Check if country exists in shipping requirements
+                    $requirement = ShippingRequirement::whereRaw('LOWER(destination) = ?', [strtolower($value)])->first();
+                    if (!$requirement) {
+                        $requirement = ShippingRequirement::whereRaw('LOWER(destination) LIKE ?', ['%' . strtolower($value) . '%'])->first();
+                    }
+
+                    if (!$requirement) {
+                        $availableCountries = ShippingRequirement::pluck('destination')->toArray();
+                        $fail("Country '{$value}' is not found in shipping requirements. Available destinations: " . implode(', ', $availableCountries));
+                    }
+                },
+            ],
             'work_order' => 'required|string',
             'hauler' => 'required|string',
             'driver_name' => 'nullable|string',
@@ -303,17 +425,11 @@ class ShipmentTransportController extends Controller
 
         $validated = $request->validate($rules);
 
-        $shipment = ShipmentTransport::create(array_merge($validated, [
-            'site_id' => $site_id,
-            'date' => now()->toDateString(),
-            'status' => 'pending',
-            'stage' => 'container_checking',
-            'created_by' => auth()->id(),
-        ]));
+        $shipmentTransport->update($validated);
 
         return response()->json([
-            'message' => 'Shipment Transport created successfully.',
-            'data' => $shipment,
+            'message' => 'Shipment Transport updated successfully.',
+            'data' => $shipmentTransport->fresh(),
         ]);
     }
 
@@ -398,9 +514,11 @@ class ShipmentTransportController extends Controller
         }
 
         // Seal photos - required if seal serial numbers are present
-        if (!empty($shipmentTransport->high_security_seal_sn) ||
+        if (
+            !empty($shipmentTransport->high_security_seal_sn) ||
             !empty($shipmentTransport->fork_seal_sn) ||
-            !empty($shipmentTransport->temporary_seal_sn)) {
+            !empty($shipmentTransport->temporary_seal_sn)
+        ) {
             $requiredPhotos = array_merge($requiredPhotos, [
                 ['key' => 'security_seal_photo', 'label' => 'Security Seal'],
             ]);
@@ -414,17 +532,19 @@ class ShipmentTransportController extends Controller
      */
     public function getShippingRequirements(Request $request)
     {
-        $query = ShippingRequirement::with(['changes' => function($q) {
-            $q->where('status', 'pending')->latest();
-        }]);
+        $query = ShippingRequirement::with([
+            'changes' => function ($q) {
+                $q->where('status', 'pending')->latest();
+            }
+        ]);
 
         // Search functionality
         if ($request->has('search') && !empty($request->search)) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('region', 'like', "%{$search}%")
-                  ->orWhere('destination', 'like', "%{$search}%")
-                  ->orWhere('risk_level', 'like', "%{$search}%");
+                    ->orWhere('destination', 'like', "%{$search}%")
+                    ->orWhere('risk_level', 'like', "%{$search}%");
             });
         }
 
@@ -628,7 +748,7 @@ class ShipmentTransportController extends Controller
             $shippingRequirement = ShippingRequirement::findOrFail($validated['shipping_requirement_id']);
 
             // Check if at least one field has been provided for update
-            $providedFields = array_filter($validated['proposed_data'], function($value) {
+            $providedFields = array_filter($validated['proposed_data'], function ($value) {
                 return $value !== null && $value !== '';
             });
 
@@ -692,7 +812,7 @@ class ShipmentTransportController extends Controller
         \Log::info('Firing ShippingRequirementChangeRequested event', ['change_request_id' => $changeRequest->id]);
         \App\Events\ShippingRequirementChangeRequested::dispatch($changeRequest);
 
-        $actionMessage = match($validated['change_type']) {
+        $actionMessage = match ($validated['change_type']) {
             'create' => 'creation',
             'update' => 'change',
             'delete' => 'deletion',
@@ -799,7 +919,7 @@ class ShipmentTransportController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->whereHas('shippingRequirement', function ($subQ) use ($search) {
                     $subQ->where('destination', 'like', "%{$search}%")
-                         ->orWhere('region', 'like', "%{$search}%");
+                        ->orWhere('region', 'like', "%{$search}%");
                 });
             });
         }

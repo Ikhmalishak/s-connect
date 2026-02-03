@@ -21,12 +21,11 @@ import CreateContainerRecordModal from "@/Components/ManageContainer/CreateConta
 import ViewContainerRecordModal from "@/Components/ManageContainer/ViewContainerRecordModal.vue";
 import CreateContainerSecurityCheckingModal from "@/Components/ManageContainer/CreateContainerSecurityCheckingModal.vue";
 import ViewContainerSecurityCheckingModal from "@/Components/ManageContainer/ViewContainerSecurityCheckingModal.vue";
-import Button from "@/components/ui/button/Button.vue";
-import { h } from "vue"
-import { ToastAction } from "@/components/ui/toast"
+import EditContainerFormModal from "@/Components/ManageContainer/EditContainerFormModal.vue";
 
 const currentTime = ref(new Date());
 const openCreateContainerModal = ref(false);
+const openEditContainerModal = ref(false);
 const openCreateContainerInspectionModal = ref(false);
 const openEditContainerInspectionModal = ref(false);
 const openViewContainerInspectionModal = ref(false);
@@ -44,7 +43,7 @@ const currentViewContainerSecurityCheckingId = ref<number | null>(null);
 const containers = ref([]);
 
 let intervalId;
-const { toast } = useToast()
+const { toast } = useToast();
 
 const formattedDate = computed(() =>
     currentTime.value.toLocaleDateString("en-GB", {
@@ -52,17 +51,17 @@ const formattedDate = computed(() =>
         year: "numeric",
         month: "long",
         day: "numeric",
-    })
+    }),
 );
 
 const formattedTime = computed(() =>
-    currentTime.value.toLocaleTimeString("en-GB")
+    currentTime.value.toLocaleTimeString("en-GB"),
 );
 
 function handleOpenCreatContainerInspectionModal(containerId: number) {
     console.log(
         "Opening Create Container Inspection Modal for ID:",
-        containerId
+        containerId,
     );
     currentCreateContainerId.value = containerId;
     openCreateContainerInspectionModal.value = true;
@@ -87,29 +86,41 @@ function handleOpenViewContainerRecordModal(containerId: number) {
     currentViewContainerRecordId.value = containerId;
     console.log(
         "Current View Container ID:",
-        currentViewContainerRecordId.value
+        currentViewContainerRecordId.value,
     );
     openViewContainerRecordModal.value = true;
 }
 
 function handleOpenContainerSecurityCheckingModal(containerId: number) {
-    console.log("Opening Container Security Checking Modal for ID:", containerId);
+    console.log(
+        "Opening Container Security Checking Modal for ID:",
+        containerId,
+    );
     currentContainerSecurityCheckingId.value = containerId;
     console.log(
         "Current Container Security Checking",
-        currentContainerSecurityCheckingId.value
+        currentContainerSecurityCheckingId.value,
     );
     openContainerSecurityCheckingModal.value = true;
 }
 
 function handleOpenViewContainerSecurityCheckingModal(containerId: number) {
-    console.log("Opening Container Security Checking Modal for ID:", containerId);
+    console.log(
+        "Opening Container Security Checking Modal for ID:",
+        containerId,
+    );
     currentViewContainerSecurityCheckingId.value = containerId;
     console.log(
         "Current Container Security Checking",
-        currentViewContainerSecurityCheckingId.value
+        currentViewContainerSecurityCheckingId.value,
     );
     openViewContainerSecurityCheckingModal.value = true;
+}
+
+function handleOpenEditContainerFormModal(containerId: number) {
+    console.log("Opening Edit Container Form Modal for ID:", containerId);
+    currentEditContainerId.value = containerId;
+    openEditContainerModal.value = true;
 }
 
 async function fetchContainers() {
@@ -171,11 +182,11 @@ onMounted(() => {
             });
 
         console.log(
-            'Listening for VisitorRegistered, NotifyGuard, GuardScanInAndOut, and ContainerStageUpdated events via Reverb.'
+            "Listening for VisitorRegistered, NotifyGuard, GuardScanInAndOut, and ContainerStageUpdated events via Reverb.",
         );
     } else {
         console.error(
-            "Laravel Echo is not initialized. Please check resources/js/app.js."
+            "Laravel Echo is not initialized. Please check resources/js/app.js.",
         );
     }
 });
@@ -189,7 +200,7 @@ onUnmounted(() => {
         window.Echo.leave("guard");
         window.Echo.leave("containers");
         console.log(
-            'Stopped listening for events on "visitors", "guard", and "containers" channels.'
+            'Stopped listening for events on "visitors", "guard", and "containers" channels.',
         );
     }
 });
@@ -246,16 +257,31 @@ onUnmounted(() => {
                 handleOpenViewContainerRecordModal
             "
             @open-container-security-checking-modal="
-            handleOpenContainerSecurityCheckingModal"
+                handleOpenContainerSecurityCheckingModal
+            "
             @open-view-container-security-checking-modal="
-            handleOpenViewContainerSecurityCheckingModal"
+                handleOpenViewContainerSecurityCheckingModal
+            "
             @update-containers="handleUpdateContainers"
+            @open-edit-container-form-modal="handleOpenEditContainerFormModal"
         />
+
         <CreateContainerFormModal
             v-model:show="openCreateContainerModal"
             @close="
                 () => {
                     openCreateContainerModal = false;
+                    fetchContainers();
+                }
+            "
+        />
+
+        <EditContainerFormModal
+            v-model:show="openEditContainerModal"
+            :container-id="currentEditContainerId"
+            @close="
+                () => {
+                    openEditContainerModal = false;
                     fetchContainers();
                 }
             "
@@ -328,7 +354,7 @@ onUnmounted(() => {
         />
 
         <ViewContainerSecurityCheckingModal
-           v-model:show="openViewContainerSecurityCheckingModal"
+            v-model:show="openViewContainerSecurityCheckingModal"
             :id="currentViewContainerSecurityCheckingId"
             @close="
                 () => {

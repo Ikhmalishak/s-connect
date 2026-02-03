@@ -12,7 +12,7 @@ class SiteController extends Controller
      */
     public function index()
     {
-        //
+        return response()->json(Site::all());
     }
 
     /**
