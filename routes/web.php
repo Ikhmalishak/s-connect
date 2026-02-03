@@ -213,12 +213,19 @@ Route::middleware(['auth'])->prefix('api/archive-container-reports')->name('arch
     Route::get('/', [App\Http\Controllers\ManageContainer\ArchiveContainerReportController::class, 'index'])->name('index');
 });
 
+Route::get('/containers', action: [ShipmentTransportController::class, 'index'])->middleware('can:container.access')->name('container.index');
 Route::post('/containers/create', [ShipmentTransportController::class, 'store'])->middleware('can:container.access')->name('container.create');
 Route::get('/containers/country-requirements', [ShipmentTransportController::class, 'getCountryRequirements'])->middleware('can:container.access')->name('container.country-requirements');
+Route::get('/containers/questions', [InspectionQuestionController::class, 'index'])->name('container.question');
+Route::post('/containers/create-inspection', [ShipmentTransportInspectionController::class, 'createInspection'])->middleware('can:container.approve')->name('container.create-inspection');
+Route::post('/containers/update-inspection/{id}', [ShipmentTransportInspectionController::class, 'updateInspection'])->middleware('can:container.approve')->name('container.update-inspection');
+Route::get('/containers/inspection-details/{id}', [ShipmentTransportInspectionController::class, 'getInspectionDetails'])->middleware('can:container.approve')->name('container.inspection-details');
+Route::post('containers/create-photo', [ShipmentTransportPhotoController::class, 'store'])->middleware('can:container.approve')->name('container.create-photo');
+Route::get('/containers/inspection-answer', [ShipmentTransportInspectionController::class, 'showByShipmentTransportId'])->middleware('can:container.approve')->name('container.get-inspection-answer-by-shipment-transport-id');
+Route::post('/containers/submit-security-checking', [ShipmentTransportPhotoController::class, 'submitSecurityChecking'])->middleware('can:container.approve')->name('container.submit-security-checking');
 Route::get('/containers/{shipmentTransport}', [ShipmentTransportController::class, 'getShipmentTransportInfoById'])->middleware('can:container.access')->name('container.show');
 Route::put('/containers/{shipmentTransport}', [ShipmentTransportController::class, 'update'])->middleware('can:container.access')->name('container.update');
-Route::get('/containers', [ShipmentTransportController::class, 'index'])->middleware('can:container.access')->name('container.index');
-
+Route::get('containers/{shipmentTransport}/photos', [ShipmentTransportPhotoController::class, 'getPhotos'])->middleware('can:container.approve')->name('container.get-photos');
 Route::get('/containers/{shipmentTransport}/driver-info', [ShipmentTransportController::class, 'getDriverInfo'])->middleware('can:container.access')->name('container.driver-info');
 Route::get('/containers/{shipmentTransport}/required-photos', [ShipmentTransportController::class, 'getRequiredPhotos'])->middleware('can:container.access')->name('container.required-photos');
 Route::post('/containers/{shipmentTransport}/hold', [ShipmentTransportController::class, 'hold'])->middleware('can:container.quality.access')->name('container.hold');
@@ -240,14 +247,6 @@ Route::middleware(['auth'])->prefix('api/shipping-requirements')->name('shipping
     Route::post('/approve-change/{changeRequestId}', [ShipmentTransportController::class, 'approveChangeRequest'])->name('approve-change');
     Route::post('/reject-change/{changeRequestId}', [ShipmentTransportController::class, 'rejectChangeRequest'])->name('reject-change');
 });
-Route::get('/containers/questions', [InspectionQuestionController::class, 'index'])->middleware('can:container.approve')->name('container.question');
-Route::post('/containers/create-inspection', [ShipmentTransportInspectionController::class, 'createInspection'])->middleware('can:container.approve')->name('container.create-inspection');
-Route::post('/containers/update-inspection/{id}', [ShipmentTransportInspectionController::class, 'updateInspection'])->middleware('can:container.approve')->name('container.update-inspection');
-Route::get('/containers/inspection-details/{id}', [ShipmentTransportInspectionController::class, 'getInspectionDetails'])->middleware('can:container.approve')->name('container.inspection-details');
-Route::post('containers/create-photo', [ShipmentTransportPhotoController::class, 'store'])->middleware('can:container.approve')->name('container.create-photo');
-Route::get('containers/{shipmentTransport}/photos', [ShipmentTransportPhotoController::class, 'getPhotos'])->middleware('can:container.approve')->name('container.get-photos');
-Route::get('/containers/inspection-answer', [ShipmentTransportInspectionController::class, 'showByShipmentTransportId'])->middleware('can:container.approve')->name('container.get-inspection-answer-by-shipment-transport-id');
-Route::post('/containers/submit-security-checking', [ShipmentTransportPhotoController::class, 'submitSecurityChecking'])->middleware('can:container.approve')->name('container.submit-security-checking');
 
 // Container approval routes
 Route::middleware(['auth'])->prefix('container-approvals')->name('container-approvals.')->group(function () {
