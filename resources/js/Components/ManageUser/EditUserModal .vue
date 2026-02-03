@@ -29,7 +29,7 @@ const formSchema = toTypedSchema(
         name: z.string().min(2).max(50),
         email: z.string().toLowerCase().email(),
         site_id: z.string(),
-        role: z.enum(["admin", "guard", "receptionist"]),
+        role: z.enum(["admin", "guard", "receptionist", "staff"]),
     })
 );
 
