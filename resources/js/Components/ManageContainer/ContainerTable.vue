@@ -518,7 +518,9 @@ function isRecordComplete(photos) {
                             </td>
                             <td class="p-2">
                                 {{
-                                    container.site_id ? container.site_id : "N/A"
+                                    container.site_id
+                                        ? container.site_id
+                                        : "N/A"
                                 }}
                             </td>
                             <td class="p-2">
@@ -930,98 +932,52 @@ function isRecordComplete(photos) {
                                 >
                             </td>
                             <td class="p-2 flex flex-row spec">
-                                <div>
-                                    <div
-                                        v-if="
-                                            container.status === 'completed' &&
-                                            canDownloadReport
+                                <CustomTooltip
+                                    :text="
+                                        container.status === 'completed'
+                                            ? 'Download container report'
+                                            : 'The container is still not completed'
+                                    "
+                                    position="top"
+                                >
+                                    <Button
+                                        :disabled="
+                                            container.status !== 'completed'
+                                        "
+                                        variant="outline"
+                                        size="sm"
+                                        class="bg-purple-600 hover:bg-purple-700 text-white text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                                        @click="
+                                            downloadContainerReport(
+                                                container.id,
+                                            )
                                         "
                                     >
-                                        <CustomTooltip
-                                            v-if="
-                                                container.status ===
-                                                    'completed' &&
-                                                canDownloadReport
-                                            "
-                                            text="Download container report"
-                                            position="top"
-                                        >
-                                            <Button
-                                                v-if="
-                                                    container.status ===
-                                                        'completed' &&
-                                                    canDownloadReport
-                                                "
-                                                variant="outline"
-                                                size="sm"
-                                                class="bg-purple-600 hover:bg-purple-700 text-white text-xs"
-                                                @click="
-                                                    downloadContainerReport(
-                                                        container.id,
-                                                    )
-                                                "
-                                            >
-                                                Download Report
-                                            </Button>
-                                        </CustomTooltip>
-                                    </div>
-                                    <div v-else class="text-gray-400 text-xs">
-                                        <CustomTooltip
-                                            v-if="
-                                                container.status !=
-                                                    'completed' &&
-                                                canDownloadReport
-                                            "
-                                            text="The container is still not completed"
-                                            position="top"
-                                        >
-                                            <Button
-                                                v-if="
-                                                    container.status ===
-                                                        'in_progress' &&
-                                                    canDownloadReport
-                                                "
-                                                disabled
-                                                variant="outline"
-                                                size="sm"
-                                                class="bg-purple-600 hover:bg-purple-700 text-white text-xs"
-                                                @click="
-                                                    downloadContainerReport(
-                                                        container.id,
-                                                    )
-                                                "
-                                            >
-                                                Download Report
-                                            </Button>
-                                        </CustomTooltip>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div>
-                                        <CustomTooltip
-                                            v-if="canDownloadReport"
-                                            text="Download container report"
-                                            position="top"
-                                        >
-                                            <Button
-                                                v-if="canDownloadReport"
-                                                variant="outline"
-                                                size="sm"
-                                                class="bg-purple-600 hover:bg-purple-700 text-white text-xs"
-                                                @click="
-                                                    canCreateContainer
-                                                        ? $emit(
-                                                              'openEditContainerFormModal',
-                                                              container.id,
-                                                          )
-                                                        : null
-                                                "
-                                            >
-                                                Edit
-                                            </Button>
-                                        </CustomTooltip>
-                                    </div>
-                                </div>
+                                        Download Report
+                                    </Button>
+                                </CustomTooltip>
+                                <CustomTooltip
+                                    v-if="canDownloadReport"
+                                    text="Download container report"
+                                    position="top"
+                                >
+                                    <Button
+                                        v-if="canDownloadReport"
+                                        variant="outline"
+                                        size="sm"
+                                        class="bg-purple-600 hover:bg-purple-700 text-white text-xs"
+                                        @click="
+                                            canCreateContainer
+                                                ? $emit(
+                                                      'openEditContainerFormModal',
+                                                      container.id,
+                                                  )
+                                                : null
+                                        "
+                                    >
+                                        Edit
+                                    </Button>
+                                </CustomTooltip>
                             </td>
                         </tr>
                     </tbody>
