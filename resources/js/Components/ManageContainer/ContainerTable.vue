@@ -968,8 +968,8 @@ function isRecordComplete(photos) {
                                     <div v-else class="text-gray-400 text-xs">
                                         <CustomTooltip
                                             v-if="
-                                                container.status ===
-                                                    'in_progress' &&
+                                                container.status !=
+                                                    'completed' &&
                                                 canDownloadReport
                                             "
                                             text="The container is still not completed"
