@@ -354,7 +354,18 @@ class SyncExternalApprovals extends Command
             $shippingRequirement = $changeRequest->shippingRequirement;
 
             if ($status === 'approved') {
-                if ($changeRequest->change_type === 'update') {
+                if ($changeRequest->change_type === 'create') {
+                    // Create the new shipping requirement
+                    $shippingRequirement = \App\Models\ShippingRequirement::create(array_merge($changeRequest->proposed_data, [
+                        'last_updated_by' => $changeRequest->requested_by,
+                        'attachment_path' => $changeRequest->attachment_path,
+                        'change_requested_at' => $changeRequest->created_at,
+                        'requires_approval' => false,
+                        'approved_by' => $user->id,
+                        'approved_at' => now(),
+                        'status' => 'normal',
+                    ]));
+                } elseif ($changeRequest->change_type === 'update') {
                     // Apply the update
                     $shippingRequirement->update(array_merge($changeRequest->proposed_data, [
                         'last_updated_by' => $changeRequest->requested_by,
