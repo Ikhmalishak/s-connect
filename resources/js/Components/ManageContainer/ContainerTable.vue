@@ -35,6 +35,7 @@ interface Container {
     id: number;
     transport_type: string;
     transport_number: string;
+    site_id: string;
     inspection: {
         id: number;
         status: string;
@@ -434,6 +435,11 @@ function isRecordComplete(photos) {
                             <th
                                 class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
                             >
+                                Site
+                            </th>
+                            <th
+                                class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
+                            >
                                 Date
                             </th>
                             <th
@@ -509,6 +515,11 @@ function isRecordComplete(photos) {
                                 >
                                     {{ container.transport_number }}
                                 </button>
+                            </td>
+                            <td class="p-2">
+                                {{
+                                    container.site_id ? container.site_id : "N/A"
+                                }}
                             </td>
                             <td class="p-2">
                                 {{
