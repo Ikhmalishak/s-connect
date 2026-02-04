@@ -115,7 +115,7 @@ class ShipmentTransportController extends Controller
         $query = ShipmentTransport::with(['inspection', 'photo', 'holdBy']);
 
         // Apply site filter unless user is superadmin
-        if (!$user->hasPermissionTo('superadmin')) {
+        if (!$user->hasAnyPermission(['superadmin','container.shipping.access'])) {
             $query->where('site_id', $user->site_id);
         }
 

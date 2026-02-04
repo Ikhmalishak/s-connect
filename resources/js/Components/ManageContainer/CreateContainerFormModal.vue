@@ -34,11 +34,13 @@ function debounce(func, delay) {
 
 const transportType = ref<"Truck" | "Container" | "">("");
 const isLoading = ref(false);
-const errorMessage = ref("");
+const errorMessage = ref("d");
 const successMessage = ref("");
 const countryRequirements = ref(null);
 const sites = ref([]);
-const countryValidationStatus = ref<"idle" | "loading" | "valid" | "invalid">("idle");
+const countryValidationStatus = ref<"idle" | "loading" | "valid" | "invalid">(
+    "idle",
+);
 
 const requiresGPS = computed(() => {
     return countryRequirements.value?.requires_gps === true;
@@ -49,43 +51,51 @@ const forkSealSize = computed(() => {
     if (requirements?.requires_fork_seal && requirements?.strength) {
         return `${requirements.strength}mm`;
     }
-    return '';
+    return "";
 });
 
 const formSchema = toTypedSchema(
-    z.object({
-        site_id: z.number({
-            required_error: "Site is required",
-        }),
-        transport_type: z.enum(["Truck", "Container"], {
-            required_error: "Transport Type is required",
-        }),
-        size: z.enum(["20GP", "40HC"], {
-            required_error: "Container Size is required for containers",
-        }).optional(),
-        transport_number: z.string().min(1, "Transport Number is required"),
-        sku_number: z.string().min(1, "SKU Number is required"),
-        model_project: z.string().min(1, "Model/Project is required"),
-        forwarder: z.string().min(1, "Forwarder is required"),
-        country: z.string().min(1, "Country is required"),
-        work_order: z.string().min(1, "Work Order is required"),
-        hauler: z.string().min(1, "Hauler is required"),
-        high_security_seal_sn: z.string().optional(),
-        inside_gps_sn: z.string().optional(),
-        outside_gps_sn: z.string().optional(),
-        fork_seal_sn: z.string().optional(),
-        fork_seal_size: z.string().optional(),
-        temporary_seal_sn: z.string().optional(),
-    }).refine((data) => {
-        // If transport_type is Container, size is required
-        if (data.transport_type === "Container") {
-            return data.size !== undefined && data.size !== null;
-        }
-        return true;
-    }, {
-        message: "Container Size is required when Transport Type is Container",
-        path: ["size"],
-    })
+    z
+        .object({
+            site_id: z.number({
+                required_error: "Site is required",
+            }),
+            transport_type: z.enum(["Truck", "Container"], {
+                required_error: "Transport Type is required",
+            }),
+            size: z
+                .enum(["20GP", "40HC"], {
+                    required_error: "Container Size is required for containers",
+                })
+                .optional(),
+            transport_number: z.string().min(1, "Transport Number is required"),
+            sku_number: z.string().min(1, "SKU Number is required"),
+            model_project: z.string().min(1, "Model/Project is required"),
+            forwarder: z.string().min(1, "Forwarder is required"),
+            country: z.string().min(1, "Country is required"),
+            work_order: z.string().min(1, "Work Order is required"),
+            hauler: z.string().min(1, "Hauler is required"),
+            high_security_seal_sn: z.string().optional(),
+            inside_gps_sn: z.string().optional(),
+            outside_gps_sn: z.string().optional(),
+            fork_seal_sn: z.string().optional(),
+            fork_seal_size: z.string().optional(),
+            temporary_seal_sn: z.string().optional(),
+        })
+        .refine(
+            (data) => {
+                // If transport_type is Container, size is required
+                if (data.transport_type === "Container") {
+                    return data.size !== undefined && data.size !== null;
+                }
+                return true;
+            },
+            {
+                message:
+                    "Container Size is required when Transport Type is Container",
+                path: ["size"],
+            },
+        ),
 );
 
 const form = useForm({
@@ -122,10 +132,12 @@ watch(countryRequirements, (newRequirements) => {
 const debouncedFetchRequirements = debounce(async (newCountry) => {
     if (newCountry && newCountry.trim().length >= 2) {
         try {
-            const response = await axios.get(`/containers/country-requirements?country=${encodeURIComponent(newCountry)}`);
+            const response = await axios.get(
+                `/containers/country-requirements?country=${encodeURIComponent(newCountry)}`,
+            );
             countryRequirements.value = response.data.data;
         } catch (error) {
-            console.error('Failed to fetch country requirements:', error);
+            console.error("Failed to fetch country requirements:", error);
             // Don't clear requirements on error - keep previous valid data
         }
     } else if (!newCountry || !newCountry.trim()) {
@@ -152,7 +164,9 @@ const debouncedValidateCountry = debounce(async (country) => {
     countryValidationStatus.value = "loading";
 
     try {
-        const response = await axios.get(`/containers/country-requirements?country=${encodeURIComponent(country.trim())}`);
+        const response = await axios.get(
+            `/containers/country-requirements?country=${encodeURIComponent(country.trim())}`,
+        );
         if (response.data.data) {
             countryValidationStatus.value = "valid";
         } else {
@@ -164,9 +178,12 @@ const debouncedValidateCountry = debounce(async (country) => {
 }, 500);
 
 // Watch for country changes to validate (debounced)
-watch(() => form.values.country, (newCountry) => {
-    debouncedValidateCountry(newCountry);
-});
+watch(
+    () => form.values.country,
+    (newCountry) => {
+        debouncedValidateCountry(newCountry);
+    },
+);
 
 // Also watch for transport type changes to re-validate country
 watch(transportType, (newTransportType) => {
@@ -176,26 +193,29 @@ watch(transportType, (newTransportType) => {
 });
 
 // Clear messages when modal is closed or reopened
-watch(() => props.show, (newVal) => {
-    if (!newVal) {
-        errorMessage.value = "";
-        successMessage.value = "";
-        isLoading.value = false;
-        countryRequirements.value = null;
-        transportType.value = "";
-    } else if (newVal) {
-        // Modal is opening - fetch sites
-        fetchSites();
-    }
-});
+watch(
+    () => props.show,
+    (newVal) => {
+        if (!newVal) {
+            errorMessage.value = "";
+            successMessage.value = "";
+            isLoading.value = false;
+            countryRequirements.value = null;
+            transportType.value = "";
+        } else if (newVal) {
+            // Modal is opening - fetch sites
+            fetchSites();
+        }
+    },
+);
 
 // Fetch sites for the dropdown
 async function fetchSites() {
     try {
-        const response = await axios.get('/api/sites');
+        const response = await axios.get("/api/sites");
         sites.value = response.data;
     } catch (error) {
-        console.error('Failed to fetch sites:', error);
+        console.error("Failed to fetch sites:", error);
     }
 }
 
@@ -229,13 +249,13 @@ const onSubmit = handleSubmit(async (values) => {
             emit("close");
             resetFormWithTransportType();
         }, 2000);
-
     } catch (error: any) {
         console.error("Request failed:", error);
         if (error.response?.data?.message) {
             errorMessage.value = error.response.data.message;
         } else {
-            errorMessage.value = "Failed to create container. Please try again.";
+            errorMessage.value =
+                "Failed to create container. Please try again.";
         }
     } finally {
         isLoading.value = false;
@@ -270,23 +290,18 @@ const onSubmit = handleSubmit(async (values) => {
                             </button>
                         </div>
 
-                        <!-- Error Message -->
-                        <div v-if="errorMessage" class="p-4 bg-red-50 border border-red-200 rounded-md mb-4">
-                            <p class="text-red-800 text-sm">{{ errorMessage }}</p>
-                        </div>
-
-                        <!-- Success Message -->
-                        <div v-if="successMessage" class="p-4 bg-green-50 border border-green-200 rounded-md mb-4">
-                            <p class="text-green-800 text-sm">{{ successMessage }}</p>
-                        </div>
-
                         <form @submit.prevent="onSubmit">
                             <FormField
                                 v-slot="{ componentField }"
                                 name="site_id"
                             >
                                 <FormItem>
-                                    <FormLabel>Site <span class="text-red-500">*</span></FormLabel>
+                                    <FormLabel
+                                        >Site
+                                        <span class="text-red-500"
+                                            >*</span
+                                        ></FormLabel
+                                    >
                                     <Select v-bind="componentField">
                                         <SelectTrigger>
                                             <SelectValue
@@ -314,7 +329,12 @@ const onSubmit = handleSubmit(async (values) => {
                                 name="transport_type"
                             >
                                 <FormItem>
-                                    <FormLabel>Transport Type <span class="text-red-500">*</span></FormLabel>
+                                    <FormLabel
+                                        >Transport Type
+                                        <span class="text-red-500"
+                                            >*</span
+                                        ></FormLabel
+                                    >
                                     <Select
                                         v-bind="componentField"
                                         v-model="transportType"
@@ -344,53 +364,119 @@ const onSubmit = handleSubmit(async (values) => {
                                 name="country"
                             >
                                 <FormItem>
-                                    <FormLabel>Country <span class="text-red-500">*</span></FormLabel>
+                                    <FormLabel
+                                        >Country
+                                        <span class="text-red-500"
+                                            >*</span
+                                        ></FormLabel
+                                    >
                                     <FormControl>
                                         <div class="relative">
                                             <Input
                                                 type="text"
                                                 v-bind="componentField"
                                                 :class="{
-                                                    'pr-10': countryValidationStatus !== 'idle'
+                                                    'pr-10':
+                                                        countryValidationStatus !==
+                                                        'idle',
                                                 }"
                                             />
                                             <!-- Loading indicator -->
                                             <div
-                                                v-if="countryValidationStatus === 'loading'"
+                                                v-if="
+                                                    countryValidationStatus ===
+                                                    'loading'
+                                                "
                                                 class="absolute right-3 top-1/2 transform -translate-y-1/2"
                                             >
-                                                <svg class="animate-spin h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                <svg
+                                                    class="animate-spin h-4 w-4 text-gray-400"
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    fill="none"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <circle
+                                                        class="opacity-25"
+                                                        cx="12"
+                                                        cy="12"
+                                                        r="10"
+                                                        stroke="currentColor"
+                                                        stroke-width="4"
+                                                    ></circle>
+                                                    <path
+                                                        class="opacity-75"
+                                                        fill="currentColor"
+                                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                                    ></path>
                                                 </svg>
                                             </div>
                                             <!-- Valid indicator -->
                                             <div
-                                                v-else-if="countryValidationStatus === 'valid'"
+                                                v-else-if="
+                                                    countryValidationStatus ===
+                                                    'valid'
+                                                "
                                                 class="absolute right-3 top-1/2 transform -translate-y-1/2"
                                             >
-                                                <svg class="h-4 w-4 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                                <svg
+                                                    class="h-4 w-4 text-green-500"
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    fill="none"
+                                                    viewBox="0 0 24 24"
+                                                    stroke="currentColor"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M5 13l4 4L19 7"
+                                                    ></path>
                                                 </svg>
                                             </div>
                                             <!-- Invalid indicator -->
                                             <div
-                                                v-else-if="countryValidationStatus === 'invalid'"
+                                                v-else-if="
+                                                    countryValidationStatus ===
+                                                    'invalid'
+                                                "
                                                 class="absolute right-3 top-1/2 transform -translate-y-1/2"
                                             >
-                                                <svg class="h-4 w-4 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                <svg
+                                                    class="h-4 w-4 text-red-500"
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    fill="none"
+                                                    viewBox="0 0 24 24"
+                                                    stroke="currentColor"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M6 18L18 6M6 6l12 12"
+                                                    ></path>
                                                 </svg>
                                             </div>
                                         </div>
                                     </FormControl>
                                     <FormMessage />
                                     <!-- Validation status message -->
-                                    <div v-if="countryValidationStatus === 'valid'" class="text-sm text-green-600 mt-1">
+                                    <div
+                                        v-if="
+                                            countryValidationStatus === 'valid'
+                                        "
+                                        class="text-sm text-green-600 mt-1"
+                                    >
                                         ✓ Country found in shipping requirements
                                     </div>
-                                    <div v-else-if="countryValidationStatus === 'invalid'" class="text-sm text-red-600 mt-1">
-                                        ✗ Country not found in shipping requirements
+                                    <div
+                                        v-else-if="
+                                            countryValidationStatus ===
+                                            'invalid'
+                                        "
+                                        class="text-sm text-red-600 mt-1"
+                                    >
+                                        ✗ Country not found in shipping
+                                        requirements
                                     </div>
                                 </FormItem>
                             </FormField>
@@ -400,7 +486,12 @@ const onSubmit = handleSubmit(async (values) => {
                                 name="transport_number"
                             >
                                 <FormItem>
-                                    <FormLabel>Transport Number <span class="text-red-500">*</span></FormLabel>
+                                    <FormLabel
+                                        >Transport Number
+                                        <span class="text-red-500"
+                                            >*</span
+                                        ></FormLabel
+                                    >
                                     <FormControl>
                                         <Input
                                             type="text"
@@ -417,7 +508,12 @@ const onSubmit = handleSubmit(async (values) => {
                                 name="size"
                             >
                                 <FormItem>
-                                    <FormLabel>Container Size <span class="text-red-500">*</span></FormLabel>
+                                    <FormLabel
+                                        >Container Size
+                                        <span class="text-red-500"
+                                            >*</span
+                                        ></FormLabel
+                                    >
                                     <Select v-bind="componentField">
                                         <SelectTrigger>
                                             <SelectValue
@@ -444,7 +540,12 @@ const onSubmit = handleSubmit(async (values) => {
                                 name="sku_number"
                             >
                                 <FormItem>
-                                    <FormLabel>SKU Number <span class="text-red-500">*</span></FormLabel>
+                                    <FormLabel
+                                        >SKU Number
+                                        <span class="text-red-500"
+                                            >*</span
+                                        ></FormLabel
+                                    >
                                     <FormControl>
                                         <Input
                                             type="text"
@@ -460,7 +561,12 @@ const onSubmit = handleSubmit(async (values) => {
                                 name="model_project"
                             >
                                 <FormItem>
-                                    <FormLabel>Model Project <span class="text-red-500">*</span></FormLabel>
+                                    <FormLabel
+                                        >Model Project
+                                        <span class="text-red-500"
+                                            >*</span
+                                        ></FormLabel
+                                    >
                                     <FormControl>
                                         <Input
                                             type="text"
@@ -476,7 +582,12 @@ const onSubmit = handleSubmit(async (values) => {
                                 name="forwarder"
                             >
                                 <FormItem>
-                                    <FormLabel>Forwarder <span class="text-red-500">*</span></FormLabel>
+                                    <FormLabel
+                                        >Forwarder
+                                        <span class="text-red-500"
+                                            >*</span
+                                        ></FormLabel
+                                    >
                                     <FormControl>
                                         <Input
                                             type="text"
@@ -492,7 +603,12 @@ const onSubmit = handleSubmit(async (values) => {
                                 name="hauler"
                             >
                                 <FormItem>
-                                    <FormLabel>Hauler <span class="text-red-500">*</span></FormLabel>
+                                    <FormLabel
+                                        >Hauler
+                                        <span class="text-red-500"
+                                            >*</span
+                                        ></FormLabel
+                                    >
                                     <FormControl>
                                         <Input
                                             type="text"
@@ -508,7 +624,12 @@ const onSubmit = handleSubmit(async (values) => {
                                 name="work_order"
                             >
                                 <FormItem>
-                                    <FormLabel>Work Order <span class="text-red-500">*</span></FormLabel>
+                                    <FormLabel
+                                        >Work Order
+                                        <span class="text-red-500"
+                                            >*</span
+                                        ></FormLabel
+                                    >
                                     <FormControl>
                                         <Input
                                             type="text"
@@ -525,7 +646,12 @@ const onSubmit = handleSubmit(async (values) => {
                                 name="high_security_seal_sn"
                             >
                                 <FormItem>
-                                    <FormLabel>High Security Seal Serial Number <span class="text-red-500">*</span></FormLabel>
+                                    <FormLabel
+                                        >High Security Seal Serial Number
+                                        <span class="text-red-500"
+                                            >*</span
+                                        ></FormLabel
+                                    >
                                     <FormControl>
                                         <Input
                                             type="text"
@@ -537,12 +663,19 @@ const onSubmit = handleSubmit(async (values) => {
                             </FormField>
 
                             <FormField
-                                v-if="transportType === 'Container' && requiresGPS"
+                                v-if="
+                                    transportType === 'Container' && requiresGPS
+                                "
                                 v-slot="{ componentField }"
                                 name="inside_gps_sn"
                             >
                                 <FormItem>
-                                    <FormLabel>Inside GPS Serial Number <span class="text-red-500">*</span></FormLabel>
+                                    <FormLabel
+                                        >Inside GPS Serial Number
+                                        <span class="text-red-500"
+                                            >*</span
+                                        ></FormLabel
+                                    >
                                     <FormControl>
                                         <Input
                                             type="text"
@@ -554,12 +687,19 @@ const onSubmit = handleSubmit(async (values) => {
                             </FormField>
 
                             <FormField
-                                v-if="transportType === 'Container' && requiresGPS"
+                                v-if="
+                                    transportType === 'Container' && requiresGPS
+                                "
                                 v-slot="{ componentField }"
                                 name="outside_gps_sn"
                             >
                                 <FormItem>
-                                    <FormLabel>Outside GPS Serial Number<span class="text-red-500">*</span></FormLabel>
+                                    <FormLabel
+                                        >Outside GPS Serial Number<span
+                                            class="text-red-500"
+                                            >*</span
+                                        ></FormLabel
+                                    >
                                     <FormControl>
                                         <Input
                                             type="text"
@@ -571,12 +711,20 @@ const onSubmit = handleSubmit(async (values) => {
                             </FormField>
 
                             <FormField
-                                v-if="transportType === 'Container' && countryRequirements?.requires_fork_seal"
+                                v-if="
+                                    transportType === 'Container' &&
+                                    countryRequirements?.requires_fork_seal
+                                "
                                 v-slot="{ componentField }"
                                 name="fork_seal_sn"
                             >
                                 <FormItem>
-                                    <FormLabel>Fork Seal Serial Number <span class="text-red-500">*</span></FormLabel>
+                                    <FormLabel
+                                        >Fork Seal Serial Number
+                                        <span class="text-red-500"
+                                            >*</span
+                                        ></FormLabel
+                                    >
                                     <FormControl>
                                         <Input
                                             type="text"
@@ -588,7 +736,10 @@ const onSubmit = handleSubmit(async (values) => {
                             </FormField>
 
                             <FormField
-                                v-if="transportType === 'Container' && countryRequirements?.requires_fork_seal"
+                                v-if="
+                                    transportType === 'Container' &&
+                                    countryRequirements?.requires_fork_seal
+                                "
                                 v-slot="{ componentField }"
                                 name="fork_seal_size"
                             >
@@ -612,7 +763,9 @@ const onSubmit = handleSubmit(async (values) => {
                                 name="temporary_seal_sn"
                             >
                                 <FormItem>
-                                    <FormLabel>Temporary Seal Serial Number</FormLabel>
+                                    <FormLabel
+                                        >Temporary Seal Serial Number</FormLabel
+                                    >
                                     <FormControl>
                                         <Input
                                             type="text"
@@ -624,13 +777,57 @@ const onSubmit = handleSubmit(async (values) => {
                             </FormField>
 
                             <div
-                                class="flex flex-row justify-between items-center"
+                                class="flex flex-row justify-between items-center mt-4"
                             >
-                                <Button class="mt-4" type="submit" :disabled="isLoading">
-                                    <span v-if="isLoading" class="flex items-center">
-                                        <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                <div>
+                                    <!-- Error Message -->
+                                    <div
+                                        v-if="errorMessage"
+                                        class="p-2 bg-red-50 border border-red-200 rounded-md mb-4"
+                                    >
+                                        <p class="text-red-800 text-sm">
+                                            {{ errorMessage }}
+                                        </p>
+                                    </div>
+
+                                    <!-- Success Message -->
+                                    <div
+                                        v-if="successMessage"
+                                        class="p-2 bg-green-50 border border-green-200 rounded-md mb-4"
+                                    >
+                                        <p class="text-green-800 text-sm">
+                                            {{ successMessage }}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <Button
+                                    type="submit"
+                                    :disabled="isLoading"
+                                >
+                                    <span
+                                        v-if="isLoading"
+                                        class="flex items-center"
+                                    >
+                                        <svg
+                                            class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <circle
+                                                class="opacity-25"
+                                                cx="12"
+                                                cy="12"
+                                                r="10"
+                                                stroke="currentColor"
+                                                stroke-width="4"
+                                            ></circle>
+                                            <path
+                                                class="opacity-75"
+                                                fill="currentColor"
+                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                            ></path>
                                         </svg>
                                         Creating...
                                     </span>
