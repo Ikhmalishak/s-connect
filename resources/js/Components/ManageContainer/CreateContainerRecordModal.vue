@@ -674,7 +674,7 @@ async function loadRequiredPhotos() {
             { key: 'container_truck_photo', label: 'Container Truck' },
             { key: 'empty_container_photo', label: 'Empty Container' },
             { key: 'half_loaded_photo', label: 'Half Loaded' },
-            { key: 'one_side_door_closed_with_container_number_photo', label: 'Door Closed' },
+            { key: 'one_side_door_closed_with_container_number_photo', label: 'One Side Door Closed With Container Number' },
             { key: 'complete_loaded_photo', label: 'Complete Loaded' },
             { key: 'container_full_seal', label: 'Container Full Seal' },
         ]

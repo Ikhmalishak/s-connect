@@ -41,8 +41,8 @@ public function verifyCode(Request $request)
     if ($request->expectsJson()) {
         return response()->json(['message' => 'Authenticated successfully.']);
     }
-dd("here");
-    return redirect()->route('welcome');
+
+    return redirect()->route('agreement.show');
 }
 
 public function resendCode(Request $request)

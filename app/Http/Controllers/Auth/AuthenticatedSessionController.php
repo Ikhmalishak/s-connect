@@ -43,7 +43,7 @@ class AuthenticatedSessionController extends Controller
             return redirect()->route('mfa.verify');
         }
 
-        return redirect()->route('welcome');
+        return redirect()->route('agreement.show');
     }
 
     /**

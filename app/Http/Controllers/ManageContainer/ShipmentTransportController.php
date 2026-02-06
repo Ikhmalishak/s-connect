@@ -115,7 +115,7 @@ class ShipmentTransportController extends Controller
         $query = ShipmentTransport::with(['inspection', 'photo', 'holdBy']);
 
         // Apply site filter unless user is superadmin
-        if (!$user->hasAnyPermission(['superadmin','container.shipping.access'])) {
+        if (!$user->hasAnyPermission(['superadmin', 'container.shipping.access'])) {
             $query->where('site_id', $user->site_id);
         }
 
@@ -1302,13 +1302,67 @@ class ShipmentTransportController extends Controller
             .status-failed { color: red; font-weight: bold; }
             .photo-list { margin: 10px 0; }
             .photo-item { margin: 5px 0; padding: 5px; background-color: #f9f9f9; }
+
+            @page {
+    margin: 120px 40px 100px 40px; /* top right bottom left */
+}
+
+.header-fixed {
+    position: fixed;
+    top: -100px;
+    left: 0;
+    right: 0;
+    height: 90px;
+    border-bottom: 2px solid #333;
+}
+
+.footer-fixed {
+    position: fixed;
+    bottom: -80px;
+    left: 0;
+    right: 0;
+    height: 70px;
+    border-top: 1px solid #333;
+    font-size: 11px;
+    color: #555;
+    text-align: center;
+    padding-top: 10px;
+}
+
+.company-table {
+    width: 100%;
+    border: none;
+}
+
+.company-table td {
+    border: none;
+    vertical-align: middle;
+}
+
+.company-info {
+    text-align: right;
+    font-size: 12px;
+    line-height: 1.4;
+}
         </style>
 
-        <div class="header">
-            <h1>Container Report</h1>
-            <h2>' . $container->transport_number . '</h2>
-            <p><strong>Report Generated:</strong> ' . now()->format('d/m/Y H:i:s') . '</p>
-        </div>
+<div class="header-fixed">
+    <table class="company-table">
+        <tr>
+            <td style="width: 120px;">
+                <img src="' . public_path('assets/skpLogo.png') . '" style="height:70px;">
+            </td>
+            <td class="company-info">
+                <strong style="font-size:16px;">Syarikat Sin Kwang Plastic Industries Sdn Bhd</strong><br>
+                No 6, Jalan Teknologi 5,<br>
+                Taman Teknologi Johor, 81400 Senai, Johor, Malaysia<br>
+                Phone: 07 4330 777<br>
+                Email: info@skpres.com
+            </td>
+        </tr>
+    </table>
+</div>
+
 
         <div class="section">
             <h3>Basic Information</h3>
@@ -1472,6 +1526,14 @@ class ShipmentTransportController extends Controller
                 </table>
             </div>';
         }
+
+        $html .= '
+<div class="footer-fixed">
+    Confidential Notice: This container inspection report contains confidential and proprietary information of 
+    <strong>Syarikat Sin Kwang Plastic Industries Sdn Bhd</strong>. Unauthorized disclosure, copying, distribution, 
+    or use of this report, in whole or in part, is strictly prohibited without prior written approval from Management.
+</div>';
+
 
         $html .= '</body></html>';
 

@@ -140,6 +140,12 @@ Route::middleware(['auth', 'can:superadmin', 'password.age'])
         Route::post('/users/{user}/permissions', [UserController::class, 'manageUserPermissions']);
     });
 
+Route::middleware(['auth'])->group(function () {
+    // Agreement routes
+    Route::get('/agreement', [App\Http\Controllers\AgreementController::class, 'show'])->name('agreement.show');
+    Route::post('/agreement/accept', [App\Http\Controllers\AgreementController::class, 'accept'])->name('agreement.accept');
+});
+
 Route::middleware(['auth', 'password.age'])->group(function () {
     //profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
