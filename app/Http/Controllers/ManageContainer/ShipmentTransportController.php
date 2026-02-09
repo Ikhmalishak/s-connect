@@ -346,7 +346,7 @@ class ShipmentTransportController extends Controller
         $user = auth()->user();
 
         // Check if shipment transport belongs to user's site (unless superadmin)
-        if (!$user->hasAnyPermission(['superadmin', 'container.access.shipping']) && $shipmentTransport->site_id !== $user->site_id) {
+        if (!$user->hasAnyPermission(['superadmin', 'container.shipping.access']) && $shipmentTransport->site_id !== $user->site_id) {
             return response()->json(['message' => 'Unauthorized access to shipment transport'], 403);
         }
 
