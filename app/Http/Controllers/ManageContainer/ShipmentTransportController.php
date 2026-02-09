@@ -174,13 +174,13 @@ class ShipmentTransportController extends Controller
         }
 
         // Check if container stage is 'onboarding_ready'
-        if ($container->stage !== 'onboarding_ready') {
-            // Container exists but not ready for pickup - cannot proceed
-            return response()->json([
-                'valid' => false,
-                'message' => 'Container is not ready for visitor registration (current stage: ' . str_replace('_', ' ', $container->stage) . ')'
-            ]);
-        }
+        // if ($container->stage !== 'onboarding_ready') {
+        //     // Container exists but not ready for pickup - cannot proceed
+        //     return response()->json([
+        //         'valid' => false,
+        //         'message' => 'Container is not ready for visitor registration (current stage: ' . str_replace('_', ' ', $container->stage) . ')'
+        //     ]);
+        // }
 
         // Container exists and is ready for pickup - success
         return response()->json([
@@ -346,7 +346,7 @@ class ShipmentTransportController extends Controller
         $user = auth()->user();
 
         // Check if shipment transport belongs to user's site (unless superadmin)
-        if (!$user->hasPermissionTo('superadmin') && $shipmentTransport->site_id !== $user->site_id) {
+        if (!$user->hasAnyPermission(['superadmin', 'container.access.shipping']) && $shipmentTransport->site_id !== $user->site_id) {
             return response()->json(['message' => 'Unauthorized access to shipment transport'], 403);
         }
 

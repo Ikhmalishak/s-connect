@@ -14,5 +14,5 @@ Schedule::command('app:notify-guard-about-visitors')->dailyAt('19:30');
 Schedule::command('app:notify-guard-about-visitors')->dailyAt('20:30');
 Schedule::command('app:send-room-reservation-reminder-emails')->everyMinute();
 Schedule::command('app:mark-completed-room-reservations')->everyMinute();
-Schedule::command('approvals:sync-external')->everyTwoHours();
+Schedule::command('approvals:sync-external')->everyTenMinutes();
 
