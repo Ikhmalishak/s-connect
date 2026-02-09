@@ -24,10 +24,19 @@ const selectedImageIndex = ref(0);
 const filteredPhotos = computed(() => {
     return (
         inspectionDetails.value?.transport?.photo?.filter(
-            (p: any) => !excludeLabels.includes(p.label)
+            (p: any) => !excludeLabels.includes(p.label),
         ) || []
     );
 });
+
+const approvalSteps = computed(() => {
+    const approvals = inspectionDetails.value?.transport?.approvals || [];
+
+    return approvals.filter((a: any) => a.approval_type === "loading");
+});
+
+const formatTime = (time: string | null) =>
+    time ? new Date(time).toLocaleString() : "—";
 
 function openImagePreview(image: any, index: number) {
     selectedImage.value = image;
@@ -61,7 +70,7 @@ watch(
         if (newId !== null) {
             fetchInspectionDetails(newId);
         }
-    }
+    },
 );
 </script>
 
@@ -175,12 +184,18 @@ watch(
                                         class="group relative"
                                     >
                                         <button
-                                            @click="openImagePreview(value, Number(index))"
+                                            @click="
+                                                openImagePreview(
+                                                    value,
+                                                    Number(index),
+                                                )
+                                            "
                                             class="block relative overflow-hidden rounded-lg border-2 border-gray-300 hover:border-orange-500 transition-all duration-200 w-full"
                                         >
                                             <img
                                                 :src="
-                                                    '/storage/' + value.photo_path
+                                                    '/storage/' +
+                                                    value.photo_path
                                                 "
                                                 :alt="value.label"
                                                 class="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-200"
@@ -205,7 +220,9 @@ watch(
                                         </button>
                                         <p
                                             class="text-xs font-medium text-gray-600 mt-2 text-center truncate"
-                                            :title="value.label.replace(/_/g, ' ')"
+                                            :title="
+                                                value.label.replace(/_/g, ' ')
+                                            "
                                         >
                                             {{
                                                 value.label
@@ -214,6 +231,82 @@ watch(
                                             }}
                                         </p>
                                     </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h3 class="font-semibold text-gray-700 mb-4">
+                                    Approval Progress
+                                </h3>
+
+                                <div class="overflow-x-auto">
+                                    <table
+                                        class="min-w-full text-sm border border-gray-200 rounded-lg overflow-hidden"
+                                    >
+                                        <thead
+                                            class="bg-gray-100 text-gray-700"
+                                        >
+                                            <tr>
+                                                <th class="px-4 py-2 text-left">
+                                                    Approver
+                                                </th>
+                                                <th class="px-4 py-2 text-left">
+                                                    Status
+                                                </th>
+                                                <th class="px-4 py-2 text-left">
+                                                    Timestamp
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr
+                                                v-for="(
+                                                    step, index
+                                                ) in approvalSteps"
+                                                :key="index"
+                                                class="border-t"
+                                            >
+                                                <td
+                                                    class="px-4 py-2 text-gray-900"
+                                                >
+                                                    {{ step.department || "—" }}
+                                                </td>
+
+                                                <td class="px-4 py-2">
+                                                    <span
+                                                        v-if="step.approved_at"
+                                                        class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700"
+                                                    >
+                                                        Approved
+                                                    </span>
+                                                    <span
+                                                        v-else-if="
+                                                            step.rejected_at
+                                                        "
+                                                        class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700"
+                                                    >
+                                                        Rejected
+                                                    </span>
+                                                    <span
+                                                        v-else
+                                                        class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700"
+                                                    >
+                                                        Pending
+                                                    </span>
+                                                </td>
+
+                                                <td
+                                                    class="px-4 py-2 text-gray-600"
+                                                >
+                                                    {{
+                                                        formatTime(
+                                                            step.approved_at,
+                                                        ) || "—"
+                                                    }}
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
@@ -248,18 +341,40 @@ watch(
                             @click="prevImage"
                             class="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 bg-black/50 hover:bg-black/70 rounded-full w-12 h-12 flex items-center justify-center transition-colors z-10"
                         >
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            <svg
+                                class="w-6 h-6"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M15 19l-7-7 7-7"
+                                ></path>
                             </svg>
                         </button>
 
                         <button
-                            v-if="selectedImageIndex < filteredPhotos.length - 1"
+                            v-if="
+                                selectedImageIndex < filteredPhotos.length - 1
+                            "
                             @click="nextImage"
                             class="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 bg-black/50 hover:bg-black/70 rounded-full w-12 h-12 flex items-center justify-center transition-colors z-10"
                         >
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            <svg
+                                class="w-6 h-6"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M9 5l7 7-7 7"
+                                ></path>
                             </svg>
                         </button>
 
@@ -272,18 +387,29 @@ watch(
                             />
 
                             <!-- Image info -->
-                            <div class="absolute bottom-0 left-0 right-0 bg-black/70 text-white p-4 rounded-b-lg">
+                            <div
+                                class="absolute bottom-0 left-0 right-0 bg-black/70 text-white p-4 rounded-b-lg"
+                            >
                                 <div class="flex items-center justify-between">
                                     <div>
                                         <h3 class="font-semibold text-lg">
-                                            {{ selectedImage?.label.replace(/_/g, ' ').toUpperCase() }}
+                                            {{
+                                                selectedImage?.label
+                                                    .replace(/_/g, " ")
+                                                    .toUpperCase()
+                                            }}
                                         </h3>
                                         <p class="text-sm text-gray-300">
-                                            Image {{ selectedImageIndex + 1 }} of {{ filteredPhotos.length }}
+                                            Image
+                                            {{ selectedImageIndex + 1 }} of
+                                            {{ filteredPhotos.length }}
                                         </p>
                                     </div>
                                     <a
-                                        :href="'/storage/' + selectedImage?.photo_path"
+                                        :href="
+                                            '/storage/' +
+                                            selectedImage?.photo_path
+                                        "
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         class="text-blue-400 hover:text-blue-300 text-sm underline"

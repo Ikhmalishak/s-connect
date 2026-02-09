@@ -198,7 +198,7 @@ class ShipmentTransportInspectionController extends Controller
             return response()->json(['message' => 'Unauthorized access to shipment transport'], 403);
         }
 
-        $inspection = ShipmentTransportInspection::with(['answers.question', 'transport.photo'])->where('shipment_transport_id', $id)->firstOrFail();
+        $inspection = ShipmentTransportInspection::with(['answers.question', 'transport.photo', 'transport.approvals'])->where('shipment_transport_id', $id)->firstOrFail();
 
         return response()->json([
             'data' => $inspection
