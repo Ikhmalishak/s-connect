@@ -198,11 +198,11 @@ class ShipmentTransportPhotoController extends Controller
         $requiredPhotos = [
             'pallet_condition_photo',
             'pallet_label_photo',
-            'container_truck_photo',
             'empty_container_photo',
             'half_loaded_photo',
             'one_side_door_closed_with_container_number_photo',
             'complete_loaded_photo',
+            'container_truck_photo',
         ];
 
         // GPS photos - required if GPS serial numbers are present
