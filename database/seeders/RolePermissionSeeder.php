@@ -20,6 +20,7 @@ class RolePermissionSeeder extends Seeder
                 'shipping.approve',
                 'shipping.access',
                 'quality.approve',
+                'quality.approve_inspection',
                 'quality.access',
                 'warehouse.approve',
                 'warehouse.access',
