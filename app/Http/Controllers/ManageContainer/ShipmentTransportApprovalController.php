@@ -49,7 +49,8 @@ class ShipmentTransportApprovalController extends Controller
                 if ($user->hasPermissionTo('container.quality.approve') || $user->hasPermissionTo('container.quality.approve_inspection')) {
                     $q->orWhere('department', 'quality');
                 }
-                if ($user->hasPermissionTo('container.security.approve')) {
+                // For security department, check both external and internal approval permissions
+                if ($user->hasPermissionTo('container.security.approve') || $user->hasPermissionTo('container.security.approve_internal')) {
                     $q->orWhere('department', 'security');
                 }
             });
@@ -140,7 +141,15 @@ class ShipmentTransportApprovalController extends Controller
                 ? 'container.quality.approve_inspection'
                 : 'container.quality.approve';
         }
-        if (!$user->hasPermissionTo($requiredPermission)) {
+        // For security department, allow both external and internal permissions
+        elseif ($approval->department === 'security') {
+            if (!$user->hasPermissionTo('container.security.approve') && !$user->hasPermissionTo('container.security.approve_internal')) {
+                return response()->json(['message' => 'Unauthorized'], 403);
+            }
+            $requiredPermission = null; // Skip the standard permission check since we already validated
+        }
+
+        if ($requiredPermission && !$user->hasPermissionTo($requiredPermission)) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -207,7 +216,15 @@ class ShipmentTransportApprovalController extends Controller
                 ? 'container.quality.approve_inspection'
                 : 'container.quality.approve';
         }
-        if (!$user->hasPermissionTo($requiredPermission)) {
+        // For security department, allow both external and internal permissions
+        elseif ($approval->department === 'security') {
+            if (!$user->hasPermissionTo('container.security.approve') && !$user->hasPermissionTo('container.security.approve_internal')) {
+                return response()->json(['message' => 'Unauthorized'], 403);
+            }
+            $requiredPermission = null; // Skip the standard permission check since we already validated
+        }
+
+        if ($requiredPermission && !$user->hasPermissionTo($requiredPermission)) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -286,7 +303,7 @@ class ShipmentTransportApprovalController extends Controller
                 broadcast(new \App\Events\ContainerStageUpdated($container))->toOthers();
 
                 // Send notification to security team that container is ready for onboarding
-                $securityUsers = $this->getDepartmentUsers('security');
+                $securityUsers = $this->getDepartmentUsers('security', $container->site_id);
                 if ($securityUsers->isNotEmpty()) {
                     try {
                         Mail::to($securityUsers)->send(new \App\Mail\ContainerReadyForOnboarding($container));
@@ -380,15 +397,15 @@ class ShipmentTransportApprovalController extends Controller
                 $this->sendPowerAutomateNotification($container, $approval);
 
                 // Send email as backup
-                $users = $this->getDepartmentUsers($department);
-                if ($users->isNotEmpty()) {
-                    try {
-                        Mail::to($users)->send(new ContainerReadyForDepartmentApproval($container, $department, 'loading'));
-                    } catch (\Exception $e) {
-                        // Log the error but don't fail the entire process
-                        \Log::error("Failed to send approval email to {$department} department: " . $e->getMessage());
-                    }
-                }
+                // $users = $this->getDepartmentUsers($department, $container->site_id);
+                // if ($users->isNotEmpty()) {
+                //     try {
+                //         Mail::to($users)->send(new ContainerReadyForDepartmentApproval($container, $department, 'loading'));
+                //     } catch (\Exception $e) {
+                //         // Log the error but don't fail the entire process
+                //         \Log::error("Failed to send approval email to {$department} department: " . $e->getMessage());
+                //     }
+                // }
             }
         }
     }
@@ -396,8 +413,9 @@ class ShipmentTransportApprovalController extends Controller
     private function sendPowerAutomateNotification(ShipmentTransport $container, ShipmentTransportApproval $approval)
     {
         try {
-            // Get department users who can approve
-            $departmentUsers = $this->getDepartmentUsers($approval->department);
+            // Get department users who can approve (for notifications, only external permissions)
+            $forNotifications = in_array($approval->department, ['security']);
+            $departmentUsers = $this->getDepartmentUsers($approval->department, $container->site_id, $forNotifications);
 
             if ($departmentUsers->isEmpty()) {
                 \Log::warning("No users found for department {$approval->department}, skipping Power Automate notifications");
@@ -434,31 +452,61 @@ class ShipmentTransportApprovalController extends Controller
         }
     }
 
-    public function approveFromEmail($approvalId)
-    {
-        $approval = ShipmentTransportApproval::findOrFail($approvalId);
-        $user = auth()->user();
+    // public function approveFromEmail($approvalId)
+    // {
+    //     $approval = ShipmentTransportApproval::findOrFail($approvalId);
+    //     $user = auth()->user();
 
-        // Check if already approved
-        if ($approval->approval_status === 'approved') {
-            return redirect('/container/dashboard')->with('info', 'Container already approved');
+    //     // Check if already approved
+    //     if ($approval->approval_status === 'approved') {
+    //         return redirect('/container/dashboard')->with('info', 'Container already approved');
+    //     }
+
+    //     $approval->update([
+    //         'approval_status' => 'approved',
+    //         'approved_by' => $user->id,
+    //         'approved_at' => now(),
+    //     ]);
+
+    //     $this->checkAndUpdateContainerStatus($approval->shipmentTransport);
+
+    //     return redirect('/container/dashboard')->with('success', 'Container approved successfully');
+    // }
+
+    private function getDepartmentUsers($department, $containerSiteId = null, $forNotifications = false)
+    {
+        // For security department, handle both external and internal permissions
+        if ($department === 'security') {
+            if ($forNotifications) {
+                // For Power Automate notifications, only use external permission (Teams licensed users)
+                $query = \App\Models\User::permission('container.security.approve');
+            } else {
+                // For internal approvals, use both external and internal permissions
+                $query = \App\Models\User::where(function ($q) {
+                    $q->whereHas('permissions', function ($perm) {
+                        $perm->where('name', 'container.security.approve');
+                    })->orWhereHas('permissions', function ($perm) {
+                        $perm->where('name', 'container.security.approve_internal');
+                    });
+                });
+            }
+        } else {
+            // For other departments, use the standard permission
+            $query = \App\Models\User::permission("container.{$department}.approve");
         }
 
-        $approval->update([
-            'approval_status' => 'approved',
-            'approved_by' => $user->id,
-            'approved_at' => now(),
-        ]);
+        // Apply site-based filtering based on department
+        if (in_array($department, ['warehouse', 'quality'])) {
+            // Warehouse and Quality: route to users in the same site as container
+            if ($containerSiteId) {
+                $query->where('site_id', $containerSiteId);
+            }
+        } elseif (in_array($department, ['shipping', 'security'])) {
+            // Shipping and Security: always route to Site 2 (S2)
+            $query->where('site_id', 2);
+        }
 
-        $this->checkAndUpdateContainerStatus($approval->shipmentTransport);
-
-        return redirect('/container/dashboard')->with('success', 'Container approved successfully');
-    }
-
-    private function getDepartmentUsers($department)
-    {
-        // Return users with the specific permission
-        return \App\Models\User::permission("container.{$department}.approve")->get();
+        return $query->get();
     }
 
     public function receiveApprovalResult(Request $request)

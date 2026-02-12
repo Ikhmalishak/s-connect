@@ -25,6 +25,7 @@ class RolePermissionSeeder extends Seeder
                 'warehouse.approve',
                 'warehouse.access',
                 'security.approve',
+                'security.approve_internal',
                 'security.access'
             ],
         ];
