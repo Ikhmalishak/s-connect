@@ -20,14 +20,15 @@ class ShipmentTransportController extends Controller
         return Inertia::render('ManageContainer/Dashboard');
     }
 
-    public function getStats()
+    public function getStats(Request $request)
     {
         $user = auth()->user();
         $query = ShipmentTransport::query();
 
-        // Apply site filter unless user is superadmin
-        if (!$user->hasPermissionTo('superadmin')) {
-            $query->where('site_id', $user->site_id);
+        // Apply site filter if specified
+        $siteId = $request->input('site_id');
+        if ($siteId && $siteId !== 'all') {
+            $query->where('site_id', $siteId);
         }
 
         $totalContainers = $query->count();
@@ -111,12 +112,13 @@ class ShipmentTransportController extends Controller
         $limit = $request->input('limit', 50);
         $search = $request->input('search');
         $status = $request->input('status');
+        $siteId = $request->input('site_id');
 
-        $query = ShipmentTransport::with(['inspection', 'photo', 'holdBy']);
+        $query = ShipmentTransport::with(['inspection', 'photo', 'holdBy', 'site']);
 
-        // Apply site filter unless user is superadmin
-        if (!$user->hasAnyPermission(['superadmin', 'container.shipping.access'])) {
-            $query->where('site_id', $user->site_id);
+        // Apply site filter if specified, otherwise show all sites
+        if ($siteId && $siteId !== 'all') {
+            $query->where('site_id', $siteId);
         }
 
         // Apply search filter

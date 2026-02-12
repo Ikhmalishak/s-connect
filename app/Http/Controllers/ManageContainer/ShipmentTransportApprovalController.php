@@ -45,7 +45,8 @@ class ShipmentTransportApprovalController extends Controller
                 if ($user->hasPermissionTo('container.shipping.approve')) {
                     $q->orWhere('department', 'shipping');
                 }
-                if ($user->hasPermissionTo('container.quality.approve')) {
+                // For quality department, check both inspection and loading permissions
+                if ($user->hasPermissionTo('container.quality.approve') || $user->hasPermissionTo('container.quality.approve_inspection')) {
                     $q->orWhere('department', 'quality');
                 }
                 if ($user->hasPermissionTo('container.security.approve')) {
@@ -131,8 +132,14 @@ class ShipmentTransportApprovalController extends Controller
             return response()->json(['message' => 'Unauthorized access to shipment transport'], 403);
         }
 
-        // Check permissions based on department
+        // Check permissions based on department and approval type
         $requiredPermission = "container.{$approval->department}.approve";
+        // For quality department, use different permissions based on approval type
+        if ($approval->department === 'quality') {
+            $requiredPermission = $approval->approval_type === 'inspection'
+                ? 'container.quality.approve_inspection'
+                : 'container.quality.approve';
+        }
         if (!$user->hasPermissionTo($requiredPermission)) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
@@ -192,8 +199,14 @@ class ShipmentTransportApprovalController extends Controller
             return response()->json(['message' => 'Unauthorized access to shipment transport'], 403);
         }
 
-        // Check permissions based on department
+        // Check permissions based on department and approval type
         $requiredPermission = "container.{$approval->department}.approve";
+        // For quality department, use different permissions based on approval type
+        if ($approval->department === 'quality') {
+            $requiredPermission = $approval->approval_type === 'inspection'
+                ? 'container.quality.approve_inspection'
+                : 'container.quality.approve';
+        }
         if (!$user->hasPermissionTo($requiredPermission)) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }

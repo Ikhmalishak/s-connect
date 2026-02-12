@@ -145,8 +145,8 @@ class ShipmentTransportInspectionController extends Controller
             // Send Power Automate notification for inspection approval
             $this->sendInspectionApprovalNotification($container, $approval);
 
-            // Send email to quality department for inspection approval
-            $qualityUsers = \App\Models\User::permission('container.quality.approve')->get();
+            // Send email to quality department users who can approve inspections
+            $qualityUsers = \App\Models\User::permission('container.quality.approve_inspection')->get();
             \Illuminate\Support\Facades\Mail::to($qualityUsers)->send(new \App\Mail\ContainerInspectionPassed($container, $approval));
         }
 
@@ -209,7 +209,7 @@ class ShipmentTransportInspectionController extends Controller
     {
         try {
             // Get quality department users who can approve inspections
-            $qualityUsers = \App\Models\User::permission('container.quality.approve')->get();
+            $qualityUsers = \App\Models\User::permission('container.quality.approve_inspection')->get();
 
             if ($qualityUsers->isEmpty()) {
                 \Illuminate\Support\Facades\Log::warning("No quality users found for inspection approval notifications");

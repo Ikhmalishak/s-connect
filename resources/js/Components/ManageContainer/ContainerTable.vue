@@ -82,6 +82,7 @@ const canDownloadReport = computed(() =>
 const searchQuery = ref("");
 const limit = ref("50");
 const statusFilter = ref("all");
+const siteFilter = ref(page.props.auth?.user?.site_id?.toString() || "all");
 let searchTimeout: any = null;
 
 // Modal state
@@ -121,6 +122,8 @@ async function fetchFilteredContainers() {
         if (limit.value !== "all") params.append("limit", limit.value);
         if (statusFilter.value !== "all")
             params.append("status", statusFilter.value);
+        if (siteFilter.value !== "all")
+            params.append("site_id", siteFilter.value);
 
         const res = await axios.get(`/containers?${params.toString()}`);
         // Update parent component's containers
@@ -133,7 +136,7 @@ async function fetchFilteredContainers() {
 }
 
 // Watch for filter changes
-watch([limit, statusFilter], () => {
+watch([limit, statusFilter, siteFilter], () => {
     fetchFilteredContainers();
 });
 
@@ -358,6 +361,22 @@ function isRecordComplete(photos) {
                                     <SelectItem value="failed"
                                         >Failed</SelectItem
                                     >
+                                </SelectGroup>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div>
+                        <Select v-model="siteFilter">
+                            <SelectTrigger class="w-24">
+                                <SelectValue placeholder="Site" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectGroup>
+                                    <SelectItem value="all">All Sites</SelectItem>
+                                    <SelectItem value="1">Site 1</SelectItem>
+                                    <SelectItem value="2">Site 2</SelectItem>
+                                    <SelectItem value="3">Site 3</SelectItem>
+                                    <SelectItem value="4">Site 4</SelectItem>
                                 </SelectGroup>
                             </SelectContent>
                         </Select>
