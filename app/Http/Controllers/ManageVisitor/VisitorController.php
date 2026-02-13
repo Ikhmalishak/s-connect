@@ -277,7 +277,7 @@ class VisitorController extends Controller
             // Check if container exists and has correct stage
             $container = \App\Models\ShipmentTransport::where('transport_number', $validated['container_number'])
                 ->where('site_id', $validated['site_id'])
-                ->where('stage', 'onboarding_ready')
+                // ->where('stage', 'onboarding_ready')
                 ->first();
 
             if (!$container) {
