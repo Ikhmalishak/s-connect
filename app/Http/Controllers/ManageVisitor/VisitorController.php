@@ -396,7 +396,8 @@ class VisitorController extends Controller
                 if (
                     !in_array($validated['visitor_type'], [
                         'inbound-shipment/transfer',
-                        'outbound-shipment/transfer'
+                        'outbound-shipment/transfer',
+                        'shipping',
                     ])
                 ) {
                     $ackRow = $this->createAcknowledgementWithVisitors($visitorIds);
