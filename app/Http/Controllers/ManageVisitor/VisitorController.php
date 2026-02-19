@@ -577,7 +577,7 @@ class VisitorController extends Controller
         if (is_null($visitor->time_out)) {
             $ack = $visitor->acknowledgements->first();
 
-            if (!in_array($visitor->visitor_type, ['inbound-shipment/transfer', 'outbound-shipment/transfer'])) {
+            if (!in_array($visitor->visitor_type, ['inbound-shipment/transfer', 'outbound-shipment/transfer', 'shipping'])) {
                 $ack = $visitor->acknowledgements->first();
 
                 if (!$ack || is_null($ack->acknowledged_at) || is_null($ack->acknowledged_at_security)) {
