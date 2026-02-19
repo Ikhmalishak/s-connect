@@ -72,13 +72,13 @@ class VisitorController extends Controller
         $site = $user->site->id;
         $filterSite = $request->input('site');
 
-        if ($user->hasRole('admin')) {
+        if ($user->hasAnyRole(['admin', 'superadmin'])) {
 
             $query = Visitor::with([
                 'gatePass:id,pass_number',
                 'site:id,site_code',
                 'acknowledgements',
-                'shipmentTransport' => function($q) {
+                'shipmentTransport' => function ($q) {
                     $q->select('shipment_transports.id', 'shipment_transports.transport_number', 'shipment_transports.driver_name');
                 }
             ]);
@@ -94,7 +94,7 @@ class VisitorController extends Controller
             $query = Visitor::with([
                 'gatePass:id,pass_number',
                 'acknowledgements',
-                'shipmentTransport' => function($q) {
+                'shipmentTransport' => function ($q) {
                     $q->select('shipment_transports.id', 'shipment_transports.transport_number', 'shipment_transports.driver_name');
                 }
             ])
