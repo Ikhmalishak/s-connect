@@ -146,10 +146,10 @@ class ShipmentTransportInspectionController extends Controller
             $this->sendInspectionApprovalNotification($container, $approval);
 
             // Send email to quality department users who can approve inspections (same site as container)
-            $qualityUsers = \App\Models\User::permission('container.quality.approve_inspection')
-                ->where('site_id', $container->site_id)
-                ->get();
-            \Illuminate\Support\Facades\Mail::to($qualityUsers)->send(new \App\Mail\ContainerInspectionPassed($container, $approval));
+            // $qualityUsers = \App\Models\User::permission('container.quality.approve_inspection')
+            //     ->where('site_id', $container->site_id)
+            //     ->get();
+            // \Illuminate\Support\Facades\Mail::to($qualityUsers)->send(new \App\Mail\ContainerInspectionPassed($container, $approval));
         }
 
         return response()->json([
