@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/tooltip";
 import { ref, watch } from "vue";
 import { Card } from "@/components/ui/card";
-import { Trash, Pencil, FileLock, UserRoundPlus } from "lucide-vue-next";
+import { Trash, Pencil, FileLock, UserRoundPlus, Unlock } from "lucide-vue-next";
 import { Button } from "@/components/ui/button";
 
 const props = defineProps<{
@@ -24,7 +24,7 @@ const props = defineProps<{
     user: any;
 }>();
 
-const emit = defineEmits(["update:limit", "search", "openCreateUserModal", "openEditUserModal","openDeleteUserModal", "openManagePermissionsModal"]);
+const emit = defineEmits(["update:limit", "search", "openCreateUserModal", "openEditUserModal","openDeleteUserModal", "openManagePermissionsModal", "unlockAccount"]);
 
 const searchQuery = ref("");
 
@@ -135,6 +135,11 @@ watch(searchQuery, (newVal) => {
                             <th
                                 class="font-black text-black text-center bg-gray-100 p-3 sticky top-0 z-20 border-r border-gray-300 text-sm"
                             >
+                                Status
+                            </th>
+                            <th
+                                class="font-black text-black text-center bg-gray-100 p-3 sticky top-0 z-20 border-r border-gray-300 text-sm"
+                            >
                                 Action
                             </th>
                         </tr>
@@ -161,6 +166,13 @@ watch(searchQuery, (newVal) => {
                                         : "-"
                                 }}
                             </td>
+                            <td class="text-center p-2">
+                                <span
+                                    :class="u.locked_until && new Date(u.locked_until) > new Date() ? 'text-red-600 font-semibold' : 'text-green-600'"
+                                >
+                                    {{ u.locked_until && new Date(u.locked_until) > new Date() ? 'Locked' : 'Active' }}
+                                </span>
+                            </td>
                             <td class="flex justify-center gap-2 p-2">
                                 <!-- Edit button -->
                                 <Button
@@ -170,6 +182,17 @@ watch(searchQuery, (newVal) => {
                                     @click="$emit('openEditUserModal', u)"
                                 >
                                     <Pencil class="w-4 h-4" />
+                                </Button>
+
+                                <!-- Unlock button (only show if account is locked) -->
+                                <Button
+                                    v-if="u.locked_until && new Date(u.locked_until) > new Date()"
+                                    variant="outline"
+                                    size="icon"
+                                    class="text-orange-500 border-orange-300 hover:bg-orange-50"
+                                    @click="$emit('unlockAccount', u)"
+                                >
+                                    <Unlock class="w-4 h-4" />
                                 </Button>
 
                                 <!-- Permissions button -->
@@ -197,7 +220,7 @@ watch(searchQuery, (newVal) => {
                         <!-- empty state if no users -->
                         <tr v-if="!user || user.length === 0">
                             <td
-                                colspan="6"
+                                colspan="8"
                                 class="text-center p-4 text-gray-500"
                             >
                                 No users found

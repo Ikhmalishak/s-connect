@@ -61,6 +61,19 @@ function openManagePermissionsModal(user) {
     showManagePermissionsModal.value = true;
 }
 
+async function unlockAccount(user) {
+    if (confirm(`Are you sure you want to unlock the account for ${user.name}?`)) {
+        try {
+            await axios.post(`/admin/unlock-account/${user.id}`);
+            alert('Account unlocked successfully!');
+            fetchUser();
+        } catch (error) {
+            console.error('Failed to unlock account:', error);
+            alert('Failed to unlock account. Please try again.');
+        }
+    }
+}
+
 async function fetchUser(
     limit = limitTable.value,
     keyword = searchQuery.value
@@ -254,6 +267,7 @@ watch(searchQuery, (newVal) => {
             @open-edit-user-modal="openEditUserModal"
             @open-delete-user-modal="openDeleteUserModal"
             @open-manage-permissions-modal="openManagePermissionsModal"
+            @unlock-account="unlockAccount"
         />
 
         <CreateUserModal

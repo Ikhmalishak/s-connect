@@ -41,11 +41,44 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
+        $user = \App\Models\User::where('email', $this->string('email'))->first();
+
+        // Check if account is locked
+        if ($user && $user->locked_until && now()->isBefore($user->locked_until)) {
+            throw ValidationException::withMessages([
+                'email' => 'Your account is locked due to too many failed login attempts. Please contact an administrator.',
+            ]);
+        }
+
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
+            // Track failed attempts for account locking
+            if ($user) {
+                $user->increment('failed_login_attempts');
+
+                // Lock account after 5 failed attempts
+                if ($user->failed_login_attempts >= 5) {
+                    $user->update([
+                        'locked_until' => now()->addHours(24), // Lock for 24 hours, or until admin unlocks
+                    ]);
+
+                    throw ValidationException::withMessages([
+                        'email' => 'Your account has been locked due to too many failed login attempts. Please contact an administrator.',
+                    ]);
+                }
+            }
+
             throw ValidationException::withMessages([
                 'email' => trans('auth.failed'),
+            ]);
+        }
+
+        // Reset failed attempts on successful login
+        if ($user) {
+            $user->update([
+                'failed_login_attempts' => 0,
+                'locked_until' => null,
             ]);
         }
 

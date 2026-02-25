@@ -30,6 +30,8 @@ class User extends Authenticatable
         'is_first_time_login',
         'mfa_code',
         'mfa_expires_at',
+        'failed_login_attempts',
+        'locked_until',
     ];
 
     /**
@@ -52,6 +54,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'locked_until' => 'datetime',
         ];
     }
 

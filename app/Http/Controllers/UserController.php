@@ -101,6 +101,21 @@ class UserController extends Controller
         return response()->json(['message' => 'User password successfully reset']);
     }
 
+    public function unlockAccount(User $user)
+    {
+        $user->update([
+            'failed_login_attempts' => 0,
+            'locked_until' => null
+        ]);
+
+        activity()
+            ->causedBy(auth()->user())
+            ->performedOn($user)
+            ->log("Unlocked User Account: {$user->email}");
+
+        return response()->json(['message' => 'User account successfully unlocked']);
+    }
+
     public function destroy(User $user)
     {
         $user->delete();

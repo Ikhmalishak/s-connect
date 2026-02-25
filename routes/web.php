@@ -125,6 +125,7 @@ Route::middleware(['auth', 'can:superadmin', 'password.age'])
         Route::get('/get-user-list', [UserController::class, 'getUserTableData']);
         Route::put('/update-user/{user}', [UserController::class, 'update']);
         Route::post('/reset-password/{user}', [UserController::class, 'resetPassword']);
+        Route::post('/unlock-account/{user}', [UserController::class, 'unlockAccount']);
         Route::delete('/delete-user/{user}', [UserController::class, 'destroy']);
         Route::get('/user-stats-card', [UserController::class, 'getUserStatsCard']);
         Route::get('/get-password-policy-page', [PasswordPolicyController::class, 'getPasswordPolicyPage']);

@@ -51,6 +51,9 @@ const submit = () => {
                                 v-model="form.email"
                                 autofocus
                             />
+                            <div v-if="form.errors.email" class="text-red-300 text-sm">
+                                {{ form.errors.email }}
+                            </div>
                         </div>
                         <div class="grid gap-2">
                             <div class="flex items-center">
