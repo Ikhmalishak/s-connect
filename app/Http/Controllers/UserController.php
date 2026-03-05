@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\PasswordHistory;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Hash;
@@ -92,6 +93,12 @@ class UserController extends Controller
 
     public function resetPassword(User $user)
     {
+        // Save current password to history before resetting
+        PasswordHistory::create([
+            'user_id' => $user->id,
+            'password' => $user->password,
+        ]);
+
         $user->update([
             'password' => Hash::make('12345678'),
             'is_first_time_login' => 1,

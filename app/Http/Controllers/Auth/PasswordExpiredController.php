@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\PasswordHistory;
 use App\Models\PasswordPolicy;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -13,6 +14,8 @@ class PasswordExpiredController extends Controller
 {
     public function update(Request $request)
     {
+        $user = $request->user();
+
         //call password policy
         $policy = PasswordPolicy::first();
 
@@ -36,10 +39,30 @@ class PasswordExpiredController extends Controller
             'password' => [
                 'required',
                 'confirmed',
-                $passwordRule
+                $passwordRule,
+                function ($attribute, $value, $fail) use ($user) {
+                    // Check against last 10 passwords
+                    $recentPasswords = PasswordHistory::where('user_id', $user->id)
+                        ->orderBy('created_at', 'desc')
+                        ->limit(10)
+                        ->pluck('password')
+                        ->toArray();
+
+                    foreach ($recentPasswords as $oldPassword) {
+                        if (Hash::check($value, $oldPassword)) {
+                            $fail('You cannot reuse a recent password.');
+                            return;
+                        }
+                    }
+                },
             ],
         ]);
-        $user = $request->user();
+
+        // Save current password to history before updating
+        PasswordHistory::create([
+            'user_id' => $user->id,
+            'password' => $user->password,
+        ]);
 
         $user->update([
             'password' => Hash::make($request->password),
