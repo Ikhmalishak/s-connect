@@ -13,7 +13,7 @@ import DialogDescription from "@/components/ui/dialog/DialogDescription.vue";
 
 const props = defineProps<{
     show: boolean;
-    user: number;
+    user: number | null;
 }>();
 
 const emit = defineEmits(["close", "deleted"]);

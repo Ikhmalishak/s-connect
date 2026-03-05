@@ -39,6 +39,11 @@ class UserController extends Controller
 
         $query = User::with(['roles', 'site']); // eager load relationships
 
+        // Exclude superadmin users
+        $query->whereDoesntHave('roles', function ($q) {
+            $q->where('name', 'superadmin');
+        });
+
         if ($keyword) {
             $query->where(function ($q) use ($keyword) {
                 $q->where('name', 'LIKE', "%{$keyword}%")
