@@ -244,6 +244,14 @@ function setRowMask(visitorId: number, state: boolean) {
                                             >Site 4</Link
                                         >
                                     </DropdownMenuRadioItem>
+
+                                    <DropdownMenuRadioItem value="s5">
+                                        <Link
+                                            href="/visitor/form/s5"
+                                            class="block w-full"
+                                            >SKPBM S5</Link
+                                        >
+                                    </DropdownMenuRadioItem>
                                 </DropdownMenuRadioGroup>
                             </DropdownMenuContent>
                         </DropdownMenu>

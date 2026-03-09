@@ -392,13 +392,15 @@ class VisitorController extends Controller
             if (!empty($createdVisitors)) {
                 $visitorIds = array_column($createdVisitors, 'id');
 
+                $skip = in_array($validated['visitor_type'], [
+                    'inbound-shipment/transfer',
+                    'outbound-shipment/transfer',
+                    'shipping',
+                ]) || in_array($validated['site_id'], [1, 3, 4, 5]);
+
                 // Drivers = inbound/outbound shipment transfer → skip acknowledgement + sticker
                 if (
-                    !in_array($validated['visitor_type'], [
-                        'inbound-shipment/transfer',
-                        'outbound-shipment/transfer',
-                        'shipping',
-                    ])
+                    !$skip
                 ) {
                     $ackRow = $this->createAcknowledgementWithVisitors($visitorIds);
 
@@ -577,7 +579,9 @@ class VisitorController extends Controller
         if (is_null($visitor->time_out)) {
             $ack = $visitor->acknowledgements->first();
 
-            if (!in_array($visitor->visitor_type, ['inbound-shipment/transfer', 'outbound-shipment/transfer', 'shipping'])) {
+            if (!in_array($visitor->visitor_type, ['inbound-shipment/transfer', 'outbound-shipment/transfer', 'shipping'])
+                && (!in_array($visitor->site_id, [1,3,4,5]))
+                ) {
                 $ack = $visitor->acknowledgements->first();
 
                 if (!$ack || is_null($ack->acknowledged_at) || is_null($ack->acknowledged_at_security)) {

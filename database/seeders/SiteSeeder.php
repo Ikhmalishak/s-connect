@@ -18,6 +18,7 @@ class SiteSeeder extends Seeder
             ['name' => 'Site 2', 'site_code' => 'S2'],
             ['name' => 'Site 3', 'site_code' => 'S3'],
             ['name' => 'Site 4', 'site_code' => 'S4'],
+            ['name' => 'SKPBM S5', 'site_code' => 'S5'],
         ];
 
         foreach ($sites as $site) {

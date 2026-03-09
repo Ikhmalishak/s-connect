@@ -362,6 +362,7 @@ onUnmounted(() => {
                                 <SelectItem value="2">Site 2</SelectItem>
                                 <SelectItem value="3">Site 3</SelectItem>
                                 <SelectItem value="4">Site 4</SelectItem>
+                                <SelectItem value="5">SKPBM S5</SelectItem>
                             </SelectGroup>
                         </SelectContent>
                     </Select>

@@ -144,6 +144,9 @@ const onSubmit = form.handleSubmit(async (values) => {
                                                 <SelectItem value="4">
                                                     Site 4
                                                 </SelectItem>
+                                                <SelectItem value="5">
+                                                    SKPBM S5
+                                                </SelectItem>
                                             </SelectGroup>
                                         </SelectContent>
                                     </Select>
