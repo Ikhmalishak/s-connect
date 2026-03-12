@@ -4,6 +4,7 @@ import { useForm } from "vee-validate";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import PaxModal from "../../../Components/VisitorFormComponent/PaxModal.vue";
+import ConsentModal from "../../../Components/VisitorFormComponent/ConsentModal.vue";
 import PersonalInfoStep from "../../../Components/VisitorFormComponent/PersonalInfoStep.vue";
 import VisitDetailsStep from "../../../Components/VisitorFormComponent/VisitDetailsStep.vue";
 import VideoDetailsStep from "../../../Components/VisitorFormComponent/VideoDetailsStep.vue";
@@ -97,6 +98,7 @@ const { handleSubmit, setFieldValue, values, errors, resetForm } =
 const visitorType = ref("");
 const paxCount = ref(1);
 const paxModalOpen = ref(true);
+const consentModalOpen = ref(false);
 const paxInputValue = ref("1");
 const resultModalOpen = ref(false);
 const videoEnded = ref(false);
@@ -167,6 +169,7 @@ function confirmPaxCount(count: number) {
     }));
     setFieldValue("visitors", visitorArray);
     paxModalOpen.value = false;
+    consentModalOpen.value = true;
 }
 
 const isFormValid = computed(() => {
@@ -331,6 +334,7 @@ async function handleModalClose() {
     await nextTick();
     resetReviewTrigger.value = false;
     paxModalOpen.value = true;
+    consentModalOpen.value = false;
     visitorType.value = "";
 }
 
@@ -373,6 +377,12 @@ const stepTitles = computed(() => ({
         @confirm="confirmPaxCount"
     />
 
+    <ConsentModal
+        v-model:open="consentModalOpen"
+        :site="site"
+        @agree="consentModalOpen = false"
+    />
+
     <AcknowledgementModal
         :open="acknowledgementModalOpen"
         :message="acknowledgementMessage"
@@ -394,7 +404,7 @@ const stepTitles = computed(() => ({
         :result="registrationResult"
     />
 
-    <div class="relative container mx-auto px-4 py-8 max-w-6xl">
+    <div v-if="!paxModalOpen && !consentModalOpen" class="relative container mx-auto px-4 py-8 max-w-6xl">
         <VisitorFormHeader :title="t('visitor.form.title')" />
         <Card class="relative z-0 mt-4 mx-auto max-w-3xl w-full shadow-2xl">
             <div class="absolute -top-4 -right-2 z-10">

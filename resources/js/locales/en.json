@@ -118,6 +118,44 @@
       "confirm": "Confirm",
       "compliance": "Our Visitor Management System (VMS) is fully compliant with ISO 27001 information security standards and the Personal Data Protection Act (PDPA). All personal data is encrypted and handled solely for security and operational purposes, ensuring it is stored, processed, and protected according to legal requirements and industry best practices."
     },
+    "consent": {
+      "title": "Consent for Collection and Use of Personal Data",
+      "subtitle": "Visitor Management System (VMS)",
+      "company": "Syarikat Sin Kwang Plastic Industries Sdn Bhd",
+      "intro": "By proceeding to use the Visitor Management System (\"VMS\"), you acknowledge, understand, and agree that Syarikat Sin Kwang Plastic Industries Sdn Bhd (\"the Company\") may collect, process, use, and store your personal data for legitimate business and operational purposes.",
+      "purposeTitle": "1. Purpose of Data Collection",
+      "purposeText": "Your personal data is collected for purposes including but not limited to:",
+      "purposes": {
+        "0": "Visitor identification and registration",
+        "1": "Security, safety, and access control",
+        "2": "Compliance with internal policies and applicable laws and regulations",
+        "3": "Record-keeping, reporting, and audit requirements"
+      },
+      "typesTitle": "2. Types of Personal Data Collected",
+      "typesText": "The personal data collected may include, but is not limited to:",
+      "dataTypes": {
+        "0": "Full name",
+        "1": "Identification number (e.g. IC / Passport)",
+        "2": "Contact details",
+        "3": "Company or organization name",
+        "4": "Visit details (date, time, host, purpose of visit)",
+        "5": "Photographs, images, or CCTV recordings (where applicable)"
+      },
+      "protectionTitle": "3. Data Protection and Confidentiality",
+      "protectionText": "The Company is committed to safeguarding your personal data and will take reasonable and appropriate technical and organizational measures to prevent unauthorized access, disclosure, alteration, loss, or misuse. Access to such data is strictly limited to authorized personnel only.",
+      "retentionTitle": "4. Data Retention",
+      "retentionText": "Your personal data will be retained only for as long as necessary to fulfill the purposes stated above, or as required under applicable laws, regulatory requirements, or internal policies.",
+      "declarationTitle": "5. Consent Declaration",
+      "declarationText": "By submitting your personal data and continuing to use the VMS, you hereby:",
+      "declarations": {
+        "0": "Confirm that the information provided is accurate, complete, and up to date",
+        "1": "Consent to the collection, processing, use, and storage of your personal data by the Company as described above",
+        "2": "Acknowledge that you have read, understood, and agreed to this consent notice"
+      },
+      "disclaimer": "If you do not agree with any of the above terms, please do not proceed with the use of the VMS.",
+      "acknowledged": "Acknowledged and Agreed",
+      "agreeButton": "I Agree"
+    },
     "acknowledgement": {
       "checking": "Verifying visitor details, please wait...",
       "alreadyAcknowledged": "✅ You are already acknowledged. You can directly submit the form.",

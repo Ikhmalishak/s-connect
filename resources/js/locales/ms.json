@@ -110,6 +110,44 @@
       "confirm": "Sah",
       "compliance": "Sistem Pengurusan Pelawat (VMS) kami mematuhi sepenuhnya standard keselamatan maklumat ISO 27001 dan Akta Perlindungan Data Peribadi (PDPA). Semua data peribadi dienkripsi dan dikendalikan hanya untuk tujuan keselamatan dan operasi, memastikan ia disimpan, diproses dan dilindungi mengikut keperluan undang-undang dan amalan terbaik industri."
     },
+    "consent": {
+      "title": "Persetujuan untuk Pengumpulan dan Penggunaan Data Peribadi",
+      "subtitle": "Sistem Pengurusan Pelawat (VMS)",
+      "company": "Syarikat Sin Kwang Plastic Industries Sdn Bhd",
+      "intro": "Dengan meneruskan penggunaan Sistem Pengurusan Pelawat (\"VMS\"), anda mengakui, memahami, dan bersetuju bahawa Syarikat Sin Kwang Plastic Industries Sdn Bhd (\"Syarikat\") boleh mengumpul, memproses, menggunakan, dan menyimpan data peribadi anda untuk tujuan perniagaan dan operasi yang sah.",
+      "purposeTitle": "1. Tujuan Pengumpulan Data",
+      "purposeText": "Data peribadi anda dikumpul untuk tujuan termasuk tetapi tidak terhad kepada:",
+      "purposes": {
+        "0": "Pengenalan dan pendaftaran pelawat",
+        "1": "Keselamatan, keselamatan, dan kawalan akses",
+        "2": "Pematuhan dengan dasar dalaman dan undang-undang serta peraturan yang berkenaan",
+        "3": "Penyimpanan rekod, pelaporan, dan keperluan audit"
+      },
+      "typesTitle": "2. Jenis Data Peribadi yang Dikumpul",
+      "typesText": "Data peribadi yang dikumpul boleh termasuk, tetapi tidak terhad kepada:",
+      "dataTypes": {
+        "0": "Nama penuh",
+        "1": "Nombor pengenalan (contoh: IC / Pasport)",
+        "2": "Butiran hubungan",
+        "3": "Nama syarikat atau organisasi",
+        "4": "Butiran lawatan (tarikh, masa, tuan rumah, tujuan lawatan)",
+        "5": "Gambar, imej, atau rakaman CCTV (jika berkenaan)"
+      },
+      "protectionTitle": "3. Perlindungan Data dan Kerahsiaan",
+      "protectionText": "Syarikat komited untuk menjaga data peribadi anda dan akan mengambil langkah-langkah teknikal dan organisasi yang munasabah dan sesuai untuk mencegah akses, pendedahan, pengubahan, kehilangan, atau penyalahgunaan yang tidak dibenarkan. Akses kepada data tersebut terhad secara ketat kepada kakitangan yang dibenarkan sahaja.",
+      "retentionTitle": "4. Penyimpanan Data",
+      "retentionText": "Data peribadi anda akan disimpan hanya selama yang diperlukan untuk memenuhi tujuan yang dinyatakan di atas, atau seperti yang dikehendaki di bawah undang-undang, keperluan peraturan, atau dasar dalaman.",
+      "declarationTitle": "5. Penyataan Persetujuan",
+      "declarationText": "Dengan menyerahkan data peribadi anda dan meneruskan penggunaan VMS, anda dengan ini:",
+      "declarations": {
+        "0": "Mengesahkan bahawa maklumat yang diberikan adalah tepat, lengkap, dan terkini",
+        "1": "Bersetuju dengan pengumpulan, pemprosesan, penggunaan, dan penyimpanan data peribadi anda oleh Syarikat seperti yang diterangkan di atas",
+        "2": "Mengakui bahawa anda telah membaca, memahami, dan bersetuju dengan notis persetujuan ini"
+      },
+      "disclaimer": "Jika anda tidak bersetuju dengan mana-mana terma di atas, sila jangan meneruskan penggunaan VMS.",
+      "acknowledged": "Diakui dan Bersetuju",
+      "agreeButton": "Saya Bersetuju"
+    },
     "acknowledgement": {
       "checking": "Mengesahkan butiran pelawat, sila tunggu...",
       "alreadyAcknowledged": "✅ Anda sudah diakui. Anda boleh menghantar borang secara langsung.",
