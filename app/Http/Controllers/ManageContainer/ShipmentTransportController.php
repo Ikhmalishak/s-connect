@@ -1155,7 +1155,7 @@ class ShipmentTransportController extends Controller
         }
 
         // Check if shipment transport belongs to user's site (unless superadmin)
-        if (!$user->hasAnyPermission(['superadmin','shipping.container.access']) && $shipmentTransport->site_id !== $user->site_id) {
+        if (!$user->hasAnyPermission(['superadmin','container.shipping.access']) && $shipmentTransport->site_id !== $user->site_id) {
             \Log::warning("PDF Download: Access denied for user {$user->id} - wrong site access");
             return response()->json(['message' => 'Unauthorized access to shipment transport'], 403);
         }
