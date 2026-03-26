@@ -191,7 +191,7 @@ class ShipmentTransportInspectionController extends Controller
 
         // Check if shipment transport belongs to user's site (unless superadmin)
         $container = ShipmentTransport::where('id', $id);
-        if (!$user->hasPermissionTo('superadmin')) {
+        if (!$user->hasAnyPermission(['superadmin','container.shipping.access'])) {
             $container->where('site_id', $user->site_id);
         }
         $container = $container->first();
