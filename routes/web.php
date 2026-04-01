@@ -19,7 +19,6 @@ use App\Http\Controllers\ManageVisitor\VisitorController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\ManageVisitor\VisitorStaffAcknowledgementController;
-use App\Http\Controllers\ContainerShipmentController;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -189,9 +188,6 @@ Route::middleware(['auth'])->prefix('container')->name('container.')->group(func
     Route::get('/stats', [ShipmentTransportController::class, 'getStats'])
         ->middleware('can:container.access')
         ->name('stats');
-    Route::get('/shipments', function () {
-        return Inertia::render('ManageContainer/ContainerShipments');
-    })->middleware('can:container.access')->name('shipments');
     Route::get('/approvals', function () {
         return Inertia::render('ManageContainer/ContainerApprovals');
     })->middleware('can:container.access')->name('approvals');
@@ -204,15 +200,6 @@ Route::middleware(['auth'])->prefix('container')->name('container.')->group(func
     Route::get('/shipping-requirements-approvals', function () {
         return Inertia::render('ManageContainer/ShippingRequirementsApprovals');
     })->middleware('can:container.shipping.approve')->name('shipping-requirements-approvals');
-});
-
-// Container shipments API routes
-Route::middleware(['auth'])->prefix('api/container-shipments')->name('container-shipments.')->group(function () {
-    Route::get('/', [ContainerShipmentController::class, 'index'])->name('index');
-    Route::post('/', [ContainerShipmentController::class, 'store'])->name('store');
-    Route::get('/{containerShipment}', [ContainerShipmentController::class, 'show'])->name('show');
-    Route::put('/{containerShipment}', [ContainerShipmentController::class, 'update'])->name('update');
-    Route::delete('/{containerShipment}', [ContainerShipmentController::class, 'destroy'])->name('destroy');
 });
 
 // Archive container reports API routes

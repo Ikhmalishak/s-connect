@@ -81,11 +81,11 @@ const navMain = [
                 url: "/visitor/dashboard",
                 permission: "visitor.access",
             },
-            {
-                title: "Report",
-                url: "/visitor/report",
-                permission: "visitor.report",
-            },
+            // {
+            //     title: "Report",
+            //     url: "/visitor/report",
+            //     permission: "visitor.report",
+            // },
         ],
         permission: "visitor.access", // parent permission
     },

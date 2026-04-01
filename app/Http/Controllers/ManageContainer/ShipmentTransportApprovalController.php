@@ -452,27 +452,6 @@ class ShipmentTransportApprovalController extends Controller
         }
     }
 
-    // public function approveFromEmail($approvalId)
-    // {
-    //     $approval = ShipmentTransportApproval::findOrFail($approvalId);
-    //     $user = auth()->user();
-
-    //     // Check if already approved
-    //     if ($approval->approval_status === 'approved') {
-    //         return redirect('/container/dashboard')->with('info', 'Container already approved');
-    //     }
-
-    //     $approval->update([
-    //         'approval_status' => 'approved',
-    //         'approved_by' => $user->id,
-    //         'approved_at' => now(),
-    //     ]);
-
-    //     $this->checkAndUpdateContainerStatus($approval->shipmentTransport);
-
-    //     return redirect('/container/dashboard')->with('success', 'Container approved successfully');
-    // }
-
     private function getDepartmentUsers($department, $containerSiteId = null, $forNotifications = false)
     {
         // For security department, handle both external and internal permissions
