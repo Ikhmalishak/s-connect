@@ -404,11 +404,11 @@ class VisitorController extends Controller
                 ) {
                     $ackRow = $this->createAcknowledgementWithVisitors($visitorIds);
 
-                    // $this->printSticker(
-                    //     $ackRow->id,
-                    //     count($visitorIds),
-                    //     $ackRow->ack_number
-                    // );
+                    $this->printSticker(
+                        $ackRow->id,
+                        count($visitorIds),
+                        $ackRow->ack_number
+                    );
                 }
             }
 
