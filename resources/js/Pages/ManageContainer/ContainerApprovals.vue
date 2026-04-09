@@ -382,7 +382,7 @@ import { router } from "@inertiajs/vue3";
 const approvals = ref([]);
 const loading = ref(false);
 const selectedDepartment = ref("");
-const selectedStatus = ref("all");
+const selectedStatus = ref("pending");
 const showRejectModal = ref(false);
 const rejectRemarks = ref("");
 const selectedApproval = ref(null);
