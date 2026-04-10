@@ -66,8 +66,8 @@ class ShipmentTransportApprovalController extends Controller
         if ($search) {
             $query->whereHas('shipmentTransport', function ($q) use ($search) {
                 $q->where('transport_number', 'LIKE', "%{$search}%")
-                  ->orWhere('sku_number', 'LIKE', "%{$search}%")
-                  ->orWhere('forwarder', 'LIKE', "%{$search}%");
+                    ->orWhere('sku_number', 'LIKE', "%{$search}%")
+                    ->orWhere('forwarder', 'LIKE', "%{$search}%");
             });
         }
 
@@ -474,15 +474,18 @@ class ShipmentTransportApprovalController extends Controller
             $query = \App\Models\User::permission("container.{$department}.approve");
         }
 
-        // Apply site-based filtering based on department
-        if (in_array($department, ['warehouse', 'quality'])) {
-            // Warehouse and Quality: route to users in the same site as container
-            if ($containerSiteId) {
-                $query->where('site_id', $containerSiteId);
+        // FIX: Apply site filtering for ALL departments that need it
+        if (in_array($department, ['warehouse', 'quality', 'shipping', 'security'])) {
+            if ($department === 'shipping' || $department === 'security') {
+                $query->where('site_id', 2);
+            } elseif (in_array($department, ['warehouse', 'quality'])) {
+                if ($containerSiteId && $containerSiteId > 0) {
+                    $query->where('site_id', $containerSiteId);
+                } else {
+                    \Log::error("No valid site_id for {$department}");
+                    return collect();
+                }
             }
-        } elseif (in_array($department, ['shipping', 'security'])) {
-            // Shipping and Security: always route to Site 2 (S2)
-            $query->where('site_id', 2);
         }
 
         return $query->get();
