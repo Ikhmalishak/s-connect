@@ -248,8 +248,8 @@ class SyncExternalApprovals extends Command
     private function sendDepartmentApprovalEmails(ShipmentTransportApproval $approval): void
     {
         try {
-            // Get department users who can approve
-            $departmentUsers = \App\Models\User::permission("container.{$approval->department}.approve")->get();
+            // Get department users who can approve (with proper site filtering)
+            $departmentUsers = $this->getDepartmentUsers($approval->department, $approval->shipmentTransport->site_id, true);
 
             if ($departmentUsers->isEmpty()) {
                 Log::warning("No users found for department {$approval->department}, skipping notifications");
@@ -328,16 +328,6 @@ class SyncExternalApprovals extends Command
 
                 // Broadcast event to refresh dashboard
                 broadcast(new \App\Events\ContainerStageUpdated($container))->toOthers();
-
-                // Send notification to security team that container is ready for onboarding
-                $securityUsers = $this->getDepartmentUsers('security');
-                if ($securityUsers->isNotEmpty()) {
-                    try {
-                        \Illuminate\Support\Facades\Mail::to($securityUsers)->send(new \App\Mail\ContainerReadyForOnboarding($container));
-                    } catch (\Exception $e) {
-                        Log::error("Failed to send onboarding ready email to security team: " . $e->getMessage());
-                    }
-                }
             }
         }
     }
@@ -420,10 +410,43 @@ class SyncExternalApprovals extends Command
         }
     }
 
-    private function getDepartmentUsers($department)
+    private function getDepartmentUsers($department, $containerSiteId = null, $forNotifications = false)
     {
-        // Return users with the specific permission
-        return \App\Models\User::permission("container.{$department}.approve")->get();
+        // For security department, handle both external and internal permissions
+        if ($department === 'security') {
+            if ($forNotifications) {
+                // For Power Automate notifications, only use external permission (Teams licensed users)
+                $query = \App\Models\User::permission('container.security.approve');
+            } else {
+                // For internal approvals, use both external and internal permissions
+                $query = \App\Models\User::where(function ($q) {
+                    $q->whereHas('permissions', function ($perm) {
+                        $perm->where('name', 'container.security.approve');
+                    })->orWhereHas('permissions', function ($perm) {
+                        $perm->where('name', 'container.security.approve_internal');
+                    });
+                });
+            }
+        } else {
+            // For other departments, use the standard permission
+            $query = \App\Models\User::permission("container.{$department}.approve");
+        }
+
+        // FIX: Apply site filtering for ALL departments that need it
+        if (in_array($department, ['warehouse', 'quality', 'shipping', 'security'])) {
+            if ($department === 'shipping' || $department === 'security') {
+                $query->where('site_id', 2);
+            } elseif (in_array($department, ['warehouse', 'quality'])) {
+                if ($containerSiteId && $containerSiteId > 0) {
+                    $query->where('site_id', $containerSiteId);
+                } else {
+                    Log::error("No valid site_id for {$department}");
+                    return collect();
+                }
+            }
+        }
+
+        return $query->get();
     }
 
     private function cleanupProcessedApprovals(array $processedIds, string $cleanupUrl): void
