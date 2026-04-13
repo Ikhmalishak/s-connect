@@ -74,7 +74,7 @@ const navMain = [
         permission: "container.access",
     },
     {
-        title: "Manage Visitor",
+        title: "Visitor Management System",
         items: [
             {
                 title: "Overview",
@@ -148,7 +148,6 @@ const filteredNav = navMain
                 v-for="item in filteredNav"
                 :key="item.title"
                 :title="item.title"
-                default-open
                 class="group/collapsible"
             >
                 <SidebarGroup>
