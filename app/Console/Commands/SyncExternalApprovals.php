@@ -434,7 +434,7 @@ class SyncExternalApprovals extends Command
 
         // FIX: Apply site filtering for ALL departments that need it
         if (in_array($department, ['warehouse', 'quality', 'shipping', 'security'])) {
-            if ($department === 'shipping' || $department === 'security') {
+            if ($department === 'shipping') {
                 $query->where('site_id', 2);
             } elseif (in_array($department, ['warehouse', 'quality'])) {
                 if ($containerSiteId && $containerSiteId > 0) {
