@@ -22,7 +22,8 @@ return new class extends Migration {
                 "complete_loaded_photo",
                 "outside_gps_photo",
                 "security_seal_photo",
-                "container_full_seal_photo"
+                "container_full_seal_photo",
+                "fork_seal_photo",
             ]);
             $table->string('photo_path');
             $table->string('taken_by');

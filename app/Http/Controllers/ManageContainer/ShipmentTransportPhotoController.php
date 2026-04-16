@@ -206,6 +206,13 @@ class ShipmentTransportPhotoController extends Controller
         ];
 
         // GPS photos - required if GPS serial numbers are present
+        if (!empty($shipmentTransport->fork_seal_sn)) {
+            $requiredPhotos = array_merge($requiredPhotos, [
+                'fork_seal_photo',
+            ]);
+        }
+
+        // GPS photos - required if GPS serial numbers are present
         if (!empty($shipmentTransport->inside_gps_sn) || !empty($shipmentTransport->outside_gps_sn)) {
             $requiredPhotos = array_merge($requiredPhotos, [
                 'gps_photo_before_installation',
