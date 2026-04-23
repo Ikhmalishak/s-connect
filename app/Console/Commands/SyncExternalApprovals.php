@@ -170,12 +170,20 @@ class SyncExternalApprovals extends Command
 
             // Update approval status for all approval types
             if ($approval) {
+                $timestamp = isset($vercelApproval['timestamp']) 
+                    ? Carbon::parse($vercelApproval['timestamp'])->setTimezone(config('app.timezone'))
+                    : now();
+
+                Log::info('Converting timestamp', [
+                    'original' => $vercelApproval['timestamp'] ?? null,
+                    'converted' => $timestamp->toDateTimeString(),
+                    'timezone' => config('app.timezone')
+                ]);
+
                 $approval->update([
                     'approval_status' => $status,
                     'approved_by' => $user->id,
-                    'approved_at' => isset($vercelApproval['timestamp'])
-                        ? Carbon::parse($vercelApproval['timestamp'])->setTimezone('UTC')
-                        : now()->setTimezone('UTC')
+                    'approved_at' => $timestamp
                 ]);
 
                 // Special handling for loading approvals
