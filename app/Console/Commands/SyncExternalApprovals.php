@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Console\Commands;
-
+Use Carbon\Carbon;
 use App\Models\ShipmentTransportApproval;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
@@ -173,7 +173,9 @@ class SyncExternalApprovals extends Command
                 $approval->update([
                     'approval_status' => $status,
                     'approved_by' => $user->id,
-                    'approved_at' => $vercelApproval['timestamp'] ?? now()
+                    'approved_at' => isset($vercelApproval['timestamp'])
+                        ? Carbon::parse($vercelApproval['timestamp'])->setTimezone('UTC')
+                        : now()->setTimezone('UTC')
                 ]);
 
                 // Special handling for loading approvals
