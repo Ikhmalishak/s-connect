@@ -37,7 +37,7 @@ class AuthenticatedSessionController extends Controller
         $user = auth()->user();
 
         //Apply MFA only for admin
-        if ($user->hasRole(['admin'])) {
+        if ($user->hasRole(['admin','superadmin'])) {
             MfaHelper::sendMfaCode($user);
             auth()->logout();
             return redirect()->route('mfa.verify');
