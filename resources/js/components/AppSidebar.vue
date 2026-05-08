@@ -90,13 +90,29 @@ const navMain = [
         permission: "visitor.access", // parent permission
     },
     {
+        title: "EHS Management System",
+        items: [
+            {
+                title: "Overview",
+                url: "/safety/dashboard",
+                permission: "visitor.access",
+            },
+            // {
+            //     title: "Report",
+            //     url: "/visitor/report",
+            //     permission: "visitor.report",
+            // },
+        ],
+        permission: "visitor.access", // parent permission
+    },
+    {
         title: "Meeting Room Reservation",
         items: [
             {
                 title: "Overview",
                 url: "/room-reservation/dashboard",
                 permission: "room-reservation.access",
-            }
+            },
         ],
         permission: "room-reservation.access",
     },
@@ -127,7 +143,7 @@ const navMain = [
 const filteredNav = navMain
     .map((parent) => {
         const filteredItems = parent.items.filter((child) =>
-            userPermissionNames.includes(child.permission)
+            userPermissionNames.includes(child.permission),
         );
         if (filteredItems.length === 0) return null;
         return { ...parent, items: filteredItems };

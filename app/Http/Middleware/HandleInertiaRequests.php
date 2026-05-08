@@ -40,6 +40,7 @@ class HandleInertiaRequests extends Middleware
                         'name' => $user->name,
                         'email' => $user->email,
                         'roles' => $user->getRoleNames(), // ["admin"]
+                        'site_id' => $user->site_id,
                         'permissions' => $user->getAllPermissions()->pluck('name'), // includes role permissions
                     ]
                     : null,

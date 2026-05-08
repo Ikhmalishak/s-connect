@@ -3,6 +3,10 @@
 use App\Http\Controllers\EncryptionSettingController;
 use App\Http\Controllers\ManageContainer\InspectionAnswerController;
 use App\Http\Controllers\ManageContainer\InspectionQuestionController;
+use App\Http\Controllers\ManageSafety\AuditQuestionController;
+use App\Http\Controllers\ManageSafety\AuditSectionController;
+use App\Http\Controllers\ManageSafety\AuditSessionController;
+use App\Http\Controllers\ManageSafety\AuditTypeController;
 use App\Http\Controllers\ManageVisitor\GatePassController;
 use App\Http\Controllers\MFAController;
 use App\Http\Controllers\PasswordPolicyController;
@@ -254,12 +258,17 @@ Route::middleware(['auth'])->prefix('container-approvals')->name('container-appr
 // Power Automate approval result endpoint (public access for external service)
 Route::post('/api/approval-result', [ShipmentTransportApprovalController::class, 'receiveApprovalResult']);
 
-use App\Http\Controllers\ApprovalController;
+//routes for EHS module
+Route::middleware(['auth', 'password.age'])->prefix('safety')->name('safety.')->group(function () {
 
-// Route::post('/approvals', [ApprovalController::class, 'create']);
-Route::get('/test-approval', [ApprovalController::class, 'create']);
-Route::post('/approvals/{id}/approve', [ApprovalController::class, 'approve']);
-Route::post('/approvals/{id}/reject', [ApprovalController::class, 'reject']);
-Route::get('/approvals/{id}', [ApprovalController::class, 'status']);
+    // Dashboard (view only)
+    Route::get('/dashboard', [AuditSessionController::class, 'getDashboard'])
+        ->name('dashboard');
+
+    Route::get('/audit-sessions',[AuditSessionController::class, 'getAllSessions']);
+    Route::get('/question-lists',[AuditTypeController::class, 'getAllQuestions']);
+    Route::get('/audit-types',[AuditTypeController::class, 'getAuditTypes']);
+    Route::post('/submit-inspection',[AuditSessionController::class, 'submitAudit']);
+});
 
 require __DIR__ . '/auth.php';

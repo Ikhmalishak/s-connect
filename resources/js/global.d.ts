@@ -6,3 +6,25 @@ declare global {
     Echo: Echo;
   }
 }
+
+export interface AuthUser {
+  id: number
+  name: string
+  email: string
+  roles: string
+  site_id?: number
+  permissions: string
+}
+
+export interface PageProps {
+  [key: string]: unknown
+
+  auth: {
+    user?: AuthUser | null
+  }
+
+  flash?: {
+    success?: string
+    reason?: string
+  }
+}
