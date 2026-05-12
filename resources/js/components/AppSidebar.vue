@@ -95,15 +95,15 @@ const navMain = [
             {
                 title: "Overview",
                 url: "/safety/dashboard",
-                permission: "visitor.access",
+                permission: "safety.access",
             },
             {
                 title: "Manage PIC (EHS Audit)",
                 url: "/safety/manage-pic",
-                permission: "visitor.access",
+                permission: "safety.pic",
             },
         ],
-        permission: "visitor.access", // parent permission
+        permission: "safety.access", // parent permission
     },
     {
         title: "Meeting Room Reservation",

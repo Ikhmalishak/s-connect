@@ -28,7 +28,10 @@ class RolePermissionSeeder extends Seeder
                 'security.approve_internal',
                 'security.access'
             ],
-            'safety' => ['pic'],
+            'safety' => [
+                'access',
+                'pic'
+            ],
         ];
 
         foreach ($modules as $module => $actions) {
