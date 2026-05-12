@@ -97,11 +97,11 @@ const navMain = [
                 url: "/safety/dashboard",
                 permission: "visitor.access",
             },
-            // {
-            //     title: "Report",
-            //     url: "/visitor/report",
-            //     permission: "visitor.report",
-            // },
+            {
+                title: "Manage PIC (EHS Audit)",
+                url: "/safety/manage-pic",
+                permission: "safety.pic",
+            },
         ],
         permission: "visitor.access", // parent permission
     },

@@ -1,6 +1,8 @@
 <?php
 
 use App\Models\AuditType;
+use App\Models\Department;
+use App\Models\Site;
 use App\Models\User;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -13,10 +15,12 @@ return new class extends Migration
         Schema::create('audit_sessions', function (Blueprint $table) {
             $table->id();
             $table->foreignIdFor(AuditType::class)->constrained()->cascadeOnDelete();
-            $table->date('date');
             $table->foreignIdFor(User::class)->constrained('users');
+            $table->foreignIdFor(Department::class)->constrained('departments');
+            $table->foreignIdFor(Site::class)->constrained('sites');
             $table->enum('status', ['draft', 'submitted', 'approved'])->default('draft');
-            $table->text('remarks')->nullable();
+            $table->text('remarks')->nullable();            
+            $table->date('date');
             $table->timestamps();
         });
     }

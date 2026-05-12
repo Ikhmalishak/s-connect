@@ -30,6 +30,10 @@ interface Audit {
     id: number;
     audit_type_id: number;
     audit_type: any;
+    department_id: number;
+    department: any;
+    site_id: number;
+    site: any;
     date: string;
     user_id: number;
     status: string;
@@ -62,7 +66,10 @@ async function fetchFilteredSessions() {
         if (statusFilter.value !== "all")
             params.append("status", statusFilter.value);
 
-        const res = await axios.get(`/safety/audit-sessions?${params.toString()}`);
+        const res = await axios.get(
+            `/safety/audit-sessions?${params.toString()}`,
+        );
+        console.log(res.data.session);
         filteredAudits.value = res.data.session;
     } catch (error) {
         console.error("Error fetching filtered sessions:", error);
@@ -114,9 +121,7 @@ onMounted(() => {
                                     <SelectItem value="all"
                                         >All Status</SelectItem
                                     >
-                                    <SelectItem value="draft"
-                                        >Draft</SelectItem
-                                    >
+                                    <SelectItem value="draft">Draft</SelectItem>
                                     <SelectItem value="submitted"
                                         >Submitted</SelectItem
                                     >
@@ -179,6 +184,16 @@ onMounted(() => {
                             <th
                                 class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
                             >
+                                Department
+                            </th>
+                            <th
+                                class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
+                            >
+                                Site
+                            </th>
+                            <th
+                                class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
+                            >
                                 Audit Type
                             </th>
                             <th
@@ -192,12 +207,18 @@ onMounted(() => {
                         class="border border-gray-300 divide-x divide-gray-300"
                     >
                         <tr v-if="isLoading">
-                            <td colspan="4" class="text-center p-4 text-gray-500">
+                            <td
+                                colspan="4"
+                                class="text-center p-4 text-gray-500"
+                            >
                                 Loading...
                             </td>
                         </tr>
                         <tr v-else-if="filteredAudits.length === 0">
-                            <td colspan="4" class="text-center p-4 text-gray-500">
+                            <td
+                                colspan="4"
+                                class="text-center p-4 text-gray-500"
+                            >
                                 No audit sessions found.
                             </td>
                         </tr>
@@ -215,15 +236,20 @@ onMounted(() => {
                                     {{ audit.date }}
                                 </button>
                             </td>
+                            <td class="p-2">{{ audit.department?.name }}</td>
+                            <td class="p-2">{{ audit.site?.name }}</td>
                             <td class="p-2">{{ audit.audit_type?.name }}</td>
+
                             <td class="p-2">
                                 <span
                                     class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium capitalize"
-                                    :class="audit.status === 'approved'
-                                        ? 'bg-green-100 text-green-800'
-                                        : audit.status === 'submitted'
-                                            ? 'bg-blue-100 text-blue-800'
-                                            : 'bg-gray-100 text-gray-800'"
+                                    :class="
+                                        audit.status === 'approved'
+                                            ? 'bg-green-100 text-green-800'
+                                            : audit.status === 'submitted'
+                                              ? 'bg-blue-100 text-blue-800'
+                                              : 'bg-gray-100 text-gray-800'
+                                    "
                                 >
                                     {{ audit.status }}
                                 </span>

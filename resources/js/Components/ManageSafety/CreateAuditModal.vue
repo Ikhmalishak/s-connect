@@ -26,8 +26,9 @@ interface Answer {
 }
 
 interface FormData {
-    received_at: string;
     inspected_at: string;
+    department: number | null;
+    site: number | null;
     answers: Answer[];
 }
 
@@ -40,13 +41,16 @@ interface AuditType {
 // Refs
 const questions = ref<Question[]>([]);
 const sections = ref<Section[]>([]);
+const sites = ref([]);
+const departments = ref([]);
 // Added sections ref for better structure
 const auditTypes = ref<AuditType[]>([]);
 const selectedAuditType = ref<number | null>(null);
 const showAuditTypeSelection = ref(true);
 const formData = ref<FormData>({
-    received_at: "",
     inspected_at: "",
+    department: null,
+    site: 2,
     answers: [],
 });
 
@@ -70,6 +74,36 @@ const anyFailed = computed(() =>
 );
 
 // Methods
+
+async function fetchSites() {
+    return await axios.get("/api/sites");
+}
+
+async function fetchDepartments() {
+    return await axios.get("/api/departments");
+}
+
+async function loadData() {
+    try {
+        isLoading.value = true;
+
+        const [siteList, departmentList] = await Promise.all([
+            fetchSites(),
+            fetchDepartments(),
+        ]);
+
+        sites.value = siteList.data;
+        departments.value = departmentList.data.data;
+
+        console.log(sites.value);
+        console.log(departments.value);
+    } catch (error) {
+        console.error("Failed to load data:", error);
+    } finally {
+        isLoading.value = false;
+    }
+}
+
 async function fetchAuditTypes() {
     isLoadingAuditTypes.value = true;
     try {
@@ -118,7 +152,6 @@ async function fetchQuestions() {
 
         // Set default dates
         const today = getCurrentDate();
-        formData.value.received_at = today;
         formData.value.inspected_at = today;
 
         // Initialize answers array based on total questions
@@ -271,10 +304,14 @@ const onSubmit = async (event: Event) => {
             selectedAuditType.value?.toString() || "",
         );
 
+        submissionData.append("site_id", formData.value.site?.toString() ?? "");
+        submissionData.append(
+            "department_id",
+            formData.value.department?.toString() ?? "",
+        );
+
         const answersToSubmit = anyFailed.value
-            ? formData.value.answers.filter(
-                  (a) => a.answer !== null,
-              )
+            ? formData.value.answers.filter((a) => a.answer !== null)
             : formData.value.answers;
 
         submissionData.append(
@@ -328,8 +365,9 @@ const resetForm = () => {
     questions.value = [];
     sections.value = [];
     formData.value = {
-        received_at: "",
         inspected_at: "",
+        department: null,
+        site: null,
         answers: [],
     };
     errorMessage.value = "";
@@ -358,6 +396,12 @@ const getAnswerForQuestion = (globalIndex: number) => {
 const getCurrentDate = (): string => {
     const now = new Date();
     return now.toISOString().split("T")[0];
+};
+
+const getMinDate = (): string => {
+    const minDate = new Date();
+    minDate.setFullYear(minDate.getFullYear() - 1);
+    return minDate.toISOString().split("T")[0];
 };
 
 const getStatusBadge = (answer: number | null): string => {
@@ -399,7 +443,10 @@ watch(
     async (value) => {
         if (value) {
             await fetchAuditTypes();
+            await loadData();
+            const today = getCurrentDate();
             resetForm();
+            formData.value.inspected_at = today;
         } else {
             resetForm();
         }
@@ -586,6 +633,74 @@ watch(
                                 </div>
                             </div>
 
+                            <div
+                                class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg"
+                            >
+                                <!-- Received Date -->
+                                <div>
+                                    <label
+                                        class="block text-sm font-medium text-gray-700 mb-2"
+                                    >
+                                        Inspected At
+                                    </label>
+                                    <input
+                                        type="date"
+                                        v-model="formData.inspected_at"
+                                        :max="getCurrentDate()"
+                                        :min="getMinDate()"
+                                        :disabled="isLoading"
+                                        class="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                        required
+                                    />
+                                </div>
+
+                                <!-- Site -->
+                                <div>
+                                    <label
+                                        class="block text-sm font-medium text-gray-700 mb-2"
+                                    >
+                                        Site
+                                    </label>
+                                    <select
+                                        v-model="formData.site"
+                                        :disabled="isLoading"
+                                        class="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                        required
+                                    >
+                                        <option disabled value="">
+                                            Select Site
+                                        </option>
+                                        <option :value="1">Site 1</option>
+                                        <option :value="2">Site 2</option>
+                                        <option :value="3">Site 3</option>
+                                        <option :value="4">Site 4</option>
+                                    </select>
+                                </div>
+
+                                <!-- Department -->
+                                <div>
+                                    <label
+                                        class="block text-sm font-medium text-gray-700 mb-2"
+                                    >
+                                        Department
+                                    </label>
+                                    <select
+                                        v-model="formData.department"
+                                        :disabled="isLoading"
+                                        class="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                        required
+                                    >
+                                        <option disabled value="">
+                                            Select Department
+                                        </option>
+                                        <option value="1">Site 1</option>
+                                        <option value="2">Site 2</option>
+                                        <option value="3">Site 3</option>
+                                        <option value="4">Site 4</option>
+                                    </select>
+                                </div>
+                            </div>
+
                             <!-- Questions Section -->
                             <div class="space-y-6">
                                 <div class="flex justify-between items-center">
@@ -629,9 +744,7 @@ watch(
                                                 {{ section.name }}
                                             </h4>
                                             <span class="text-sm text-gray-500">
-                                                {{
-                                                    section.questions.length
-                                                }}
+                                                {{ section.questions.length }}
                                                 questions
                                             </span>
                                         </div>

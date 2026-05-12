@@ -20,7 +20,7 @@ class AuditSessionController extends Controller
 
     public function getAllSessions(Request $request)
     {
-        $query = AuditSession::with('answers.question', 'auditType');
+        $query = AuditSession::with('answers.question.section', 'auditType', 'site', 'user', 'department');
 
         // Filter by status
         if ($request->filled('status') && $request->status !== 'all') {
@@ -65,6 +65,8 @@ class AuditSessionController extends Controller
         // Create the audit session
         $session = AuditSession::create([
             'audit_type_id' => $request->audit_type_id,
+            'department_id' => $request->department_id,
+            'site_id' => $request->site_id,
             'user_id' => auth()->id(),
             'status' => 'submitted',
             'date' => now(),

@@ -135,6 +135,8 @@ class AuditSeeder extends Seeder
             'audit_type_id' => $safetyType->id,
             'date' => Carbon::now(),
             'user_id' => 1,
+            'department_id' => 1,
+            'site_id' => 2,
             'status' => "submitted",
             'remarks' => "testing",
         ]);

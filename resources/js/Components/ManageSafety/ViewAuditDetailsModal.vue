@@ -13,6 +13,31 @@ const sessionData = computed(() => {
     return Array.isArray(props.id) ? props.id[0] : props.id;
 });
 
+// Group answers by section
+const groupedAnswers = computed(() => {
+    if (!sessionData.value?.answers) return [];
+
+    const groupMap = new Map();
+
+    for (const answer of sessionData.value.answers) {
+        const section = answer.question?.section;
+        if (!section) continue;
+
+        const sectionId = section.id;
+        if (!groupMap.has(sectionId)) {
+            groupMap.set(sectionId, {
+                id: section.id,
+                name: section.name,
+                sort_order: section.sort_order ?? 0,
+                answers: []
+            });
+        }
+        groupMap.get(sectionId).answers.push(answer);
+    }
+
+    return Array.from(groupMap.values()).sort((a, b) => a.sort_order - b.sort_order);
+});
+
 // Image preview
 const showImagePreview = ref(false);
 const selectedImage = ref<string | null>(null);
@@ -109,102 +134,123 @@ function closeImagePreview() {
                                 </span>
                             </h3>
 
-                            <div class="space-y-3">
-                                <div
-                                    v-for="a in sessionData.answers"
-                                    :key="a.id"
-                                    class="group flex flex-col p-4 rounded-xl border border-gray-100 bg-white hover:border-blue-300 hover:shadow-md transition-all duration-200"
-                                >
-                                    <div class="flex items-start gap-3">
+                            <div v-if="groupedAnswers.length === 0" class="text-sm text-gray-500 italic">
+                                No answers found.
+                            </div>
 
-                                        <!-- ICON (LEFT, CLEAR) -->
-                                        <div
-                                            class="mt-1 w-7 h-7 rounded-full flex items-center justify-center shrink-0"
-                                            :class="a.answer === 1
-                                                ? 'bg-green-100 text-green-600'
-                                                : a.answer === 0
-                                                    ? 'bg-red-100 text-red-600'
-                                                    : 'bg-gray-100 text-gray-500'"
-                                        >
-                                            <!-- Pass (YES = 1) -->
-                                            <svg v-if="a.answer === 1" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
-                                            </svg>
-                                            <!-- Fail (NO = 0) -->
-                                            <svg v-else-if="a.answer === 0" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/>
-                                            </svg>
-                                            <!-- N/A (2) or null -->
-                                            <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
-                                            </svg>
-                                        </div>
-
-                                        <!-- CONTENT -->
-                                        <div class="flex-1">
-
-                                            <div class="flex items-center gap-2 mb-1">
-                                                <span class="text-xs font-bold text-gray-400">
-                                                    Q{{ a.audit_question_id }}
-                                                </span>
-                                                <!-- Answer label -->
-                                                <span
-                                                    class="px-2 py-0.5 text-xs font-medium rounded-full"
-                                                    :class="a.answer === 1
-                                                        ? 'bg-green-100 text-green-700'
-                                                        : a.answer === 0
-                                                            ? 'bg-red-100 text-red-700'
-                                                            : 'bg-gray-100 text-gray-600'"
-                                                >
-                                                    {{ a.answer === 1 ? 'Pass' : a.answer === 0 ? 'Fail' : a.answer === 2 ? 'N/A' : 'Not Set' }}
-                                                </span>
-                                            </div>
-
-                                            <p class="text-gray-800 font-semibold leading-snug">
-                                                {{ a.question?.question_text }}
-                                            </p>
-
-                                            <!-- REMARK -->
-                                            <div
-                                                v-if="a.remarks"
-                                                class="mt-3 text-sm text-gray-600 bg-gray-50 p-3 rounded-md border-l-4"
-                                                :class="a.answer === 1
-                                                    ? 'border-green-300'
-                                                    : 'border-red-300'"
-                                            >
-                                                <span class="font-semibold text-xs uppercase tracking-wide">
-                                                    Remark
-                                                </span>
-                                                <p class="mt-1">
-                                                    {{ a.remarks }}
-                                                </p>
-                                            </div>
-
-                                            <!-- PHOTO -->
-                                            <div
-                                                v-if="a.photo_path"
-                                                class="mt-3"
-                                            >
-                                                <button
-                                                    @click="openImagePreview(a.photo_path)"
-                                                    class="block relative overflow-hidden rounded-lg border-2 border-gray-300 hover:border-blue-500 transition-all duration-200 w-full max-w-xs group"
-                                                >
-                                                    <img
-                                                        :src="'/storage/' + a.photo_path"
-                                                        :alt="'Photo evidence'"
-                                                        class="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-200"
-                                                    />
-                                                    <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center">
-                                                        <svg class="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/>
-                                                        </svg>
-                                                    </div>
-                                                </button>
-                                            </div>
-
-                                        </div>
+                            <div v-for="section in groupedAnswers" :key="section.id" class="mb-6">
+                                <!-- SECTION HEADER -->
+                                <div class="flex items-center gap-3 mb-3 pb-2 border-b-2 border-blue-200">
+                                    <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">
+                                        {{ section.sort_order }}
                                     </div>
+                                    <div>
+                                        <h4 class="text-base font-bold text-gray-900">
+                                            {{ section.name }}
+                                        </h4>
+                                        <p class="text-xs text-gray-500">
+                                            {{ section.answers.length }} question(s)
+                                        </p>
+                                    </div>
+                                </div>
 
+                                <div class="space-y-3">
+                                    <div
+                                        v-for="a in section.answers"
+                                        :key="a.id"
+                                        class="group flex flex-col p-4 rounded-xl border border-gray-100 bg-white hover:border-blue-300 hover:shadow-md transition-all duration-200"
+                                    >
+                                        <div class="flex items-start gap-3">
+
+                                            <!-- ICON (LEFT, CLEAR) -->
+                                            <div
+                                                class="mt-1 w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+                                                :class="a.answer === 1
+                                                    ? 'bg-green-100 text-green-600'
+                                                    : a.answer === 0
+                                                        ? 'bg-red-100 text-red-600'
+                                                        : 'bg-gray-100 text-gray-500'"
+                                            >
+                                                <!-- Pass (YES = 1) -->
+                                                <svg v-if="a.answer === 1" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                                                </svg>
+                                                <!-- Fail (NO = 0) -->
+                                                <svg v-else-if="a.answer === 0" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/>
+                                                </svg>
+                                                <!-- N/A (2) or null -->
+                                                <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                                                </svg>
+                                            </div>
+
+                                            <!-- CONTENT -->
+                                            <div class="flex-1">
+
+                                                <div class="flex items-center gap-2 mb-1">
+                                                    <span class="text-xs font-bold text-gray-400">
+                                                        Q{{ a.audit_question_id }}
+                                                    </span>
+                                                    <!-- Answer label -->
+                                                    <span
+                                                        class="px-2 py-0.5 text-xs font-medium rounded-full"
+                                                        :class="a.answer === 1
+                                                            ? 'bg-green-100 text-green-700'
+                                                            : a.answer === 0
+                                                                ? 'bg-red-100 text-red-700'
+                                                                : 'bg-gray-100 text-gray-600'"
+                                                    >
+                                                        {{ a.answer === 1 ? 'Pass' : a.answer === 0 ? 'Fail' : a.answer === 2 ? 'N/A' : 'Not Set' }}
+                                                    </span>
+                                                </div>
+
+                                                <p class="text-gray-800 font-semibold leading-snug">
+                                                    {{ a.question?.question_text }}
+                                                </p>
+
+                                                <!-- REMARK -->
+                                                <div
+                                                    v-if="a.remarks"
+                                                    class="mt-3 text-sm text-gray-600 bg-gray-50 p-3 rounded-md border-l-4"
+                                                    :class="a.answer === 1
+                                                        ? 'border-green-300'
+                                                        : 'border-red-300'"
+                                                >
+                                                    <span class="font-semibold text-xs uppercase tracking-wide">
+                                                        Remark
+                                                    </span>
+                                                    <p class="mt-1">
+                                                        {{ a.remarks }}
+                                                    </p>
+                                                </div>
+
+                                                <!-- PHOTO -->
+                                                <div
+                                                    v-if="a.photo_path"
+                                                    class="mt-3"
+                                                >
+                                                    <button
+                                                        @click="openImagePreview(a.photo_path)"
+                                                        class="block relative overflow-hidden rounded-lg border-2 border-gray-300 hover:border-blue-500 transition-all duration-200 w-full max-w-xs group"
+                                                    >
+                                                        <img
+                                                            :src="'/storage/' + a.photo_path"
+                                                            :alt="'Photo evidence'"
+                                                            class="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-200"
+                                                        />
+                                                        <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center">
+                                                            <svg class="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/>
+                                                            </svg>
+                                                        </div>
+                                                    </button>
+                                                </div>
+
+                                            </div>
+                                        </div>
+
+                                    </div>
                                 </div>
                             </div>
                         </div>

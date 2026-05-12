@@ -1,10 +1,12 @@
 <?php
 
+use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\EncryptionSettingController;
 use App\Http\Controllers\ManageContainer\InspectionAnswerController;
 use App\Http\Controllers\ManageContainer\InspectionQuestionController;
 use App\Http\Controllers\ManageSafety\AuditQuestionController;
 use App\Http\Controllers\ManageSafety\AuditSectionController;
+use App\Http\Controllers\ManageSafety\AuditPicController;
 use App\Http\Controllers\ManageSafety\AuditSessionController;
 use App\Http\Controllers\ManageSafety\AuditTypeController;
 use App\Http\Controllers\ManageVisitor\GatePassController;
@@ -179,6 +181,7 @@ Route::post('/containers/validate-for-visitor', [ShipmentTransportController::cl
 
 // API route for sites
 Route::middleware(['auth'])->get('/api/sites', [SiteController::class, 'index'])->name('sites.index');
+Route::middleware(['auth'])->get('/api/departments', [DepartmentController::class, 'index'])->name('departments.index');
 
 Route::get('/mfa-verify', [MFAController::class, 'showVerifyForm'])->name('mfa.verify');
 Route::post('/mfa-verify', [MFAController::class, 'verifyCode'])->name('mfa.verify');
@@ -269,6 +272,16 @@ Route::middleware(['auth', 'password.age'])->prefix('safety')->name('safety.')->
     Route::get('/question-lists',[AuditTypeController::class, 'getAllQuestions']);
     Route::get('/audit-types',[AuditTypeController::class, 'getAuditTypes']);
     Route::post('/submit-inspection',[AuditSessionController::class, 'submitAudit']);
+
+    // PIC Management (EHS Audit)
+    Route::get('/manage-pic', function () {
+        return Inertia::render('ManageSafety/AuditPicDashboard');
+    })->middleware('can:safety.pic')->name('manage-pic');
+
+    Route::get('/audit-pics', [AuditPicController::class, 'index']);
+    Route::get('/audit-pics/form-data', [AuditPicController::class, 'getFormData']);
+    Route::post('/audit-pics', [AuditPicController::class, 'store']);
+    Route::delete('/audit-pics/{auditPic}', [AuditPicController::class, 'destroy']);
 });
 
 require __DIR__ . '/auth.php';

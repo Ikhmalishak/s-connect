@@ -12,7 +12,12 @@ class DepartmentController extends Controller
      */
     public function index()
     {
-        //
+        $departments = Department::all();
+
+        return response()->json([
+            'data' => $departments,
+            'message' => "Successfully retrieved departments list"
+        ]);
     }
 
     /**

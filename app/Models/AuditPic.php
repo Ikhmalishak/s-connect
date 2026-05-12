@@ -5,29 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class AuditSession extends Model
+class AuditPic extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'audit_type_id',
         'user_id',
-        'department_id',
         'site_id',
-        'date',
-        'status',
-        'remarks',
+        'department_id',
     ];
-
-    protected $casts = [
-        'audit_date' => 'date',
-        'status' => 'string',
-    ];
-
-    public function auditType()
-    {
-        return $this->belongsTo(AuditType::class);
-    }
 
     public function user()
     {
@@ -38,13 +24,9 @@ class AuditSession extends Model
     {
         return $this->belongsTo(Site::class);
     }
+
     public function department()
     {
         return $this->belongsTo(Department::class);
-    }
-
-    public function answers()
-    {
-        return $this->hasMany(AuditAnswer::class);
     }
 }
