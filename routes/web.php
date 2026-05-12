@@ -8,6 +8,7 @@ use App\Http\Controllers\ManageSafety\AuditQuestionController;
 use App\Http\Controllers\ManageSafety\AuditSectionController;
 use App\Http\Controllers\ManageSafety\AuditPicController;
 use App\Http\Controllers\ManageSafety\AuditSessionController;
+use App\Http\Controllers\ManageSafety\AuditSetupController;
 use App\Http\Controllers\ManageSafety\AuditTypeController;
 use App\Http\Controllers\ManageVisitor\GatePassController;
 use App\Http\Controllers\MFAController;
@@ -165,6 +166,7 @@ Route::middleware(['auth', 'password.age'])->group(function () {
             'permissions' => $user->getAllPermissions()->pluck('name')->toArray()
         ]);
     });
+
 });
 
 //api to fetch form by site
@@ -282,6 +284,26 @@ Route::middleware(['auth', 'password.age'])->prefix('safety')->name('safety.')->
     Route::get('/audit-pics/form-data', [AuditPicController::class, 'getFormData']);
     Route::post('/audit-pics', [AuditPicController::class, 'store']);
     Route::delete('/audit-pics/{auditPic}', [AuditPicController::class, 'destroy']);
+
+    // Audit Setup (Types, Sections, Questions)
+    Route::get('/audit-setup', [AuditSetupController::class, 'getDashboard'])
+        ->middleware('can:superadmin')
+        ->name('audit-setup');
+
+    Route::get('/audit-setup/types', [AuditSetupController::class, 'getTypes']);
+    Route::post('/audit-setup/types', [AuditSetupController::class, 'storeType']);
+    Route::put('/audit-setup/types/{auditType}', [AuditSetupController::class, 'updateType']);
+    Route::delete('/audit-setup/types/{auditType}', [AuditSetupController::class, 'deleteType']);
+
+    Route::get('/audit-setup/sections', [AuditSetupController::class, 'getSections']);
+    Route::post('/audit-setup/sections', [AuditSetupController::class, 'storeSection']);
+    Route::put('/audit-setup/sections/{auditSection}', [AuditSetupController::class, 'updateSection']);
+    Route::delete('/audit-setup/sections/{auditSection}', [AuditSetupController::class, 'deleteSection']);
+
+    Route::get('/audit-setup/questions', [AuditSetupController::class, 'getQuestions']);
+    Route::post('/audit-setup/questions', [AuditSetupController::class, 'storeQuestion']);
+    Route::put('/audit-setup/questions/{auditQuestion}', [AuditSetupController::class, 'updateQuestion']);
+    Route::delete('/audit-setup/questions/{auditQuestion}', [AuditSetupController::class, 'deleteQuestion']);
 });
 
 require __DIR__ . '/auth.php';
