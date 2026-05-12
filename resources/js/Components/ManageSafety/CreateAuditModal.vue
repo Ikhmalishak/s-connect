@@ -16,6 +16,16 @@ interface Section {
     name: string;
     questions: Question[];
 }
+
+interface Department {
+    id: number;
+    name: string;
+}
+
+interface Site {
+    id: number;
+    name: string;
+}
 // No change needed, but adding Section interface for clarity
 
 interface Answer {
@@ -41,9 +51,8 @@ interface AuditType {
 // Refs
 const questions = ref<Question[]>([]);
 const sections = ref<Section[]>([]);
-const sites = ref([]);
-const departments = ref([]);
-// Added sections ref for better structure
+const sites = ref<Site[]>([]);
+const departments = ref<Department[]>([]);
 const auditTypes = ref<AuditType[]>([]);
 const selectedAuditType = ref<number | null>(null);
 const showAuditTypeSelection = ref(true);
@@ -670,10 +679,13 @@ watch(
                                         <option disabled value="">
                                             Select Site
                                         </option>
-                                        <option :value="1">Site 1</option>
-                                        <option :value="2">Site 2</option>
-                                        <option :value="3">Site 3</option>
-                                        <option :value="4">Site 4</option>
+                                        <option
+                                            v-for="site in sites"
+                                            :key="site.id"
+                                            :value="site.id"
+                                        >
+                                            {{ site.name }}
+                                        </option>
                                     </select>
                                 </div>
 
@@ -693,10 +705,13 @@ watch(
                                         <option disabled value="">
                                             Select Department
                                         </option>
-                                        <option value="1">Site 1</option>
-                                        <option value="2">Site 2</option>
-                                        <option value="3">Site 3</option>
-                                        <option value="4">Site 4</option>
+                                        <option
+                                            v-for="department in departments"
+                                            :key="department.id"
+                                            :value="department.id"
+                                        >
+                                            {{ department.name }}
+                                        </option>
                                     </select>
                                 </div>
                             </div>

@@ -4,9 +4,12 @@ namespace App\Http\Controllers\ManageSafety;
 
 use App\Enums\AuditAnswerEnum;
 use App\Http\Controllers\Controller;
+use App\Mail\NotifyAuditFinding;
 use App\Models\AuditAnswer;
+use App\Models\AuditPic;
 use App\Models\AuditSession;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
@@ -51,6 +54,8 @@ class AuditSessionController extends Controller
     {
         $request->validate([
             'audit_type_id' => 'required|integer|exists:audit_types,id',
+            'department_id' => 'required|integer|exists:departments,id',
+            'site_id' => 'required|integer|exists:sites,id',
             'answers' => 'required|json',
         ]);
 
@@ -103,7 +108,47 @@ class AuditSessionController extends Controller
         }
 
         // Reload with relationships for the response
-        $session->load('answers.question');
+        $session->load([
+            'answers.question',
+            'site',
+            'department',
+            'auditType',
+            'user',
+        ]);
+
+        // Check for failed items (answer = 0)
+        $failedItems = [];
+        foreach ($session->answers as $answer) {
+            if ($answer->answer === AuditAnswerEnum::NO) {
+                $failedItems[] = [
+                    'question_text' => $answer->question?->question_text ?? 'Unknown question',
+                    'remarks' => $answer->remarks,
+                ];
+            }
+        }
+
+        // If there are findings, update status and notify PICs
+        if (!empty($failedItems)) {
+            $session->update(['status' => 'failed']);
+
+            try {
+                // Find PICs assigned to this site + department
+                $pics = AuditPic::where('site_id', $session->site_id)
+                    ->where('department_id', $session->department_id)
+                    ->with('user')
+                    ->get();
+
+                    foreach ($pics as $pic) {
+                    if ($pic->user && $pic->user->email) {
+                        Mail::to($pic->user->email)
+                            ->send(new NotifyAuditFinding($session, $failedItems, $pic->user));                        
+                    }
+                }
+            } catch (\Exception $e) {
+                // Log the error but don't break the submission
+                \Illuminate\Support\Facades\Log::error('Failed to send audit finding email: ' . $e->getMessage());
+            }
+        }
 
         return response()->json([
             'message' => 'Inspection submitted successfully!',
