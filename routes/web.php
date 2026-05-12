@@ -281,6 +281,7 @@ Route::middleware(['auth', 'password.age'])->prefix('safety')->name('safety.')->
     })->middleware('can:safety.pic')->name('manage-pic');
 
     Route::get('/audit-pics', [AuditPicController::class, 'index']);
+    Route::get('/audit-statistics', [AuditSessionController::class, 'auditStatistic']);
     Route::get('/audit-pics/form-data', [AuditPicController::class, 'getFormData']);
     Route::post('/audit-pics', [AuditPicController::class, 'store']);
     Route::delete('/audit-pics/{auditPic}', [AuditPicController::class, 'destroy']);

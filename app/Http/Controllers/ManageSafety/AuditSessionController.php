@@ -35,9 +35,9 @@ class AuditSessionController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('date', 'like', "%{$search}%")
-                  ->orWhereHas('auditType', function ($subQ) use ($search) {
-                      $subQ->where('name', 'like', "%{$search}%");
-                  });
+                    ->orWhereHas('auditType', function ($subQ) use ($search) {
+                        $subQ->where('name', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -138,10 +138,10 @@ class AuditSessionController extends Controller
                     ->with('user')
                     ->get();
 
-                    foreach ($pics as $pic) {
+                foreach ($pics as $pic) {
                     if ($pic->user && $pic->user->email) {
                         Mail::to($pic->user->email)
-                            ->send(new NotifyAuditFinding($session, $failedItems, $pic->user));                        
+                            ->send(new NotifyAuditFinding($session, $failedItems, $pic->user));
                     }
                 }
             } catch (\Exception $e) {
@@ -154,5 +154,23 @@ class AuditSessionController extends Controller
             'message' => 'Inspection submitted successfully!',
             'session' => $session,
         ], 201);
+    }
+
+    public function auditStatistic()
+    {
+        $audit_by_status = AuditSession::selectRaw('status, COUNT(*) as total')
+            ->groupBy('status')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'name' => $item->status,
+                    'total' => $item->total
+                ];
+            });
+
+        return response()->json([
+            'data' => $audit_by_status,
+            'messages' => "Successful"
+        ]);
     }
 }

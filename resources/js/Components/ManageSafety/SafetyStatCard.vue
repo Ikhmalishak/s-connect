@@ -4,20 +4,14 @@ import { Card } from "@/components/ui/card";
 import { ref, onMounted } from "vue";
 import axios from "axios";
 
-const containerStats = ref({
-    totalContainers: 0,
-    containerTypes: [],
-    statusStats: [],
-    stageStats: [],
-    inspectionStats: []
-});
+const containerStats = ref([]);
 
 const loading = ref(true);
 
 const fetchStats = async () => {
     try {
-        const response = await axios.get('/container/stats');
-        containerStats.value = response.data;
+        const response = await axios.get('/safety/audit-statistics');
+        containerStats.value = response.data.data;
     } catch (error) {
         console.error('Error fetching container stats:', error);
     } finally {
@@ -52,9 +46,9 @@ onMounted(() => {
                         <div class="w-full max-w-[250px] h-[185px]">
                             <DonutChart
                                 index="name"
-                                title="Container Types"
+                                title="Audit Overview"
                                 :category="'total'"
-                                :data="containerStats.containerTypes"
+                                :data="containerStats"
                                 :type="'donut'"
                                 :colors="[
                                     'hsl(0, 100%, 70%)',
@@ -72,37 +66,9 @@ onMounted(() => {
                         <div class="w-full max-w-[250px] h-[185px]">
                             <DonutChart
                                 index="name"
-                                title="Status Overview"
+                                title="Audit Overview"
                                 :category="'total'"
-                                :data="containerStats.statusStats"
-                                class="w-4/5 h-4/5"
-                            />
-                        </div>
-                    </div>
-
-                    <!-- Inspection Status Donut -->
-                    <div class="flex-1 h-full flex justify-center">
-                        <div class="w-full max-w-[250px] h-[185px]">
-                            <DonutChart
-                                index="name"
-                                title="Inspection Status"
-                                :category="'total'"
-                                :data="containerStats.inspectionStats"
-                                :type="'donut'"
-                                class="w-4/5 h-4/5"
-                            />
-                        </div>
-                    </div>
-
-                    <!-- Stage Progress Donut -->
-                    <div class="flex-1 h-full flex justify-center">
-                        <div class="w-full max-w-[250px] h-[185px]">
-                            <DonutChart
-                                index="name"
-                                title="Stage Progress"
-                                :category="'total'"
-                                :data="containerStats.stageStats"
-                                :type="'donut'"
+                                :data="containerStats"
                                 class="w-4/5 h-4/5"
                             />
                         </div>
