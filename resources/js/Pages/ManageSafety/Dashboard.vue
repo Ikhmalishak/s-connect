@@ -14,11 +14,14 @@ import SafetyStatCard from "@/Components/ManageSafety/SafetyStatCard.vue";
 import SafetyTable from "@/Components/ManageSafety/SafetyTable.vue";
 import ViewAuditDetailsModal from "@/Components/ManageSafety/ViewAuditDetailsModal.vue";
 import CreateAuditModal from "@/Components/ManageSafety/CreateAuditModal.vue";
+import ViewFailedItemModal from "@/Components/ManageSafety/ViewFailedItemModal.vue";
 
 const currentTime = ref(new Date());
 const openCreateAuditModal = ref(false);
 const openAuditDetailModal = ref(false);
 const currentAuditDetailDetails = ref<any>(null);
+const openFailedItemModal = ref(false);
+const currentFailedItem = ref<any>(null);
 let intervalId: ReturnType<typeof setInterval>;
 
 // Ref to trigger table refresh
@@ -28,6 +31,12 @@ function handleOpenAuditDetailModal(audit: any) {
     console.log("Opening View Details for audit:", audit?.id);
     currentAuditDetailDetails.value = audit;
     openAuditDetailModal.value = true;
+}
+
+function handleOpenFailedItemModal(audit: any) {
+    console.log("Opening View Details for audit:", audit?.id);
+    currentFailedItem.value = audit;
+    openFailedItemModal.value = true;
 }
 
 const formattedDate = computed(() =>
@@ -97,6 +106,7 @@ onUnmounted(() => {
             :key="tableRefreshKey"
             @open-audit-detail-modal="handleOpenAuditDetailModal"
             @open-create-audit-modal="openCreateAuditModal = true"
+            @open-failed-item-modal="handleOpenFailedItemModal"
         />
 
         <ViewAuditDetailsModal
@@ -105,6 +115,16 @@ onUnmounted(() => {
             @close="
                 () => {
                     openAuditDetailModal = false;
+                }
+            "
+        />
+
+        <ViewFailedItemModal
+            v-model:show="openFailedItemModal"
+            :id="currentFailedItem"
+            @close="
+                () => {
+                    openFailedItemModal = false;
                 }
             "
         />

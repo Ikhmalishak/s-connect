@@ -305,6 +305,10 @@ Route::middleware(['auth', 'password.age'])->prefix('safety')->name('safety.')->
     Route::post('/audit-setup/questions', [AuditSetupController::class, 'storeQuestion']);
     Route::put('/audit-setup/questions/{auditQuestion}', [AuditSetupController::class, 'updateQuestion']);
     Route::delete('/audit-setup/questions/{auditQuestion}', [AuditSetupController::class, 'deleteQuestion']);
+
+    //corrective action
+    Route::get('/corrective-action/failed-items', [AuditSetupController::class, 'getFailedItems']);
+
 });
 
 require __DIR__ . '/auth.php';

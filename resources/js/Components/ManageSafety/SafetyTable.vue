@@ -12,8 +12,9 @@ import { Card } from "@/components/ui/card";
 import CustomTooltip from "../CustomTooltip.vue";
 import { ref, watch, onMounted } from "vue";
 import axios from "axios";
+import Button from "@/components/ui/button/Button.vue";
 
-const emit = defineEmits(["openAuditDetailModal", "openCreateAuditModal"]);
+const emit = defineEmits(["openAuditDetailModal", "openCreateAuditModal", "openFailedItemModal"]);
 
 interface AuditAnswer {
     id: number;
@@ -54,6 +55,10 @@ const statusFilter = ref("all");
 
 function handleOpenAuditDetailModal(audit: Audit) {
     emit("openAuditDetailModal", audit);
+}
+
+function handleOpenFailedItemsModal(audit: Audit) {
+    emit("openFailedItemModal", audit);
 }
 
 // Fetch sessions with filters from safety endpoint
@@ -204,6 +209,11 @@ onMounted(() => {
                             >
                                 Status
                             </th>
+                            <th
+                                class="font-black text-black text-center bg-gray-100 p-2 sticky top-0 z-20 border-r border-gray-300 text-sm"
+                            >
+                                Action
+                            </th>
                         </tr>
                     </thead>
                     <tbody
@@ -227,6 +237,7 @@ onMounted(() => {
                         </tr>
                         <tr
                             v-for="(audit, index) in filteredAudits"
+                            class="text-center text-sm border border-gray-300 divide-x divide-gray-300 p-2"
                             :key="audit.id"
                         >
                             <td class="p-2 text-center">{{ index + 1 }}</td>
@@ -258,6 +269,33 @@ onMounted(() => {
                                 >
                                     {{ audit.status }}
                                 </span>
+                            </td>
+                            <td class="p-2 flex flex-row justify-center gap-2">
+                                <CustomTooltip
+                                    :text="'The container is still not completed'"
+                                    position="top"
+                                >
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        class="bg-purple-600 hover:bg-purple-700 text-white text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                                        @click = "handleOpenFailedItemsModal(audit)"
+                                    >
+                                        Corrective Action
+                                    </Button>
+                                </CustomTooltip>
+                                <CustomTooltip
+                                    text="Download container report"
+                                    position="top"
+                                >
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        class="bg-purple-600 hover:bg-purple-700 text-white text-xs"
+                                    >
+                                        Edit
+                                    </Button>
+                                </CustomTooltip>
                             </td>
                         </tr>
                     </tbody>

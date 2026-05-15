@@ -173,4 +173,13 @@ class AuditSessionController extends Controller
             'messages' => "Successful"
         ]);
     }
+
+    public function getFailedItems(Request $request){
+        $failed_items = AuditAnswer::where('audit_session_id', $request->id)->get();
+
+        return response()->json([
+            'data' => $failed_items,
+            'messages' => "Successfully fetch failed items",
+        ]);
+    }
 }
