@@ -138,6 +138,9 @@ Route::prefix('room-reservation')
             ->whereNumber('id');
     });
 
+Route::get('/tablet/{id}', [RoomReservationController::class, 'getRoomReservationTabletInterface'])
+        ->name('booking.tablet');
+
 //routes for superadmin
 Route::middleware(['auth', 'can:superadmin', 'password.age'])
     ->prefix('admin')
