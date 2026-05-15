@@ -108,17 +108,24 @@ Route::middleware(['auth', 'password.age'])->prefix('room-reservation')->name('r
         ->middleware('can:visitor.access')
         ->name('dashboard');
 
+    Route::post('/create-room-reservations', [RoomReservationController::class, 'store']); //create new reservation
+    Route::post('/{id}/cancel', [RoomReservationController::class, 'cancel']); //cancel room reservation
+
+    Route::get('/get-rooms-by-site', [RoomController::class, 'getRoomBySite']);
+});
+
+
+//routes for manage room reservation module no need auth
+Route::prefix('room-reservation')->name('room-reservation.')->group(function () {
+
     Route::get('/tablet/{id}', [RoomReservationController::class, 'getRoomReservationTabletInterface'])
         ->name('booking.tablet');
 
     Route::get('/get-room-reservations', [RoomReservationController::class, 'index']); //fetch room reservation
-    Route::post('/create-room-reservations', [RoomReservationController::class, 'store']); //create new reservation
-    Route::post('/{id}/cancel', [RoomReservationController::class, 'cancel']); //cancel room reservation
     Route::get('/{id}/status', [RoomReservationController::class, 'getRoomStatus']);
-
     Route::get('/get-room-by-id/{id}', [RoomController::class, 'getRoomById']);
-    Route::get('/get-rooms-by-site', [RoomController::class, 'getRoomBySite']);
 });
+
 
 //routes for superadmin
 Route::middleware(['auth', 'can:superadmin', 'password.age'])
