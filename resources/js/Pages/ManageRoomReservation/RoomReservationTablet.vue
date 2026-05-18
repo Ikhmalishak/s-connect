@@ -380,7 +380,7 @@ onUnmounted(() => {
                             IN PROGRESS
                         </div>
 
-                        <div class="text-sm">
+                        <div class="text-2xl">
                             {{
                                 new Date(event.start_time).toLocaleTimeString(
                                     [],
@@ -396,10 +396,10 @@ onUnmounted(() => {
                             }}
                         </div>
 
-                        <div class="text-base font-semibold">
+                        <div class="text-2xl font-semibold">
                             {{ event.purpose }}
                         </div>
-                        <div class="text-xs">
+                        <div class="text-xl">
                             {{ event.user_name }}
                         </div>
                     </div>
