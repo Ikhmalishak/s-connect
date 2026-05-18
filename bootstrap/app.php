@@ -4,7 +4,8 @@ use App\Http\Middleware\CheckPasswordExpiry;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use App\Http\Middleware\RoleMiddleware; // ← Add this
+use App\Http\Middleware\RoleMiddleware;
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -26,5 +27,11 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Customize the 429 Too Many Requests response
+        $exceptions->throttle(function (Request $request, string $key, int $maxAttempts, int $minutes) {
+            return response()->json([
+                'message' => 'Too many requests. Please try again in ' . $minutes . ' minutes.',
+                'retry_after_minutes' => $minutes,
+            ], 429);
+        });
     })->create();
