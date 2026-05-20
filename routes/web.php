@@ -35,7 +35,7 @@ Route::get('/', function () {
         $user = Auth::user();
 
         // First-time login → force password update
-        if ($user->is_first_time_login) {  
+        if ($user->is_first_time_login) {
             return redirect()->route('password.expired')->with('reason', 'first_time');
         }
 
@@ -101,31 +101,42 @@ Route::middleware(['auth', 'password.age'])->prefix('visitor')->name('visitor.')
 
 
 //routes for manage room reservation module
-Route::middleware(['auth', 'password.age'])->prefix('room-reservation')->name('room-reservation.')->group(function () {
+Route::prefix('room-reservation')
+    ->name('room-reservation.')
+    ->group(function () {
 
-    // Dashboard (view only)
-    Route::get('/dashboard', [RoomReservationController::class, 'dashboard'])
-        ->middleware('can:visitor.access')
-        ->name('dashboard');
+        // Dashboard
+        Route::get('/dashboard', [RoomReservationController::class, 'dashboard'])
+            ->name('dashboard');
 
-    Route::post('/create-room-reservations', [RoomReservationController::class, 'store']); //create new reservation
-    Route::post('/{id}/cancel', [RoomReservationController::class, 'cancel']); //cancel room reservation
+        // Create reservation
+        Route::post('/create-room-reservations', [RoomReservationController::class, 'store'])
+            ->middleware('throttle:5,1');
 
-    Route::get('/get-rooms-by-site', [RoomController::class, 'getRoomBySite']);
-});
+        // Cancel reservation
+        Route::post('/{id}/cancel', [RoomReservationController::class, 'cancel'])
+            ->middleware('throttle:3,1')
+            ->whereNumber('id');
 
+        // Fetch rooms
+        Route::get('/get-rooms-by-site', [RoomController::class, 'getRoomBySite']);
 
-//routes for manage room reservation module no need auth
-Route::prefix('room-reservation')->name('room-reservation.')->group(function () {
+        // Tablet interface
+        Route::get('/tablet/{id}', [RoomReservationController::class, 'getRoomReservationTabletInterface'])
+            ->whereNumber('id')
+            ->name('booking.tablet');
 
-    Route::get('/tablet/{id}', [RoomReservationController::class, 'getRoomReservationTabletInterface'])
-        ->name('booking.tablet');
+        // Fetch reservations
+        Route::get('/get-room-reservations', [RoomReservationController::class, 'index']);
 
-    Route::get('/get-room-reservations', [RoomReservationController::class, 'index']); //fetch room reservation
-    Route::get('/{id}/status', [RoomReservationController::class, 'getRoomStatus']);
-    Route::get('/get-room-by-id/{id}', [RoomController::class, 'getRoomById']);
-});
+        // Room status
+        Route::get('/{id}/status', [RoomReservationController::class, 'getRoomStatus'])
+            ->whereNumber('id');
 
+        // Room by ID
+        Route::get('/get-room-by-id/{id}', [RoomController::class, 'getRoomById'])
+            ->whereNumber('id');
+    });
 
 //routes for superadmin
 Route::middleware(['auth', 'can:superadmin', 'password.age'])
@@ -277,10 +288,10 @@ Route::middleware(['auth', 'password.age'])->prefix('safety')->name('safety.')->
     Route::get('/dashboard', [AuditSessionController::class, 'getDashboard'])
         ->name('dashboard');
 
-    Route::get('/audit-sessions',[AuditSessionController::class, 'getAllSessions']);
-    Route::get('/question-lists',[AuditTypeController::class, 'getAllQuestions']);
-    Route::get('/audit-types',[AuditTypeController::class, 'getAuditTypes']);
-    Route::post('/submit-inspection',[AuditSessionController::class, 'submitAudit']);
+    Route::get('/audit-sessions', [AuditSessionController::class, 'getAllSessions']);
+    Route::get('/question-lists', [AuditTypeController::class, 'getAllQuestions']);
+    Route::get('/audit-types', [AuditTypeController::class, 'getAuditTypes']);
+    Route::post('/submit-inspection', [AuditSessionController::class, 'submitAudit']);
 
     // PIC Management (EHS Audit)
     Route::get('/manage-pic', function () {

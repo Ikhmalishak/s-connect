@@ -327,7 +327,7 @@ onUnmounted(() => {
             <!-- Right Schedule Panel (Floating) -->
             <div
                 :class="[
-                    'absolute right-7 top-7 bottom-14 w-96 backdrop-blur-md rounded-3xl p-6 flex flex-col ',
+                    'absolute right-7 top-7 bottom-14 w-1/4 backdrop-blur-md rounded-3xl p-6 flex flex-col ',
                     roomStatus === 'in_use' ? 'bg-red-700' : 'bg-green-700',
                 ]"
             >

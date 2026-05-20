@@ -16,6 +16,7 @@ class RoomReservationController extends Controller
     {
         return Inertia::render('ManageRoomReservation/RoomReservationDashboard');
     }
+    
     public function getRoomReservationTabletInterface($id)
     {
         return Inertia::render('ManageRoomReservation/RoomReservationTablet', [
@@ -87,6 +88,7 @@ class RoomReservationController extends Controller
             'room_id' => 'required|exists:rooms,id',
             'user_name' => 'required|string|min:2|max:50',
             'user_id' => 'required|string|min:3|max:20',
+            'user_email' => 'required|string',
             'date' => 'required|date',
             'start_time' => 'required|date_format:H:i|before:end_time',
             'end_time' => 'required|date_format:H:i|after:start_time',
@@ -122,7 +124,7 @@ class RoomReservationController extends Controller
             'start_time' => $startDateTime,
             'end_time' => $endDateTime,
             'purpose' => $request->purpose,
-            'email' => "Ikhmal1410@gmail.com",
+            'email' => $request->user_email,
             'reminder_sent' => false
         ]);
 

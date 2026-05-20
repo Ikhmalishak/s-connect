@@ -32,6 +32,7 @@ const formSchema = toTypedSchema(
             room_id: z.string().transform(Number),
             user_name: z.string().min(2).max(50),
             user_id: z.string().min(3).max(20),
+            user_email: z.string().email(),
             start_time: z
                 .string()
                 .regex(timeRegex, "Time must be 00 or 30 only"),
@@ -138,6 +139,25 @@ for (let hour = startHour; hour <= endHour; hour++) {
                                         <Input
                                             type="text"
                                             placeholder="509260"
+                                            v-bind="componentField"
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            </FormField>
+
+
+                            <FormField
+                                v-slot="{ componentField }"
+                                name="user_email"
+                            >
+                                <!--User Name-->
+                                <FormItem>
+                                    <FormLabel>Email</FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            type="text"
+                                            placeholder="test@skpres.com"
                                             v-bind="componentField"
                                         />
                                     </FormControl>

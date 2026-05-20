@@ -264,7 +264,7 @@ onMounted(() => {
             <Breadcrumb>
                 <BreadcrumbList>
                     <BreadcrumbItem>
-                        <BreadcrumbLink href="/"
+                        <BreadcrumbLink href="/room-reservation/dashboard"
                             >Room Reservation Management System</BreadcrumbLink
                         >
                     </BreadcrumbItem>
