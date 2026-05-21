@@ -48,7 +48,7 @@ watch(
             showFlipCountdown.value = false;
         }
     },
-    { immediate: false }
+    { immediate: false },
 );
 
 async function fetchRoomDetails(id = roomId) {
@@ -116,20 +116,20 @@ function updateCountdown() {
 const formattedStart = computed(() =>
     currentReservation.value
         ? dayjs(currentReservation.value.start_time).format("hh:mm A")
-        : ""
+        : "",
 );
 
 const formattedEnd = computed(() =>
     currentReservation.value
         ? dayjs(currentReservation.value.end_time).format("hh:mm A")
-        : ""
+        : "",
 );
 
 // Format deadline for flip countdown
 const flipDeadline = computed(() => {
     if (!currentReservation.value?.end_time) return "";
     return dayjs(currentReservation.value.end_time).format(
-        "YYYY-MM-DD HH:mm:ss"
+        "YYYY-MM-DD HH:mm:ss",
     );
 });
 
@@ -202,7 +202,7 @@ onMounted(async () => {
         console.log("Listening for RoomReservation Created via Reverb.");
     } else {
         console.error(
-            "Laravel Echo is not initialized. Please check resources/js/app.js."
+            "Laravel Echo is not initialized. Please check resources/js/app.js.",
         );
     }
 });
@@ -238,7 +238,7 @@ onUnmounted(() => {
             <!-- Left Section -->
             <div class="flex-1 flex flex-col justify-center">
                 <div class="bg-black/70 p-6">
-                    <div class="flex flex-row items-center gap-80">
+                    <div class="flex flex-row gap-10">
                         <!-- Status Text -->
                         <p class="text-3xl font-light">
                             <template v-if="roomStatus === 'available'">
@@ -274,7 +274,7 @@ onUnmounted(() => {
                                 :showHours="true"
                                 :showMinutes="true"
                                 :showSeconds="true"
-                                countdownSize="4rem"
+                                countdownSize="3rem"
                             />
                         </div>
 
@@ -341,12 +341,12 @@ onUnmounted(() => {
                         v-if="roomSchedule.length > 0"
                         v-for="event in roomSchedule"
                         :key="event.id"
-                        class="relative p-3 rounded-xl bg-white/20 shadow-xl"
+                        class="relative mt-4 p-3 rounded-xl bg-white/20 shadow-xl"
                     >
-                        <!-- Completed Stamp -->
+                        <!-- Status Badge -->
                         <div
                             v-if="event.status === 'completed'"
-                            class="absolute top-2 right-2 text-white text-xs font-bold px-2 py-1 rounded-lg shadow-xl"
+                            class="absolute -top-3 right-3 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg z-10"
                             :class="
                                 roomStatus === 'in_use'
                                     ? 'bg-red-600'
@@ -356,42 +356,46 @@ onUnmounted(() => {
                             COMPLETED
                         </div>
 
-                        <!-- In Progress Stamp -->
                         <div
                             v-else-if="event.status === 'in_progress'"
-                            class="absolute top-2 right-2 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded-lg shadow-xl"
+                            class="absolute -top-3 right-3 bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg z-10"
                         >
                             IN PROGRESS
                         </div>
 
-                        <!-- Upcoming Stamp -->
                         <div
                             v-else-if="event.status === 'upcoming'"
-                            class="absolute top-2 right-2 bg-yellow-300 text-black text-xs font-bold px-2 py-1 rounded-lg shadow-xl"
+                            class="absolute -top-3 right-3 bg-yellow-300 text-black text-xs font-bold px-3 py-1 rounded-full shadow-lg z-10"
                         >
                             UPCOMING
                         </div>
 
-                        <!-- Active Stamp (backward compatibility) -->
                         <div
                             v-else-if="event.status === 'active'"
-                            class="absolute top-2 right-2 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded-lg shadow-xl"
+                            class="absolute -top-3 right-3 bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg z-10"
                         >
                             IN PROGRESS
                         </div>
 
+                        <!-- Content -->
                         <div class="text-2xl">
                             {{
                                 new Date(event.start_time).toLocaleTimeString(
                                     [],
-                                    { hour: "2-digit", minute: "2-digit" }
+                                    {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                    },
                                 )
                             }}
                             -
                             {{
                                 new Date(event.end_time).toLocaleTimeString(
                                     [],
-                                    { hour: "2-digit", minute: "2-digit" }
+                                    {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                    },
                                 )
                             }}
                         </div>
@@ -399,6 +403,7 @@ onUnmounted(() => {
                         <div class="text-2xl font-semibold">
                             {{ event.purpose }}
                         </div>
+
                         <div class="text-xl">
                             {{ event.user_name }}
                         </div>
@@ -443,7 +448,7 @@ onUnmounted(() => {
 <style scoped>
 .flip-countdown-container {
     min-height: 120px;
-    display: flex ;
+    display: flex;
     align-items: center;
     justify-content: center;
 }
