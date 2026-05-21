@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import axios from "axios";
 import { toTypedSchema } from "@vee-validate/zod";
 import * as z from "zod";
@@ -27,8 +27,8 @@ const formSchema = toTypedSchema(
         .object({
             name: z.string().min(2).max(50),
             email: z.string().toLowerCase().email(),
-            site_id: z.string(),
-            role: z.enum(["admin", "guard", "receptionist","staff"]),
+            site_id: z.number(),
+            role: z.enum(["admin", "guard", "receptionist", "staff"]),
             password: z
                 .string()
                 .min(1, "Password must be at least 6 characters"),
@@ -37,13 +37,21 @@ const formSchema = toTypedSchema(
         .refine((data) => data.password === data.confirm_password, {
             path: ["confirm_password"],
             message: "Passwords do not match",
-        })
+        }),
 );
+
+interface Site {
+    id: number;
+    name: string;
+}
+
 const form = useForm({ validationSchema: formSchema });
 const props = defineProps<{ show: boolean }>();
 const emit = defineEmits(["close"]);
 const errorMessage = ref("");
 const successMessage = ref("");
+const sites = ref<Site[]>([]);
+
 
 const onSubmit = form.handleSubmit(async (values) => {
     try {
@@ -51,7 +59,7 @@ const onSubmit = form.handleSubmit(async (values) => {
         console.log("Form submitted!", res.data);
         setTimeout(() => {
             successMessage.value = "User created successfully";
-            emit('close');
+            emit("close");
         }, 1000);
     } catch (e: any) {
         errorMessage.value =
@@ -62,7 +70,26 @@ const onSubmit = form.handleSubmit(async (values) => {
         console.error("Submit failed:", e);
     }
 });
+
+// Fetch sites for the dropdown
+async function fetchSites() {
+    try {
+        const response = await axios.get("/api/sites");
+        sites.value = response.data;
+    } catch (error) {
+        console.error("Failed to fetch sites:", error);
+    }
+}
+
+onMounted(() => {
+    fetchSites();
+});
+
+onMounted(() => {
+    fetchSites();
+});
 </script>
+
 <template>
     <Teleport to="body">
         <Transition name="modal-fade">
@@ -132,21 +159,13 @@ const onSubmit = form.handleSubmit(async (values) => {
                                         </FormControl>
                                         <SelectContent class="z-[99999]">
                                             <SelectGroup>
-                                                <SelectItem value="1">
-                                                    Site 1
-                                                </SelectItem>
-                                                <SelectItem value="2">
-                                                    Site 2
-                                                </SelectItem>
-                                                <SelectItem value="3">
-                                                    Site 3
-                                                </SelectItem>
-                                                <SelectItem value="4">
-                                                    Site 4
-                                                </SelectItem>
-                                                <SelectItem value="5">
-                                                    SKPBM S5
-                                                </SelectItem>
+                                                <SelectItem
+                                                v-for="site in sites"
+                                                :key="site.id"
+                                                :value = "site.id"
+                                                >
+                                                {{ site.name }}
+                                            </SelectItem>
                                             </SelectGroup>
                                         </SelectContent>
                                     </Select>

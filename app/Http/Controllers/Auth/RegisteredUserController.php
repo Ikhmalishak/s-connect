@@ -55,7 +55,7 @@ class RegisteredUserController extends Controller
             'email' => 'required|string|lowercase|email|max:255|unique:' . User::class,
             'password' => ['required', $passwordRule],
             'role' => 'required|string',
-            'site_id' => 'required|string',
+            'site_id' => 'required|int',
         ]);
 
         $user = User::create([

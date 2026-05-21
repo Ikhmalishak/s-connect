@@ -116,9 +116,14 @@ class ShipmentTransportController extends Controller
 
         $query = ShipmentTransport::with(['inspection', 'photo', 'holdBy', 'site']);
 
+        //if skpbp only see skpbp
         // Apply site filter if specified, otherwise show all sites
-        if ($siteId && $siteId !== 'all') {
-            $query->where('site_id', $siteId);
+        if ($user->site_id === 6) {
+            $query->where('site_id', $user->site_id);
+        } else {
+            if ($siteId && $siteId !== 'all') {
+                $query->where('site_id', $siteId);
+            }
         }
 
         // Apply search filter
