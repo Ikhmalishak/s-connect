@@ -379,7 +379,7 @@ onMounted(() => {
                             <div
                                 class="font-semibold text-gray-800 whitespace-nowrap"
                             >
-                                {{ room.name }}
+                                {{ room.name }} ({{ room.location }})
                             </div>
                             <div class="text-xs text-gray-500">
                                 Capacity: {{ room.capacity }}
