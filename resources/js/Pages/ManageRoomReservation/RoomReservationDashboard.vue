@@ -59,11 +59,11 @@ const formattedDate = computed(() =>
         year: "numeric",
         month: "long",
         day: "numeric",
-    })
+    }),
 );
 
 const formattedTime = computed(() =>
-    currentTime.value.toLocaleTimeString("en-GB")
+    currentTime.value.toLocaleTimeString("en-GB"),
 );
 
 interface Booking {
@@ -89,6 +89,7 @@ interface Room {
     id: number;
     name: string;
     capacity: number;
+    location: string;
 }
 
 const SLOT_HEIGHT = 60;
@@ -129,7 +130,7 @@ async function fetchRooms(site_id = selectedSite.value) {
 
 async function fetchRoomReservations(
     site_id = selectedSite.value,
-    date = selectedDate.value
+    date = selectedDate.value,
 ) {
     const res = await axios.get("/room-reservation/get-room-reservations", {
         params: {
@@ -199,7 +200,7 @@ const submitBooking = async (formData: any) => {
     try {
         const res = await axios.post(
             "/room-reservation/create-room-reservations",
-            formData
+            formData,
         );
 
         createBookingStatusMessage.value = res.data.message; // <-- show success here
@@ -331,7 +332,8 @@ onMounted(() => {
                                 :class="
                                     cn(
                                         'w-[280px] justify-start text-left font-normal',
-                                        !selectedDate && 'text-muted-foreground'
+                                        !selectedDate &&
+                                            'text-muted-foreground',
                                     )
                                 "
                             >
@@ -340,8 +342,8 @@ onMounted(() => {
                                     selectedDate
                                         ? df.format(
                                               selectedDate.toDate(
-                                                  getLocalTimeZone()
-                                              )
+                                                  getLocalTimeZone(),
+                                              ),
                                           )
                                         : "Pick a date"
                                 }}
@@ -379,10 +381,13 @@ onMounted(() => {
                             <div
                                 class="font-semibold text-gray-800 whitespace-nowrap"
                             >
-                                {{ room.name }} ({{ room.location }})
+                                {{ room.name }}
                             </div>
                             <div class="text-xs text-gray-500">
                                 Capacity: {{ room.capacity }}
+                            </div>
+                            <div class="text-xs text-gray-500">
+                                Location: {{ room.location }}
                             </div>
                         </div>
                     </div>
@@ -423,7 +428,7 @@ onMounted(() => {
                             <div>
                                 {{
                                     new Date(
-                                        booking.start_time
+                                        booking.start_time,
                                     ).toLocaleTimeString([], {
                                         hour: "2-digit",
                                         minute: "2-digit",
@@ -432,7 +437,7 @@ onMounted(() => {
                                 -
                                 {{
                                     new Date(
-                                        booking.end_time
+                                        booking.end_time,
                                     ).toLocaleTimeString([], {
                                         hour: "2-digit",
                                         minute: "2-digit",
