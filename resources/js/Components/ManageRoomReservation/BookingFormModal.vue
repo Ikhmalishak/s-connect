@@ -120,7 +120,6 @@ for (let hour = startHour; hour <= endHour; hour++) {
                                     <FormControl>
                                         <Input
                                             type="text"
-                                            placeholder="Muhammad Ikhmal Bin Ishak"
                                             v-bind="componentField"
                                         />
                                     </FormControl>
@@ -138,7 +137,6 @@ for (let hour = startHour; hour <= endHour; hour++) {
                                     <FormControl>
                                         <Input
                                             type="text"
-                                            placeholder="509260"
                                             v-bind="componentField"
                                         />
                                     </FormControl>
@@ -157,7 +155,6 @@ for (let hour = startHour; hour <= endHour; hour++) {
                                     <FormControl>
                                         <Input
                                             type="text"
-                                            placeholder="test@skpres.com"
                                             v-bind="componentField"
                                         />
                                     </FormControl>
