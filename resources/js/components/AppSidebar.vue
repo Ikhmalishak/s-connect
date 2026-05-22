@@ -108,7 +108,7 @@ const navMain = [
                 permission: "safety.access",
             },
         ],
-        permission: "visitor.access", // parent permission
+        permission: "safety.access", // parent permission
     },
     {
         title: "Meeting Room Reservation",
