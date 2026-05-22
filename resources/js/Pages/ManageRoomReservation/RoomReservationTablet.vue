@@ -322,6 +322,12 @@ onUnmounted(() => {
 
                     <div v-else class="text-xl">No active reservation.</div>
                 </div>
+
+                <!-- Text just above the progress bar -->
+                <div class="absolute bottom-10 left-0 w-full text-xl py-1">
+                    To make a meeting room reservation, kindly access
+                    https://vms.skpres.local/room-reservation/dashboard.
+                </div>
             </div>
 
             <!-- Right Schedule Panel (Floating) -->
