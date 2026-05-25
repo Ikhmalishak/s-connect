@@ -326,6 +326,7 @@ onUnmounted(() => {
                 <!-- Text just above the progress bar -->
                 <div class="absolute bottom-10 left-0 w-full text-xl py-1">
                     To make a meeting room reservation, kindly access
+                    <br>
                     https://vms.skpres.local/room-reservation/dashboard.
                 </div>
             </div>
