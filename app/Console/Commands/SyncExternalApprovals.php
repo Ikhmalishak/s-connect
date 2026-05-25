@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Console\Commands;
-Use Carbon\Carbon;
+use Carbon\Carbon;
 use App\Models\ShipmentTransportApproval;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
@@ -170,7 +170,7 @@ class SyncExternalApprovals extends Command
 
             // Update approval status for all approval types
             if ($approval) {
-                $timestamp = isset($vercelApproval['timestamp']) 
+                $timestamp = isset($vercelApproval['timestamp'])
                     ? Carbon::parse($vercelApproval['timestamp'])->setTimezone(config('app.timezone'))
                     : now();
 
@@ -423,10 +423,10 @@ class SyncExternalApprovals extends Command
     private function getDepartmentUsers($department, $containerSiteId = null, $forNotifications = false)
     {
         // For security department, handle both external and internal permissions
-        if ($department === 'security') {
+        if ($department === 'security' && $containerSiteId !== 6) {
             if ($forNotifications) {
                 // For Power Automate notifications, only use external permission (Teams licensed users)
-                $query = \App\Models\User::permission('container.security.approve');
+                $query = \App\Models\User::permission('container.security.approve')->where('site_id', '!=', 6);;
             } else {
                 // For internal approvals, use both external and internal permissions
                 $query = \App\Models\User::where(function ($q) {
@@ -435,7 +435,21 @@ class SyncExternalApprovals extends Command
                     })->orWhereHas('permissions', function ($perm) {
                         $perm->where('name', 'container.security.approve_internal');
                     });
-                });
+                })->where('site_id', '!=', 6);;
+            }
+        } else if ($department === "security" && $containerSiteId === 6) {
+            if ($forNotifications) {
+                // For Power Automate notifications, only use external permission (Teams licensed users)
+                $query = \App\Models\User::permission('container.security.approve')->where('site_id', $containerSiteId);
+            } else {
+                // For internal approvals, use both external and internal permissions
+                $query = \App\Models\User::where(function ($q) {
+                    $q->whereHas('permissions', function ($perm) {
+                        $perm->where('name', 'container.security.approve');
+                    })->orWhereHas('permissions', function ($perm) {
+                        $perm->where('name', 'container.security.approve_internal');
+                    });
+                })->where('site_id', $containerSiteId);
             }
         } else {
             // For other departments, use the standard permission
@@ -443,9 +457,14 @@ class SyncExternalApprovals extends Command
         }
 
         // FIX: Apply site filtering for ALL departments that need it
-        if (in_array($department, ['warehouse', 'quality', 'shipping', 'security'])) {
+        if (in_array($department, ['warehouse', 'quality', 'shipping'])) {
             if ($department === 'shipping') {
-                $query->where('site_id', 2);
+                if ($containerSiteId !== 6) {
+                    $query->where('site_id', 2);
+                } else {
+                    $query->where('site_id', $containerSiteId);
+
+                }
             } elseif (in_array($department, ['warehouse', 'quality'])) {
                 if ($containerSiteId && $containerSiteId > 0) {
                     $query->where('site_id', $containerSiteId);

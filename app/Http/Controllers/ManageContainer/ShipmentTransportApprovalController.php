@@ -455,10 +455,10 @@ class ShipmentTransportApprovalController extends Controller
     private function getDepartmentUsers($department, $containerSiteId = null, $forNotifications = false)
     {
         // For security department, handle both external and internal permissions
-        if ($department === 'security') {
+        if ($department === 'security' && $containerSiteId !== 6) {
             if ($forNotifications) {
                 // For Power Automate notifications, only use external permission (Teams licensed users)
-                $query = \App\Models\User::permission('container.security.approve');
+                $query = \App\Models\User::permission('container.security.approve')->where('site_id', '!=', 6);;
             } else {
                 // For internal approvals, use both external and internal permissions
                 $query = \App\Models\User::where(function ($q) {
@@ -467,7 +467,21 @@ class ShipmentTransportApprovalController extends Controller
                     })->orWhereHas('permissions', function ($perm) {
                         $perm->where('name', 'container.security.approve_internal');
                     });
-                });
+                })->where('site_id', '!=', 6);;
+            }
+        } else if ($department === "security" && $containerSiteId === 6) {
+            if ($forNotifications) {
+                // For Power Automate notifications, only use external permission (Teams licensed users)
+                $query = \App\Models\User::permission('container.security.approve')->where('site_id', $containerSiteId);
+            } else {
+                // For internal approvals, use both external and internal permissions
+                $query = \App\Models\User::where(function ($q) {
+                    $q->whereHas('permissions', function ($perm) {
+                        $perm->where('name', 'container.security.approve');
+                    })->orWhereHas('permissions', function ($perm) {
+                        $perm->where('name', 'container.security.approve_internal');
+                    });
+                })->where('site_id', $containerSiteId);
             }
         } else {
             // For other departments, use the standard permission
@@ -475,9 +489,14 @@ class ShipmentTransportApprovalController extends Controller
         }
 
         // FIX: Apply site filtering for ALL departments that need it
-        if (in_array($department, ['warehouse', 'quality', 'shipping', 'security'])) {
-            if ($department === 'shipping' || $department === 'security') {
-                $query->where('site_id', 2);
+        if (in_array($department, ['warehouse', 'quality', 'shipping'])) {
+            if ($department === 'shipping') {
+                if ($containerSiteId !== 6) {
+                    $query->where('site_id', 2);
+                } else {
+                    $query->where('site_id', $containerSiteId);
+
+                }
             } elseif (in_array($department, ['warehouse', 'quality'])) {
                 if ($containerSiteId && $containerSiteId > 0) {
                     $query->where('site_id', $containerSiteId);
