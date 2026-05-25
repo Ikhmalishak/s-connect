@@ -496,27 +496,37 @@ class ShipmentTransportController extends Controller
         $requiredPhotos = [
             ['key' => 'pallet_condition_photo', 'label' => 'Pallet Condition'],
             ['key' => 'pallet_label_photo', 'label' => 'Pallet Label'],
-            ['key' => 'empty_container_photo', 'label' => 'Empty Container'],
-            ['key' => 'half_loaded_photo', 'label' => 'Half Loaded'],
-            ['key' => 'one_side_door_closed_with_container_number_photo', 'label' => 'Door Closed'],
-            ['key' => 'complete_loaded_photo', 'label' => 'Complete Loaded'],
-            ['key' => 'container_full_seal_photo', 'label' => 'Container Full Seal'],
-            ['key' => 'container_truck_photo', 'label' => 'Container Truck'],
         ];
 
         // GPS photos - required if GPS serial numbers are present
         if (!empty($shipmentTransport->inside_gps_sn) || !empty($shipmentTransport->outside_gps_sn)) {
             $requiredPhotos = array_merge($requiredPhotos, [
                 ['key' => 'gps_photo_before_installation', 'label' => 'GPS Before Installation'],
-                ['key' => 'inside_gps_photo', 'label' => 'Inside GPS'],
-                ['key' => 'outside_gps_photo', 'label' => 'Outside GPS'],
             ]);
         }
 
+        $requiredPhotos = array_merge($requiredPhotos, [
+            ['key' => 'container_truck_photo', 'label' => 'Container Truck'],
+            ['key' => 'empty_container_photo', 'label' => 'Empty Container'],
+        ]);
+
         // GPS photos - required if GPS serial numbers are present
-        if (!empty($shipmentTransport->fork_seal_sn)) {
+        if (!empty($shipmentTransport->inside_gps_sn) || !empty($shipmentTransport->outside_gps_sn)) {
             $requiredPhotos = array_merge($requiredPhotos, [
-                ['key' => 'fork_seal_photo', 'label' => 'Fork Seal Photo'],
+                ['key' => 'inside_gps_photo', 'label' => 'Inside GPS'],
+            ]);
+        }
+
+        $requiredPhotos = array_merge($requiredPhotos, [
+            ['key' => 'half_loaded_photo', 'label' => 'Half Loaded'],
+            ['key' => 'complete_loaded_photo', 'label' => 'Complete Loaded'],
+            ['key' => 'one_side_door_closed_with_container_number_photo', 'label' => 'Door Closed'],
+        ]);
+
+        // GPS photos - required if GPS serial numbers are present
+        if (!empty($shipmentTransport->inside_gps_sn) || !empty($shipmentTransport->outside_gps_sn)) {
+            $requiredPhotos = array_merge($requiredPhotos, [
+                ['key' => 'outside_gps_photo', 'label' => 'Outside GPS'],
             ]);
         }
 
@@ -530,6 +540,17 @@ class ShipmentTransportController extends Controller
                 ['key' => 'security_seal_photo', 'label' => 'Security Seal'],
             ]);
         }
+
+        // GPS photos - required if GPS serial numbers are present
+        if (!empty($shipmentTransport->fork_seal_sn)) {
+            $requiredPhotos = array_merge($requiredPhotos, [
+                ['key' => 'fork_seal_photo', 'label' => 'Fork Seal Photo'],
+            ]);
+        }
+
+        $requiredPhotos = array_merge($requiredPhotos, [
+            ['key' => 'container_full_seal_photo', 'label' => 'Container Full Seal'],
+        ]);
 
         return $requiredPhotos;
     }
@@ -1160,7 +1181,7 @@ class ShipmentTransportController extends Controller
         }
 
         // Check if shipment transport belongs to user's site (unless superadmin)
-        if (!$user->hasAnyPermission(['superadmin','container.shipping.access']) && $shipmentTransport->site_id !== $user->site_id) {
+        if (!$user->hasAnyPermission(['superadmin', 'container.shipping.access']) && $shipmentTransport->site_id !== $user->site_id) {
             \Log::warning("PDF Download: Access denied for user {$user->id} - wrong site access");
             return response()->json(['message' => 'Unauthorized access to shipment transport'], 403);
         }
