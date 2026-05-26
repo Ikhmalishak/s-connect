@@ -230,7 +230,7 @@ onUnmounted(() => {
             <img
                 src="/assets/skpLogo.png"
                 alt=""
-                class="max-w-[150px] h-auto my-7 mx-7"
+                class="max-w-[150px] h-auto my-12 mx-7"
             />
         </div>
 
