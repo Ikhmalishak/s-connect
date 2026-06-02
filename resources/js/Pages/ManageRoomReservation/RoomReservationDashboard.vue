@@ -420,34 +420,86 @@ onMounted(() => {
                         :key="booking.id"
                         :style="getBookingStyle(booking)"
                         @click="openBookingDetails(booking)"
-                        class="p-2 absolute left-2 right-2 rounded-lg cursor-pointer transition-all hover:shadow-lg z-10 flex flex-col items-center justify-center text-center bg-indigo-500 border-2 border-indigo-600 text-white hover:bg-indigo-600"
+                        :class="[
+                            'p-1.5 absolute left-1 right-1 rounded-md cursor-pointer transition-all hover:shadow-lg z-10 flex border-2 text-black hover:bg-indigo-600 hover:text-white',
+                            // Check if duration is less than 60 minutes
+                            (new Date(booking.end_time).getTime() -
+                                new Date(booking.start_time).getTime()) /
+                                60000 <
+                            61
+                                ? 'flex-row items-center justify-between bg-sky-300 border-sky-400 text-[11px]'
+                                : 'flex-col items-start justify-between bg-sky-300 border-sky-400 text-xs',
+                        ]"
                     >
-                        <div
-                            class="flex flex-row items-center justify-between w-full text-xs mt-1"
+                        <template
+                            v-if="
+                                (new Date(booking.end_time).getTime() -
+                                    new Date(booking.start_time).getTime()) /
+                                    60000 <
+                                61
+                            "
                         >
-                            <div>
-                                {{
-                                    new Date(
-                                        booking.start_time,
-                                    ).toLocaleTimeString([], {
-                                        hour: "2-digit",
-                                        minute: "2-digit",
-                                    })
-                                }}
-                                -
-                                {{
-                                    new Date(
-                                        booking.end_time,
-                                    ).toLocaleTimeString([], {
-                                        hour: "2-digit",
-                                        minute: "2-digit",
-                                    })
-                                }}
+                            <span class="font-bold whitespace-nowrap">
+                                    {{
+                                        new Date(
+                                            booking.start_time,
+                                        ).toLocaleTimeString([], {
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                        })
+                                    }}
+                                    -
+                                    {{
+                                        new Date(
+                                            booking.end_time,
+                                        ).toLocaleTimeString([], {
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                        })
+                                    }}
+                            </span>
+                            <span class="truncate max-w-[60%] opacity-80">
+                                {{ booking.user_name }}
+                            </span>
+                        </template>
+
+                        <template v-else>
+                            <div
+                                class="w-full flex flex-col text-left gap-0.5 leading-tight"
+                            >
+                                <span class="font-bold text-[11px] opacity-90">
+                                    {{
+                                        new Date(
+                                            booking.start_time,
+                                        ).toLocaleTimeString([], {
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                        })
+                                    }}
+                                    -
+                                    {{
+                                        new Date(
+                                            booking.end_time,
+                                        ).toLocaleTimeString([], {
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                        })
+                                    }}
+                                </span>
+                                <p
+                                    class="font-semibold text-xs line-clamp-1 mt-0.5 opacity-90"
+                                    v-if="booking.purpose"
+                                >
+                                    {{ booking.purpose }}
+                                </p>
                             </div>
-                            <div>
+
+                            <div
+                                class="w-full text-left text-[10px] opacity-75 truncate mt-auto pt-0.5 border-t border-sky-400/20"
+                            >
                                 {{ booking.user_name }} ({{ booking.user_id }})
                             </div>
-                        </div>
+                        </template>
                     </div>
                 </div>
 
