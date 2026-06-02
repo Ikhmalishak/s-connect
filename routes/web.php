@@ -332,4 +332,16 @@ Route::middleware(['auth', 'password.age'])->prefix('safety')->name('safety.')->
 
 });
 
+Route::get('/test-nas', function(){
+    return Storage::disk('nas')->put('hello.txt',"hello");
+});
+
+Route::get('/download-nas', function () {
+    return Storage::disk('nas')->download('example.txt');
+});
+
+Route::get('/file/{path}', function ($path) {
+    return Storage::disk('nas')->response($path);
+})->where('path', '.*');
+
 require __DIR__ . '/auth.php';

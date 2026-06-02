@@ -60,6 +60,11 @@ return [
             'report' => false,
         ],
 
+        'nas' => [
+            'driver' => 'local',
+            'root' => '/mnt/nas'
+        ]
+
     ],
 
     /*

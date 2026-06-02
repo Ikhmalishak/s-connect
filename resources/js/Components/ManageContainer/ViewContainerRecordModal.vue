@@ -381,7 +381,7 @@ watch(
                         <!-- Image container -->
                         <div class="relative">
                             <img
-                                :src="'/storage/' + selectedImage?.photo_path"
+                                :src="selectedImage?.image_url"
                                 :alt="selectedImage?.label"
                                 class="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
                             />
