@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Mpdf\Mpdf;
+use Illuminate\Support\Facades\Storage;
 
 class ShipmentTransportController extends Controller
 {
@@ -1454,7 +1455,12 @@ class ShipmentTransportController extends Controller
                 $formattedLabel = ucfirst(str_replace('_', ' ', $photo->label));
 
                 // Get base64 encoded image for better performance with size optimization
-                $imagePath = storage_path('app/public/' . $photo->photo_path);
+                if (str_starts_with($photo->photo_path, 'archive/')) {
+                    $imagePath = Storage::disk('nas')->path($photo->photo_path);
+                } else {
+                    $imagePath = Storage::disk('public')->path($photo->photo_path);
+                }
+
                 $base64Image = '';
                 if (file_exists($imagePath)) {
                     // Resize image to reduce memory usage

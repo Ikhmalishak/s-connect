@@ -15,7 +15,7 @@ class ArchiveContainerRecord extends Command
 
     public function handle()
     {
-        $cutoffDate = Carbon::now()->subMonths(1);
+        $cutoffDate = Carbon::now()->subMonths(3);
 
         $containers = ShipmentTransport::with('photo')
             ->whereDate('date', '<=', $cutoffDate)
@@ -44,6 +44,7 @@ class ArchiveContainerRecord extends Command
                     Storage::disk('nas')->put($newPath, $content);
 
                     $photo->photo_path = $newPath;
+                    $photo->archived_at = now();
                     $photo->save();
                 }
 

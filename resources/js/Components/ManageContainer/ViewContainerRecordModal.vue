@@ -194,8 +194,7 @@ watch(
                                         >
                                             <img
                                                 :src="
-                                                    '/storage/' +
-                                                    value.photo_path
+                                                    value.image_url
                                                 "
                                                 :alt="value.label"
                                                 class="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-200"
@@ -407,8 +406,7 @@ watch(
                                     </div>
                                     <a
                                         :href="
-                                            '/storage/' +
-                                            selectedImage?.photo_path
+                                            selectedImage?.image_url
                                         "
                                         target="_blank"
                                         rel="noopener noreferrer"
