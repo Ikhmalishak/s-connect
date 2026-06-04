@@ -13,19 +13,15 @@ use App\Http\Controllers\Auth\PasswordExpiredController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
-    Route::get('register', [RegisteredUserController::class, 'create'])
-        ->name('register');
-
-    Route::post('register', [RegisteredUserController::class, 'store'])
-        ->middleware('throttle:3,1');
-
     Route::get('/login', [RegisteredUserController::class, 'login'])
         ->name('login');
 
     Route::post('/login', [AuthenticatedSessionController::class, 'store'])
         ->middleware('throttle:5,1')
         ->name('login.submit');
+});
 
+Route::middleware('auth')->group(function () {
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
         ->name('password.request');
 
@@ -39,9 +35,11 @@ Route::middleware('guest')->group(function () {
     Route::post('reset-password', [NewPasswordController::class, 'store'])
         ->middleware('throttle:3,1')
         ->name('password.store');
-});
+    Route::get('register', [RegisteredUserController::class, 'create'])
+        ->name('register');
 
-Route::middleware('auth')->group(function () {
+    Route::post('register', [RegisteredUserController::class, 'store'])
+        ->middleware('throttle:3,1');
 
     Route::get('verify-email', EmailVerificationPromptController::class)
         ->name('verification.notice');
