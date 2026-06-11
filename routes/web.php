@@ -138,6 +138,9 @@ Route::prefix('room-reservation')
             ->whereNumber('id');
     });
 
+Route::get('/tablet/{id}', [RoomReservationController::class, 'getRoomReservationTabletInterface'])
+        ->name('booking.tablet');
+
 //routes for superadmin
 Route::middleware(['auth', 'can:superadmin', 'password.age'])
     ->prefix('admin')
@@ -328,5 +331,9 @@ Route::middleware(['auth', 'password.age'])->prefix('safety')->name('safety.')->
     Route::get('/corrective-action/failed-items', [AuditSetupController::class, 'getFailedItems']);
 
 });
+
+Route::get('/file/{path}', function ($path) {
+    return Storage::disk('nas')->response($path);
+})->where('path', '.*');
 
 require __DIR__ . '/auth.php';

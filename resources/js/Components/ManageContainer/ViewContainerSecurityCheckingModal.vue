@@ -202,14 +202,14 @@ watch(
                                         }}
                                     </p>
                                     <a
-                                        :href="'/storage/' + value.photo_path"
+                                        :href="value.image_url"
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         class="block relative overflow-hidden rounded-lg border-2 border-gray-300 hover:border-orange-500 transition-all duration-200"
                                     >
                                         <img
                                             :src="
-                                                '/storage/' + value.photo_path
+                                                value.image_url
                                             "
                                             :alt="value.label"
                                             class="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-200"

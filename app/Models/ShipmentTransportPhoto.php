@@ -13,8 +13,19 @@ class ShipmentTransportPhoto extends Model
         'taken_by',
     ];
 
+    protected $appends = ['image_url'];
+
     public function shipmentTransport()
     {
         return $this->belongsTo(ShipmentTransport::class);
+    }
+
+    public function getImageUrlAttribute()
+    {
+        if ($this->shipmentTransport && $this->shipmentTransport->is_archived) {
+            return url('/file/' . $this->photo_path);
+        }
+
+        return asset('storage/' . $this->photo_path);
     }
 }
