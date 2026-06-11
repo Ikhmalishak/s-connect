@@ -15,6 +15,8 @@ import SafetyTable from "@/Components/ManageSafety/SafetyTable.vue";
 import ViewAuditDetailsModal from "@/Components/ManageSafety/ViewAuditDetailsModal.vue";
 import CreateAuditModal from "@/Components/ManageSafety/CreateAuditModal.vue";
 import ViewFailedItemModal from "@/Components/ManageSafety/ViewFailedItemModal.vue";
+import CorrectiveActionForm from "@/Components/ManageSafety/CorrectiveActionForm.vue";
+import FindingsDetailModal from "@/Components/ManageSafety/FindingsDetailModal.vue";
 
 const currentTime = ref(new Date());
 const openCreateAuditModal = ref(false);
@@ -22,6 +24,10 @@ const openAuditDetailModal = ref(false);
 const currentAuditDetailDetails = ref<any>(null);
 const openFailedItemModal = ref(false);
 const currentFailedItem = ref<any>(null);
+const openCorrectiveActionModal = ref(false);
+const currentCorrectiveActionItem = ref<any>(null);
+const openFindingsDetailModal = ref(false);
+const currentFindingsDetailItem = ref<any>(null);
 let intervalId: ReturnType<typeof setInterval>;
 
 // Ref to trigger table refresh
@@ -37,6 +43,23 @@ function handleOpenFailedItemModal(audit: any) {
     console.log("Opening View Details for audit:", audit?.id);
     currentFailedItem.value = audit;
     openFailedItemModal.value = true;
+}
+
+function handleOpenCorrectiveAction(audit: any) {
+    console.log("Opening Corrective Action for audit:", audit?.id);
+    currentCorrectiveActionItem.value = audit;
+    openCorrectiveActionModal.value = true;
+}
+
+function handleOpenFindingsDetail(audit: any) {
+    console.log("Opening Findings Detail for audit:", audit?.id);
+    currentFindingsDetailItem.value = audit;
+    openFindingsDetailModal.value = true;
+}
+
+function handleCorrectiveActionSaved(result: any) {
+    console.log("Corrective action saved:", result);
+    tableRefreshKey.value++;
 }
 
 const formattedDate = computed(() =>
@@ -107,6 +130,8 @@ onUnmounted(() => {
             @open-audit-detail-modal="handleOpenAuditDetailModal"
             @open-create-audit-modal="openCreateAuditModal = true"
             @open-failed-item-modal="handleOpenFailedItemModal"
+            @open-corrective-action="handleOpenCorrectiveAction"
+            @open-findings-detail="handleOpenFindingsDetail"
         />
 
         <ViewAuditDetailsModal
@@ -127,6 +152,19 @@ onUnmounted(() => {
                     openFailedItemModal = false;
                 }
             "
+        />
+
+        <FindingsDetailModal
+            :show="openFindingsDetailModal"
+            :session="currentFindingsDetailItem"
+            @close="openFindingsDetailModal = false"
+        />
+
+        <CorrectiveActionForm
+            :show="openCorrectiveActionModal"
+            :session="currentCorrectiveActionItem"
+            @close="openCorrectiveActionModal = false"
+            @saved="handleCorrectiveActionSaved"
         />
 
         <CreateAuditModal

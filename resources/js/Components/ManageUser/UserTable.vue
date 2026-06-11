@@ -120,6 +120,11 @@ watch(searchQuery, (newVal) => {
                             <th
                                 class="font-black text-black text-center bg-gray-100 p-3 sticky top-0 z-20 border-r border-gray-300 text-sm"
                             >
+                                Department
+                            </th>
+                            <th
+                                class="font-black text-black text-center bg-gray-100 p-3 sticky top-0 z-20 border-r border-gray-300 text-sm"
+                            >
                                 Email
                             </th>
                             <th
@@ -155,6 +160,7 @@ watch(searchQuery, (newVal) => {
                             <td class="text-center p-2">{{ index + 1 }}</td>
                             <td class="text-center p-2">{{ u.name }}</td>
                             <td class="text-center p-2">{{ u.site?.name ?? "-" }}</td>
+                            <td class="text-center p-2">{{ u.department?.name ?? "-" }}</td>
                             <td class="text-center p-2">{{ u.email }}</td>
                             <td class="text-center p-2">{{ u.roles[0].name ?? "-" }}</td>
                             <td class="text-center p-2">
@@ -220,7 +226,7 @@ watch(searchQuery, (newVal) => {
                         <!-- empty state if no users -->
                         <tr v-if="!user || user.length === 0">
                             <td
-                                colspan="8"
+                                colspan="9"
                                 class="text-center p-4 text-gray-500"
                             >
                                 No users found

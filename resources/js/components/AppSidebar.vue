@@ -98,6 +98,11 @@ const navMain = [
                 permission: "safety.access",
             },
             {
+                title: "Safety Approvals",
+                url: "/safety/approvals",
+                permission: "safety.approve",
+            },
+            {
                 title: "Manage PIC (EHS Audit)",
                 url: "/safety/manage-pic",
                 permission: "safety.access",

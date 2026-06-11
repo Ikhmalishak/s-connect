@@ -28,6 +28,7 @@ const formSchema = toTypedSchema(
             name: z.string().min(2).max(50),
             email: z.string().toLowerCase().email(),
             site_id: z.number(),
+            department_id: z.number().optional(),
             role: z.enum(["admin", "guard", "receptionist", "staff"]),
             password: z
                 .string()
@@ -45,12 +46,18 @@ interface Site {
     name: string;
 }
 
+interface Department {
+    id: number;
+    name: string;
+}
+
 const form = useForm({ validationSchema: formSchema });
 const props = defineProps<{ show: boolean }>();
 const emit = defineEmits(["close"]);
 const errorMessage = ref("");
 const successMessage = ref("");
 const sites = ref<Site[]>([]);
+const departments = ref<Department[]>([]);
 
 
 const onSubmit = form.handleSubmit(async (values) => {
@@ -81,12 +88,19 @@ async function fetchSites() {
     }
 }
 
-onMounted(() => {
-    fetchSites();
-});
+// Fetch departments for the dropdown
+async function fetchDepartments() {
+    try {
+        const response = await axios.get("/api/departments");
+        departments.value = response.data.data;
+    } catch (error) {
+        console.error("Failed to fetch departments:", error);
+    }
+}
 
 onMounted(() => {
     fetchSites();
+    fetchDepartments();
 });
 </script>
 
@@ -199,6 +213,35 @@ onMounted(() => {
                                                 >
                                                     Receptionist
                                                 </SelectItem>
+                                            </SelectGroup>
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            </FormField>
+                            <FormField
+                                v-slot="{ componentField }"
+                                name="department_id"
+                            >
+                                <FormItem>
+                                    <FormLabel>Department</FormLabel>
+                                    <Select v-bind="componentField">
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue
+                                                    placeholder="Select department"
+                                                />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent class="z-[99999]">
+                                            <SelectGroup>
+                                                <SelectItem
+                                                v-for="dept in departments"
+                                                :key="dept.id"
+                                                :value = "dept.id"
+                                                >
+                                                {{ dept.name }}
+                                            </SelectItem>
                                             </SelectGroup>
                                         </SelectContent>
                                     </Select>

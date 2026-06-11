@@ -47,4 +47,16 @@ class AuditSession extends Model
     {
         return $this->hasMany(AuditAnswer::class);
     }
+
+    public function findingActions()
+    {
+        return $this->hasManyThrough(
+            AuditFindingAction::class,
+            AuditAnswer::class,
+            'audit_session_id', // Foreign key on audit_answers
+            'audit_answer_id',  // Foreign key on audit_finding_actions
+            'id',               // Local key on audit_sessions
+            'id'                // Local key on audit_answers
+        );
+    }
 }

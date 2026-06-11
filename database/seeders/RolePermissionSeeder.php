@@ -30,7 +30,8 @@ class RolePermissionSeeder extends Seeder
             ],
             'safety' => [
                 'access',
-                'pic'
+                'pic',
+                'approve'
             ],
         ];
 

@@ -24,11 +24,17 @@ import { Input } from "@/components/ui/input";
 
 const props = defineProps<{ show: boolean; user: any }>();
 
+interface Department {
+    id: number;
+    name: string;
+}
+
 const formSchema = toTypedSchema(
     z.object({
         name: z.string().min(2).max(50),
         email: z.string().toLowerCase().email(),
         site_id: z.string(),
+        department_id: z.string(),
         role: z.enum(["admin", "guard", "receptionist", "staff"]),
     }),
 );
@@ -39,9 +45,12 @@ const form = useForm({
         name: props.user?.name || "",
         email: props.user?.email || "",
         site_id: String(props.user?.site_id || ""),
+        department_id: String(props.user?.department_id || ""),
         role: props.user?.roles[0].name || "",
     },
 });
+
+const departments = ref<Department[]>([]);
 
 watch(
     () => props.user,
@@ -52,6 +61,7 @@ watch(
                     name: newUser.name,
                     email: newUser.email,
                     site_id: String(newUser.site_id),
+                    department_id: String(newUser.department_id || ""),
                     role: newUser.roles[0].name,
                 },
             });
@@ -86,6 +96,17 @@ const onSubmit = form.handleSubmit(async (values) => {
         isSubmitting.value = false;
     }
 });
+
+async function fetchDepartments() {
+    try {
+        const response = await axios.get("/api/departments");
+        departments.value = response.data.data;
+    } catch (error) {
+        console.error("Failed to fetch departments:", error);
+    }
+}
+
+fetchDepartments();
 
 const resetPassword = async () => {
     try {
@@ -218,6 +239,32 @@ const resetPassword = async () => {
                                                 <SelectItem value="staff">
                                                     Staff
                                                 </SelectItem>
+                                            </SelectGroup>
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            </FormField>
+                            <FormField v-slot="{ componentField }" name="department_id">
+                                <FormItem>
+                                    <FormLabel>Department</FormLabel>
+                                    <Select v-bind="componentField">
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue
+                                                    placeholder="Select department"
+                                                />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent class="z-[99999]">
+                                            <SelectGroup>
+                                                <SelectItem
+                                                v-for="dept in departments"
+                                                :key="dept.id"
+                                                :value = "String(dept.id)"
+                                                >
+                                                {{ dept.name }}
+                                            </SelectItem>
                                             </SelectGroup>
                                         </SelectContent>
                                     </Select>

@@ -8,6 +8,7 @@ use App\Http\Controllers\ManageSafety\AuditQuestionController;
 use App\Http\Controllers\ManageSafety\AuditSectionController;
 use App\Http\Controllers\ManageSafety\AuditPicController;
 use App\Http\Controllers\ManageSafety\AuditSessionController;
+use App\Http\Controllers\ManageSafety\FindingActionController;
 use App\Http\Controllers\ManageSafety\AuditSetupController;
 use App\Http\Controllers\ManageSafety\AuditTypeController;
 use App\Http\Controllers\ManageVisitor\GatePassController;
@@ -329,6 +330,22 @@ Route::middleware(['auth', 'password.age'])->prefix('safety')->name('safety.')->
 
     //corrective action
     Route::get('/corrective-action/failed-items', [AuditSetupController::class, 'getFailedItems']);
+
+    // Safety Approvals (corrective action)
+    Route::get('/approvals', [FindingActionController::class, 'getApprovalsPage'])
+        ->middleware('can:safety.approve')
+        ->name('approvals');
+
+    Route::get('/findings/{session}', [FindingActionController::class, 'getFindings']);
+    Route::post('/corrective-action/submit', [FindingActionController::class, 'submitAction']);
+    Route::get('/pending-approvals', [FindingActionController::class, 'getPendingApprovals'])
+        ->middleware('can:safety.approve');
+    Route::get('/approval-stats', [FindingActionController::class, 'getApprovalStats'])
+        ->middleware('can:safety.approve');
+    Route::post('/corrective-action/approve/{session}', [FindingActionController::class, 'approveAction'])
+        ->middleware('can:safety.approve');
+    Route::post('/corrective-action/reject/{session}', [FindingActionController::class, 'rejectAction'])
+        ->middleware('can:safety.approve');
 
 });
 

@@ -38,4 +38,9 @@ class AuditAnswer extends Model
     {
         return $this->hasMany(AuditAttachment::class);
     }
+
+    public function findingAction()
+    {
+        return $this->hasOne(AuditFindingAction::class, 'audit_answer_id');
+    }
 }

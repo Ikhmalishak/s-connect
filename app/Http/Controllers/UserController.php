@@ -38,7 +38,7 @@ class UserController extends Controller
         $limit = $request->input('limit', 50);
         $keyword = $request->input('keyword');
 
-        $query = User::with(['roles', 'site']); // eager load relationships
+        $query = User::with(['roles', 'site', 'department']); // eager load relationships
 
         // Exclude superadmin users
         $query->whereDoesntHave('roles', function ($q) {
@@ -54,6 +54,9 @@ class UserController extends Controller
                     })
                     ->orWhereHas('site', function ($qs) use ($keyword) {
                         $qs->where('site_code', 'LIKE', "%{$keyword}%");
+                    })
+                    ->orWhereHas('department', function ($qd) use ($keyword) {
+                        $qd->where('name', 'LIKE', "%{$keyword}%");
                     });
             });
         }
@@ -74,10 +77,11 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email,' . $user->id,
             'role' => 'required|in:admin,guard,receptionist,staff',
             'site_id' => 'required',
+            'department_id' => 'nullable|int|exists:departments,id',
         ]);
 
         // Update user info (exclude role since we handle it separately)
-        $user->update($request->only(['name', 'email', 'site_id']));
+        $user->update($request->only(['name', 'email', 'site_id', 'department_id']));
 
         // Replace old roles with the new one
         $user->syncRoles([$request->role]);

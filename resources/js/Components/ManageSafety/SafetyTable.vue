@@ -14,7 +14,13 @@ import { ref, watch, onMounted } from "vue";
 import axios from "axios";
 import Button from "@/components/ui/button/Button.vue";
 
-const emit = defineEmits(["openAuditDetailModal", "openCreateAuditModal", "openFailedItemModal"]);
+const emit = defineEmits([
+    "openAuditDetailModal",
+    "openCreateAuditModal",
+    "openFailedItemModal",
+    "openCorrectiveAction",
+    "openFindingsDetail",
+]);
 
 interface AuditAnswer {
     id: number;
@@ -59,6 +65,39 @@ function handleOpenAuditDetailModal(audit: Audit) {
 
 function handleOpenFailedItemsModal(audit: Audit) {
     emit("openFailedItemModal", audit);
+}
+
+function handleOpenCorrectiveAction(audit: Audit) {
+    emit("openCorrectiveAction", audit);
+}
+
+function getStatusClass(status: string): string {
+    switch (status) {
+        case 'approved':
+            return 'bg-green-100 text-green-800';
+        case 'submitted':
+            return 'bg-blue-100 text-blue-800';
+        case 'failed':
+            return 'bg-red-100 text-red-800';
+        case 'corrective_action_submitted':
+            return 'bg-yellow-100 text-yellow-800';
+        case 'finding_closed':
+            return 'bg-green-100 text-green-800';
+        case 'draft':
+        default:
+            return 'bg-gray-100 text-gray-800';
+    }
+}
+
+function getStatusLabel(status: string): string {
+    switch (status) {
+        case 'corrective_action_submitted':
+            return 'Corrective Action Submitted';
+        case 'finding_closed':
+            return 'Finding Closed';
+        default:
+            return status;
+    }
 }
 
 // Fetch sessions with filters from safety endpoint
@@ -132,6 +171,12 @@ onMounted(() => {
                                     >
                                     <SelectItem value="failed"
                                         >Failed</SelectItem
+                                    >
+                                    <SelectItem value="corrective_action_submitted"
+                                        >Corrective Action Submitted</SelectItem
+                                    >
+                                    <SelectItem value="finding_closed"
+                                        >Finding Closed</SelectItem
                                     >
                                     <SelectItem value="approved"
                                         >Approved</SelectItem
@@ -221,7 +266,7 @@ onMounted(() => {
                     >
                         <tr v-if="isLoading">
                             <td
-                                colspan="4"
+                                colspan="7"
                                 class="text-center p-4 text-gray-500"
                             >
                                 Loading...
@@ -229,7 +274,7 @@ onMounted(() => {
                         </tr>
                         <tr v-else-if="filteredAudits.length === 0">
                             <td
-                                colspan="4"
+                                colspan="7"
                                 class="text-center p-4 text-gray-500"
                             >
                                 No audit sessions found.
@@ -257,43 +302,72 @@ onMounted(() => {
                             <td class="p-2">
                                 <span
                                     class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium capitalize"
-                                    :class="
-                                        audit.status === 'approved'
-                                            ? 'bg-green-100 text-green-800'
-                                            : audit.status === 'submitted'
-                                              ? 'bg-blue-100 text-blue-800'
-                                              : audit.status === 'failed'
-                                                ? 'bg-red-100 text-red-800'
-                                                : 'bg-gray-100 text-gray-800'
-                                    "
+                                    :class="getStatusClass(audit.status)"
                                 >
-                                    {{ audit.status }}
+                                    {{ getStatusLabel(audit.status) }}
                                 </span>
                             </td>
                             <td class="p-2 flex flex-row justify-center gap-2">
+                                <!-- Failed: Show Corrective Action button for PIC -->
                                 <CustomTooltip
-                                    :text="'The container is still not completed'"
-                                    position="top"
-                                >
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        class="bg-purple-600 hover:bg-purple-700 text-white text-xs disabled:opacity-50 disabled:cursor-not-allowed"
-                                        @click = "handleOpenFailedItemsModal(audit)"
-                                    >
-                                        Corrective Action
-                                    </Button>
-                                </CustomTooltip>
-                                <CustomTooltip
-                                    text="Download container report"
+                                    v-if="audit.status === 'failed'"
+                                    text="Submit corrective action for failed findings"
                                     position="top"
                                 >
                                     <Button
                                         variant="outline"
                                         size="sm"
                                         class="bg-purple-600 hover:bg-purple-700 text-white text-xs"
+                                        @click="handleOpenCorrectiveAction(audit)"
                                     >
-                                        Edit
+                                        Corrective Action
+                                    </Button>
+                                </CustomTooltip>
+
+                                <!-- Corrective Action Submitted: Show info -->
+                                <CustomTooltip
+                                    v-if="audit.status === 'corrective_action_submitted'"
+                                    text="Awaiting safety team review"
+                                    position="top"
+                                >
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        class="bg-yellow-500 hover:bg-yellow-600 text-white text-xs cursor-default"
+                                    >
+                                        Pending Review
+                                    </Button>
+                                </CustomTooltip>
+
+                                <!-- Finding Closed: Show view button with full details -->
+                                <CustomTooltip
+                                    v-if="audit.status === 'finding_closed'"
+                                    text="View corrective action details"
+                                    position="top"
+                                >
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        class="bg-green-600 hover:bg-green-700 text-white text-xs"
+                                        @click="$emit('openFindingsDetail', audit)"
+                                    >
+                                        View
+                                    </Button>
+                                </CustomTooltip>
+
+                                <!-- Show failed items for failed status -->
+                                <CustomTooltip
+                                    v-if="audit.status === 'failed'"
+                                    text="View failed items"
+                                    position="top"
+                                >
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        class="bg-blue-600 hover:bg-blue-700 text-white text-xs"
+                                        @click="handleOpenFailedItemsModal(audit)"
+                                    >
+                                        Findings
                                     </Button>
                                 </CustomTooltip>
                             </td>

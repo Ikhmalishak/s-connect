@@ -56,6 +56,7 @@ class RegisteredUserController extends Controller
             'password' => ['required', $passwordRule],
             'role' => 'required|string',
             'site_id' => 'required|int',
+            'department_id' => 'nullable|int|exists:departments,id',
         ]);
 
         $user = User::create([
@@ -65,6 +66,7 @@ class RegisteredUserController extends Controller
             'password_changed_at' => now(),
             'is_first_time_login' => 1,
             'site_id' => $request->site_id,
+            'department_id' => $request->department_id,
         ]);
 
         $user->syncRoles($request->role);
