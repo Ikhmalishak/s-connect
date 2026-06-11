@@ -361,14 +361,14 @@ onMounted(() => {
                                     text="View failed items"
                                     position="top"
                                 >
-                                    <Button
+                                    <!-- <Button
                                         variant="outline"
                                         size="sm"
                                         class="bg-blue-600 hover:bg-blue-700 text-white text-xs"
                                         @click="handleOpenFailedItemsModal(audit)"
                                     >
                                         Findings
-                                    </Button>
+                                    </Button> -->
                                 </CustomTooltip>
                             </td>
                         </tr>
