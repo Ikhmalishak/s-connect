@@ -9,6 +9,8 @@ class DepartmentSeeder extends Seeder
 {
     public function run(): void
     {
+        DB::table('departments')->truncate();
+
         DB::table('departments')->insert([
             ['name' => 'Engineering', 'created_at' => now(), 'updated_at' => now()],
             ['name' => 'MIS', 'created_at' => now(), 'updated_at' => now()],
