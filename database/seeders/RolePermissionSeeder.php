@@ -49,9 +49,6 @@ class RolePermissionSeeder extends Seeder
         // ===== ROLES =====
         $superadmin = Role::firstOrCreate(['name' => 'superadmin']);
         $admin = Role::firstOrCreate(['name' => 'admin']);
-        $receptionist = Role::firstOrCreate(['name' => 'receptionist']);
-        $guard = Role::firstOrCreate(['name' => 'guard']);
-        $staff = Role::firstOrCreate(['name' => 'staff']);
 
         // ===== ASSIGN PERMISSIONS =====
 
@@ -62,19 +59,6 @@ class RolePermissionSeeder extends Seeder
         $admin->givePermissionTo([
             'visitor.access',
             'public',
-        ]);
-
-        // Receptionist can manage visitors fully
-        $receptionist->givePermissionTo([
-            'visitor.access',
-            'public',
-            'room-reservation.access',
-        ]);
-
-        // Guard can only scan/view visitors
-        $guard->givePermissionTo([
-            'visitor.access',
-            'public'
         ]);
     }
 }
