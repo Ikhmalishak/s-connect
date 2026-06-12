@@ -127,27 +127,35 @@ class AuditSessionController extends Controller
             }
         }
 
-        // If there are findings, update status and notify PICs
+        // Update status based on results
         if (!empty($failedItems)) {
             $session->update(['status' => 'failed']);
+        } else {
+            $session->update(['status' => 'pass']);
+        }
 
-            try {
-                // Find PICs assigned to this site + department
-                $pics = AuditPic::where('site_id', $session->site_id)
-                    ->where('department_id', $session->department_id)
-                    ->with('user')
-                    ->get();
+        // Always notify PICs (pass or fail)
+        try {
+            // Find PICs assigned to this site + department
+            $pics = AuditPic::where('site_id', $session->site_id)
+                ->where('department_id', $session->department_id)
+                ->with('user')
+                ->get();
 
-                foreach ($pics as $pic) {
-                    if ($pic->user && $pic->user->email) {
+            foreach ($pics as $pic) {
+                if ($pic->user && $pic->user->email) {
+                    if (!empty($failedItems)) {
                         Mail::to($pic->user->email)
                             ->send(new NotifyAuditFinding($session, $failedItems, $pic->user));
+                    } else {
+                        // Notify PIC that inspection passed
+                        Mail::to($pic->user->email)
+                            ->send(new \App\Mail\NotifyPicInspectionPass($session, $pic->user));
                     }
                 }
-            } catch (\Exception $e) {
-                // Log the error but don't break the submission
-                \Illuminate\Support\Facades\Log::error('Failed to send audit finding email: ' . $e->getMessage());
             }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to send audit notification email: ' . $e->getMessage());
         }
 
         return response()->json([

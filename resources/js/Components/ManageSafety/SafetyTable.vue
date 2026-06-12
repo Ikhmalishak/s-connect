@@ -75,6 +75,8 @@ function getStatusClass(status: string): string {
     switch (status) {
         case 'approved':
             return 'bg-green-100 text-green-800';
+        case 'pass':
+            return 'bg-emerald-100 text-emerald-800';
         case 'submitted':
             return 'bg-blue-100 text-blue-800';
         case 'failed':
@@ -95,6 +97,8 @@ function getStatusLabel(status: string): string {
             return 'Corrective Action Submitted';
         case 'finding_closed':
             return 'Finding Closed';
+        case 'pass':
+            return 'Pass';
         default:
             return status;
     }
@@ -177,6 +181,9 @@ onMounted(() => {
                                     >
                                     <SelectItem value="finding_closed"
                                         >Finding Closed</SelectItem
+                                    >
+                                    <SelectItem value="pass"
+                                        >Pass</SelectItem
                                     >
                                     <SelectItem value="approved"
                                         >Approved</SelectItem
@@ -287,13 +294,10 @@ onMounted(() => {
                         >
                             <td class="p-2 text-center">{{ index + 1 }}</td>
                             <td class="p-2">
-                                <button
-                                    @click="handleOpenAuditDetailModal(audit)"
-                                    class="text-blue-600 hover:text-blue-800 underline"
-                                >
+                                <span class="text-gray-800">
                                     {{ audit.audit_type?.name }} -
                                     {{ audit.date }}
-                                </button>
+                                </span>
                             </td>
                             <td class="p-2">{{ audit.department?.name }}</td>
                             <td class="p-2">{{ audit.site?.name }}</td>
@@ -339,9 +343,25 @@ onMounted(() => {
                                     </Button>
                                 </CustomTooltip>
 
-                                <!-- Finding Closed: Show view button with full details -->
+                                <!-- Pass: Show view button -->
                                 <CustomTooltip
-                                    v-if="audit.status === 'finding_closed'"
+                                    v-if="audit.status === 'pass'"
+                                    text="View inspection details"
+                                    position="top"
+                                >
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs"
+                                        @click="$emit('openFindingsDetail', audit)"
+                                    >
+                                        View
+                                    </Button>
+                                </CustomTooltip>
+
+                                <!-- Finding Closed / Approved: Show view button with full details -->
+                                <CustomTooltip
+                                    v-if="audit.status === 'finding_closed' || audit.status === 'approved'"
                                     text="View corrective action details"
                                     position="top"
                                 >
@@ -353,22 +373,6 @@ onMounted(() => {
                                     >
                                         View
                                     </Button>
-                                </CustomTooltip>
-
-                                <!-- Show failed items for failed status -->
-                                <CustomTooltip
-                                    v-if="audit.status === 'failed'"
-                                    text="View failed items"
-                                    position="top"
-                                >
-                                    <!-- <Button
-                                        variant="outline"
-                                        size="sm"
-                                        class="bg-blue-600 hover:bg-blue-700 text-white text-xs"
-                                        @click="handleOpenFailedItemsModal(audit)"
-                                    >
-                                        Findings
-                                    </Button> -->
                                 </CustomTooltip>
                             </td>
                         </tr>
