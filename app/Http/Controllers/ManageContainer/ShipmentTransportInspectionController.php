@@ -143,8 +143,9 @@ class ShipmentTransportInspectionController extends Controller
             broadcast(new \App\Events\ContainerStageUpdated($container))->toOthers();
 
             // Send Power Automate notification for inspection approval
-            $this->sendInspectionApprovalNotification($container, $approval);
-
+            if ($container->id !== 6) {
+                $this->sendInspectionApprovalNotification($container, $approval);
+            }
             // Send email to quality department users who can approve inspections (same site as container)
             // $qualityUsers = \App\Models\User::permission('container.quality.approve_inspection')
             //     ->where('site_id', $container->site_id)
@@ -191,7 +192,7 @@ class ShipmentTransportInspectionController extends Controller
 
         // Check if shipment transport belongs to user's site (unless superadmin)
         $container = ShipmentTransport::where('id', $id);
-        if (!$user->hasAnyPermission(['superadmin','container.shipping.access'])) {
+        if (!$user->hasAnyPermission(['superadmin', 'container.shipping.access'])) {
             $container->where('site_id', $user->site_id);
         }
         $container = $container->first();

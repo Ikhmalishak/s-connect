@@ -274,12 +274,12 @@ class ShipmentTransportApprovalController extends Controller
             // Quality approved inspection - can upload photos
             $container->update(['stage' => 'container_loading_report']);
 
-            // Send email to container creator
-            try {
-                Mail::to($container->createdBy->email)->send(new ContainerApprovedForLoading($container));
-            } catch (\Exception $e) {
-                \Log::error("Failed to send approval email to container creator: " . $e->getMessage());
-            }
+            // // Send email to container creator
+            // try {
+            //     Mail::to($container->createdBy->email)->send(new ContainerApprovedForLoading($container));
+            // } catch (\Exception $e) {
+            //     \Log::error("Failed to send approval email to container creator: " . $e->getMessage());
+            // }
 
         } elseif ($container->stage === 'container_loading_report_approval') {
             // Check sequential approval: warehouse → quality → shipping → security
@@ -303,14 +303,14 @@ class ShipmentTransportApprovalController extends Controller
                 broadcast(new \App\Events\ContainerStageUpdated($container))->toOthers();
 
                 // Send notification to security team that container is ready for onboarding
-                $securityUsers = $this->getDepartmentUsers('security', $container->site_id);
-                if ($securityUsers->isNotEmpty()) {
-                    try {
-                        Mail::to($securityUsers)->send(new \App\Mail\ContainerReadyForOnboarding($container));
-                    } catch (\Exception $e) {
-                        \Log::error("Failed to send onboarding ready email to security team: " . $e->getMessage());
-                    }
-                }
+                // $securityUsers = $this->getDepartmentUsers('security', $container->site_id);
+                // if ($securityUsers->isNotEmpty()) {
+                //     try {
+                //         Mail::to($securityUsers)->send(new \App\Mail\ContainerReadyForOnboarding($container));
+                //     } catch (\Exception $e) {
+                //         \Log::error("Failed to send onboarding ready email to security team: " . $e->getMessage());
+                //     }
+                // }
             }
         }
     }
@@ -338,7 +338,9 @@ class ShipmentTransportApprovalController extends Controller
             ]);
 
             // Send notification only for warehouse
-            $this->sendDepartmentApprovalEmails($container, [$firstDepartment]);
+            if ($container->id !== 6) {
+                $this->sendDepartmentApprovalEmails($container, [$firstDepartment]);
+            }
         }
     }
 
@@ -375,7 +377,9 @@ class ShipmentTransportApprovalController extends Controller
             ]);
 
             // Send notification for the next department
-            $this->sendDepartmentApprovalEmails($container, [$nextDepartment]);
+            if ($container->id !== 6) {
+                $this->sendDepartmentApprovalEmails($container, [$nextDepartment]);
+            }
         }
     }
 
@@ -458,7 +462,8 @@ class ShipmentTransportApprovalController extends Controller
         if ($department === 'security' && $containerSiteId !== 6) {
             if ($forNotifications) {
                 // For Power Automate notifications, only use external permission (Teams licensed users)
-                $query = \App\Models\User::permission('container.security.approve')->where('site_id', '!=', 6);;
+                $query = \App\Models\User::permission('container.security.approve')->where('site_id', '!=', 6);
+                ;
             } else {
                 // For internal approvals, use both external and internal permissions
                 $query = \App\Models\User::where(function ($q) {
@@ -467,7 +472,8 @@ class ShipmentTransportApprovalController extends Controller
                     })->orWhereHas('permissions', function ($perm) {
                         $perm->where('name', 'container.security.approve_internal');
                     });
-                })->where('site_id', '!=', 6);;
+                })->where('site_id', '!=', 6);
+                ;
             }
         } else if ($department === "security" && $containerSiteId === 6) {
             if ($forNotifications) {
