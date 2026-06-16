@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\EncryptionSettingController;
+use App\Http\Controllers\ManageContainer\ContainerGpsController;
 use App\Http\Controllers\ManageContainer\InspectionAnswerController;
 use App\Http\Controllers\ManageContainer\InspectionQuestionController;
 use App\Http\Controllers\ManageSafety\AuditQuestionController;
@@ -231,6 +232,9 @@ Route::middleware(['auth'])->prefix('container')->name('container.')->group(func
     Route::get('/shipping-requirements-approvals', function () {
         return Inertia::render('ManageContainer/ShippingRequirementsApprovals');
     })->middleware('can:container.shipping.approve')->name('shipping-requirements-approvals');
+    Route::get('/container-gps', function () {
+        return Inertia::render('ManageContainer/ContainerGps');
+    })->middleware('can:container.shipping.access')->name('container-gps');
 });
 
 // Archive container reports API routes
@@ -280,6 +284,15 @@ Route::middleware(['auth'])->prefix('container-approvals')->name('container-appr
     Route::post('/{approval}/approve', [ShipmentTransportApprovalController::class, 'approve'])->middleware('can:container.access')->name('approve');
     Route::post('/{approval}/reject', [ShipmentTransportApprovalController::class, 'reject'])->middleware('can:container.access')->name('reject');
     Route::get('/{approval}/approve-email', [ShipmentTransportApprovalController::class, 'approveFromEmail'])->middleware('can:container.access')->name('approve-email');
+});
+
+// Container GPS management routes
+Route::middleware(['auth'])->prefix('api/container-gps')->name('container-gps.')->group(function () {
+    Route::get('/', [ContainerGpsController::class, 'index'])->name('index');
+    Route::post('/', [ContainerGpsController::class, 'store'])->name('store');
+    Route::get('/{containerGps}', [ContainerGpsController::class, 'show'])->name('show');
+    Route::put('/{containerGps}', [ContainerGpsController::class, 'update'])->name('update');
+    Route::delete('/{containerGps}', [ContainerGpsController::class, 'destroy'])->name('destroy');
 });
 
 // Power Automate approval result endpoint (public access for external service)

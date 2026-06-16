@@ -70,6 +70,11 @@ const navMain = [
                 url: "/container/archive",
                 permission: "container.access",
             },
+            {
+                title: "GPS",
+                url: "/container/container-gps",
+                permission: "container.access",
+            },
         ],
         permission: "container.access",
     },
