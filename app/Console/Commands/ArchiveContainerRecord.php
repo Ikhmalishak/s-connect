@@ -15,10 +15,10 @@ class ArchiveContainerRecord extends Command
 
     public function handle()
     {
-        $cutoffDate = Carbon::now();
+        $cutoffDate = Carbon::now()->subMonths(3);
 
         $containers = ShipmentTransport::with('photo')
-            ->whereDate('date', '=', $cutoffDate)
+            ->whereDate('date', '<=', $cutoffDate)
             ->where('is_archived', false)
             ->get();
 
