@@ -62,7 +62,7 @@ return [
 
         'nas' => [
             'driver' => 'local',
-            'root' => '/mnt/nas'
+            'root' => '/mnt/sd-folder'
         ]
 
     ],
