@@ -338,7 +338,7 @@ class ShipmentTransportApprovalController extends Controller
             ]);
 
             // Send notification only for warehouse
-            if ($container->id !== 6) {
+            if ($container->site_id !== 6) {
                 $this->sendDepartmentApprovalEmails($container, [$firstDepartment]);
             }
         }
@@ -377,7 +377,7 @@ class ShipmentTransportApprovalController extends Controller
             ]);
 
             // Send notification for the next department
-            if ($container->id !== 6) {
+            if ($container->site_id !== 6) {
                 $this->sendDepartmentApprovalEmails($container, [$nextDepartment]);
             }
         }

@@ -363,7 +363,13 @@ Route::middleware(['auth', 'password.age'])->prefix('safety')->name('safety.')->
 });
 
 Route::get('/file/{path}', function ($path) {
-    return Storage::disk('nas')->response($path);
+    $fullPath = Storage::disk('nas')->path($path);
+
+    if (!file_exists($fullPath)) {
+        abort(404);
+    }
+
+    return response()->file($fullPath);
 })->where('path', '.*');
 
 require __DIR__ . '/auth.php';

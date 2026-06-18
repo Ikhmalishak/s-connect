@@ -143,7 +143,7 @@ class ShipmentTransportInspectionController extends Controller
             broadcast(new \App\Events\ContainerStageUpdated($container))->toOthers();
 
             // Send Power Automate notification for inspection approval
-            if ($container->id !== 6) {
+            if ($container->Site_id !== 6) {
                 $this->sendInspectionApprovalNotification($container, $approval);
             }
             // Send email to quality department users who can approve inspections (same site as container)
