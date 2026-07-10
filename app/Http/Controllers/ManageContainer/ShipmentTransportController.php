@@ -1176,7 +1176,7 @@ class ShipmentTransportController extends Controller
         $user = auth()->user();
 
         // Check if user has shipping access
-        if (!$user->hasPermissionTo('container.shipping.access')) {
+        if (!$user->hasAnyPermission(['container.shipping.access','container.quality.access'])) {
             \Log::warning("PDF Download: Access denied for user {$user->id} - no shipping access");
             return response()->json(['message' => 'Unauthorized. Shipping department access required.'], 403);
         }
