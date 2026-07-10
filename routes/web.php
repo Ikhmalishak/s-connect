@@ -259,7 +259,7 @@ Route::get('/containers/{shipmentTransport}/driver-info', [ShipmentTransportCont
 Route::get('/containers/{shipmentTransport}/required-photos', [ShipmentTransportController::class, 'getRequiredPhotos'])->middleware('can:container.access')->name('container.required-photos');
 Route::post('/containers/{shipmentTransport}/hold', [ShipmentTransportController::class, 'hold'])->middleware('can:container.quality.access')->name('container.hold');
 Route::post('/containers/{shipmentTransport}/release', [ShipmentTransportController::class, 'release'])->middleware('can:container.quality.access')->name('container.release');
-Route::get('/containers/{shipmentTransport}/download-report', [ShipmentTransportController::class, 'downloadContainerReport'])->middleware(['can:container.shipping.access','can:container.quality.access'])->name('container.download-report');
+Route::get('/containers/{shipmentTransport}/download-report', [ShipmentTransportController::class, 'downloadContainerReport'])->name('container.download-report');
 
 // Shipping requirements management routes
 Route::middleware(['auth'])->prefix('api/shipping-requirements')->name('shipping-requirements.')->group(function () {
