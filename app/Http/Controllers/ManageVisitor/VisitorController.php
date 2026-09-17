@@ -140,8 +140,8 @@ class VisitorController extends Controller
         // Build site filtering rule
         $siteFilter = function ($q) use ($user, $userSite, $filterSite) {
 
-            if ($user->hasRole('admin')) {
-                // admin can filter by selected site (optional)
+            if ($user->hasRole(['superadmin','admin'])) {                
+            // admin can filter by selected site (optional)
                 if ($filterSite) {
                     $q->where('site_id', $filterSite);
                 }
